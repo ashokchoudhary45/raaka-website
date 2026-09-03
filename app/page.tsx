@@ -2,11 +2,20 @@
 
 import { useState } from "react";
 import Image from "next/image";
+
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <>
-      {/* HAMBURGER MENU */}
+      {/* FULL WEBSITE RAAKA BACKGROUND */}
+      <div className="fixed inset-0 z-0 overflow-hidden bg-black pointer-events-none">
+        <div className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1" style={{ backgroundImage: "url('/images/raakabg.jpg')" }} />
+        <div className="absolute inset-0 bg-cover bg-center animate-raaka-bg-2" style={{ backgroundImage: "url('/images/raakabg1.jpg')" }} />
+        <div className="absolute inset-0 bg-cover bg-center animate-raaka-bg-3" style={{ backgroundImage: "url('/images/raakabg2.jpg')" }} />
+        <div className="absolute inset-0 bg-black/45" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+      </div>
+
 <div className="fixed top-6 right-6 z-50">
 
   {/* 3 LINE BUTTON */}
@@ -88,65 +97,12 @@ export default function Home() {
   )}
 
 </div>
-   <main className="min-h-screen bg-transparent text-white relative">
-
-      {/* FULL WEBSITE RAAKA BACKGROUND */}
-      <div className="fixed inset-0 z-0 overflow-hidden bg-black pointer-events-none">
-        <div
-          className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1"
-          style={{ backgroundImage: "url('/images/raakabg.jpg')" }}
-        />
-        <div
-          className="absolute inset-0 bg-cover bg-center animate-raaka-bg-2"
-          style={{ backgroundImage: "url('/images/raakabg1.jpg')" }}
-        />
-        <div
-          className="absolute inset-0 bg-cover bg-center animate-raaka-bg-3"
-          style={{ backgroundImage: "url('/images/raakabg2.jpg')" }}
-        />
-        <div className="absolute inset-0 bg-black/45" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
-      </div>
+   <main className="relative z-10 min-h-screen bg-transparent text-white">
 
       {/* HERO */}
       <section className="relative min-h-screen flex items-end overflow-hidden">
 
-       {/* Animated Backgrounds */}
-<div className="absolute inset-0 overflow-hidden bg-black">
-
-  {/* RAAKA Background 1 */}
-  <div
-    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1"
-    style={{
-      backgroundImage: "url('/images/raakabg.jpg')",
-    }}
-  />
-
-  {/* RAAKA Background 2 */}
-  <div
-    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-2"
-    style={{
-      backgroundImage: "url('/images/raakabg1.jpg')",
-    }}
-  />
-
-  {/* RAAKA Background 3 */}
-  <div
-    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-3"
-    style={{
-      backgroundImage: "url('/images/raakabg2.jpg')",
-    }}
-  />
-
-  {/* Cinematic Overlay */}
-  <div className="absolute inset-0 bg-black/40" />
-
-  {/* Bottom Fade */}
-  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/40 to-transparent" />
-
-</div>
-
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pb-20">
+       <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pb-20">
 
           <p className="text-sm uppercase tracking-[0.4em] text-zinc-400 mb-4">
             The World of
@@ -734,6 +690,7 @@ export default function Home() {
 
       </footer>
 
+          
     </main>
     </>
   );
