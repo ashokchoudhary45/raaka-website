@@ -1,39 +1,112 @@
-{/* FULL WEBSITE RAAKA BACKGROUND */}
-<div className="fixed inset-0 -z-10 overflow-hidden bg-black">
+"use client";
 
-  <div
-    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1"
-    style={{
-      backgroundImage: "url('/images/raakabg.jpg')",
-    }}
-  />
+import { useState } from "react";
+import Image from "next/image";
+export default function Home() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  return (
+    <>
+      {/* HAMBURGER MENU */}
+<div className="fixed top-6 right-6 z-50">
 
-  <div
-    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-2"
-    style={{
-      backgroundImage: "url('/images/raakabg1.jpg')",
-    }}
-  />
+  {/* 3 LINE BUTTON */}
+  <button
+    onClick={() => setMenuOpen(!menuOpen)}
+    className="w-12 h-12 rounded-full border border-white/30 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center gap-1.5 hover:bg-white hover:text-black transition"
+    aria-label="Open Menu"
+  >
+    <span
+      className={`block w-5 h-0.5 bg-current transition ${
+        menuOpen ? "rotate-45 translate-y-2" : ""
+      }`}
+    />
+    <span
+      className={`block w-5 h-0.5 bg-current transition ${
+        menuOpen ? "opacity-0" : ""
+      }`}
+    />
+    <span
+      className={`block w-5 h-0.5 bg-current transition ${
+        menuOpen ? "-rotate-45 -translate-y-2" : ""
+      }`}
+    />
+  </button>
 
-  <div
-    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-3"
-    style={{
-      backgroundImage: "url('/images/raakabg2.jpg')",
-    }}
-  />
+  {/* MENU */}
+  {menuOpen && (
+    <div className="absolute right-0 mt-3 w-64 rounded-2xl border border-white/20 bg-black/90 backdrop-blur-xl p-3 shadow-2xl">
 
-  {/* Cinematic darkness */}
-  <div className="absolute inset-0 bg-black/45" />
+      <a
+        href="#cast"
+        onClick={() => setMenuOpen(false)}
+        className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+      >
+        Cast
+      </a>
 
-  {/* Bottom atmospheric fade */}
-  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+      <a
+        href="#crew"
+        onClick={() => setMenuOpen(false)}
+        className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+      >
+        Crew
+      </a>
+
+      <a
+        href="#posters"
+        onClick={() => setMenuOpen(false)}
+        className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+      >
+        Posters
+      </a>
+
+      <a
+        href="#announcements"
+        onClick={() => setMenuOpen(false)}
+        className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+      >
+        Latest Announcements
+      </a>
+
+      <a
+        href="#songs"
+        onClick={() => setMenuOpen(false)}
+        className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+      >
+        Songs
+      </a>
+
+      <a
+        href="#explore"
+        onClick={() => setMenuOpen(false)}
+        className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+      >
+        Explore More
+      </a>
+
+    </div>
+  )}
 
 </div>
-import Image from "next/image";
+   <main className="min-h-screen bg-transparent text-white relative">
 
-export default function Home() {
-  return (
-   <main className="min-h-screen bg-transparent text-white">
+      {/* FULL WEBSITE RAAKA BACKGROUND */}
+      <div className="fixed inset-0 z-0 overflow-hidden bg-black pointer-events-none">
+        <div
+          className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1"
+          style={{ backgroundImage: "url('/images/raakabg.jpg')" }}
+        />
+        <div
+          className="absolute inset-0 bg-cover bg-center animate-raaka-bg-2"
+          style={{ backgroundImage: "url('/images/raakabg1.jpg')" }}
+        />
+        <div
+          className="absolute inset-0 bg-cover bg-center animate-raaka-bg-3"
+          style={{ backgroundImage: "url('/images/raakabg2.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-black/45" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+      </div>
 
       {/* HERO */}
       <section className="relative min-h-screen flex items-end overflow-hidden">
@@ -91,7 +164,7 @@ export default function Home() {
           <div className="flex gap-4 mt-8 flex-wrap">
 
             <a
-              href="#videos"
+              href="#announcements"
               className="rounded-full bg-white text-black px-7 py-3 font-semibold hover:bg-zinc-200"
             >
               Watch Videos
@@ -283,7 +356,7 @@ export default function Home() {
 
 
       {/* CREW */}
-      <section className="px-6 md:px-10 py-24">
+      <section id="crew" className="px-6 md:px-10 py-24">
 
         <div className="max-w-6xl mx-auto">
 
@@ -409,7 +482,7 @@ export default function Home() {
 
 
       {/* POSTERS */}
-      <section className="px-6 md:px-10 py-24">
+      <section id="posters" className="px-6 md:px-10 py-24">
 
         <div className="max-w-6xl mx-auto">
 
@@ -458,7 +531,7 @@ export default function Home() {
 
       {/* ANNOUNCEMENT VIDEOS */}
       <section
-        id="videos"
+        id="announcements"
         className="px-6 md:px-10 py-24"
       >
 
@@ -585,7 +658,7 @@ export default function Home() {
 
 
       {/* EXTRA */}
-      <section className="max-w-7xl mx-auto px-6 py-24">
+      <section id="explore" className="max-w-7xl mx-auto px-6 py-24">
 
         <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">
           More
@@ -662,5 +735,6 @@ export default function Home() {
       </footer>
 
     </main>
+    </>
   );
 }
