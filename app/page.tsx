@@ -127,7 +127,7 @@ export default function Home() {
           <div className="aspect-[2/3] rounded-2xl overflow-hidden bg-zinc-900 border border-white/10">
 
             <Image
-              src="/images/RAAKAFL.jfif"
+              src="/images/RAAKAFL.jpg"
               alt="Raaka First Look"
               width={800}
               height={1200}
@@ -260,7 +260,7 @@ export default function Home() {
               <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
 
                 <Image
-                  src="/images/actor2.jfif"
+                  src="/images/actor2.jpg"
                   alt="Deepika Padukone"
                   width={600}
                   height={800}
@@ -330,7 +330,7 @@ export default function Home() {
               <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
 
                 <Image
-                  src="/images/crew2.jfif"
+                  src="/images/crew2.jpg"
                   alt="Sai Abhyankar"
                   width={600}
                   height={800}
@@ -356,7 +356,7 @@ export default function Home() {
               <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
 
                 <Image
-                  src="/images/crew3.jfif"
+                  src="/images/crew3.jpg"
                   alt="Kalanithi Maran"
                   width={600}
                   height={800}
@@ -430,7 +430,7 @@ export default function Home() {
               <div className="aspect-[2/3] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
 
                 <Image
-                  src="/images/RAAKAFL.jfif"
+                  src="/images/RAAKAFL.jpg"
                   alt="RAAKA First Look"
                   width={800}
                   height={1200}
