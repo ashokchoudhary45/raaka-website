@@ -1,17 +1,77 @@
+{/* FULL WEBSITE RAAKA BACKGROUND */}
+<div className="fixed inset-0 -z-10 overflow-hidden bg-black">
+
+  <div
+    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1"
+    style={{
+      backgroundImage: "url('/images/raakabg.jpg')",
+    }}
+  />
+
+  <div
+    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-2"
+    style={{
+      backgroundImage: "url('/images/raakabg1.jpg')",
+    }}
+  />
+
+  <div
+    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-3"
+    style={{
+      backgroundImage: "url('/images/raakabg2.jpg')",
+    }}
+  />
+
+  {/* Cinematic darkness */}
+  <div className="absolute inset-0 bg-black/45" />
+
+  {/* Bottom atmospheric fade */}
+  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+
+</div>
 import Image from "next/image";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-black text-white">
+   <main className="min-h-screen bg-transparent text-white">
 
       {/* HERO */}
       <section className="relative min-h-screen flex items-end overflow-hidden">
 
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-800 via-zinc-950 to-black" />
+       {/* Animated Backgrounds */}
+<div className="absolute inset-0 overflow-hidden bg-black">
 
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/50" />
+  {/* RAAKA Background 1 */}
+  <div
+    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1"
+    style={{
+      backgroundImage: "url('/images/raakabg.jpg')",
+    }}
+  />
+
+  {/* RAAKA Background 2 */}
+  <div
+    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-2"
+    style={{
+      backgroundImage: "url('/images/raakabg1.jpg')",
+    }}
+  />
+
+  {/* RAAKA Background 3 */}
+  <div
+    className="absolute inset-0 bg-cover bg-center animate-raaka-bg-3"
+    style={{
+      backgroundImage: "url('/images/raakabg2.jpg')",
+    }}
+  />
+
+  {/* Cinematic Overlay */}
+  <div className="absolute inset-0 bg-black/40" />
+
+  {/* Bottom Fade */}
+  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/40 to-transparent" />
+
+</div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pb-20">
 
