@@ -735,133 +735,128 @@ useEffect(() => {
       </section>
 
 
-      {/* ANNOUNCEMENT VIDEOS */}
-      <section
-        id="announcements"
-        className="px-6 md:px-10 py-24"
-      >
+     {/* ANNOUNCEMENT VIDEOS */}
+<section
+  id="announcements"
+  className="px-6 md:px-10 py-24"
+>
+  <div className="max-w-6xl mx-auto">
 
-        <div className="max-w-6xl mx-auto">
+    <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
+      Announcements
+    </p>
 
-          <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
-            Announcements
-          </p>
+    <h2 className="text-4xl md:text-5xl font-bold mb-12">
+      Latest Announcements
+    </h2>
 
-          <h2 className="text-4xl md:text-5xl font-bold mb-12">
-            Latest Announcements
-          </h2>
+    <div className="grid md:grid-cols-2 gap-8">
 
+      {/* GEAR UP for RAAKA */}
+      <div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+        <div className="aspect-video overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
 
-            {/* GEAR UP for RAAKA */}
-            <div>
-
-              <div className="aspect-video overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
-
-                <video
-                  src="/video/raaka1.mp4"
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="w-full h-full object-cover"
-                />
-
-              </div>
-
-              <h3 className="text-xl md:text-2xl font-semibold mt-5">
-                GEAR UP for RAAKA
-              </h3>
-
-              <p className="text-zinc-400 mt-1">
-                Announcement
-              </p>
-
-            </div>
-
-
-            {/* Welcome on board Deepika Padukone */}
-            <div>
-
-              <div className="aspect-video overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
-
-                <video
-                  src="/video/raaka2.mp4"
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="w-full h-full object-cover"
-                />
-
-              </div>
-
-              <h3 className="text-xl md:text-2xl font-semibold mt-5">
-                Welcome on board Deepika Padukone
-              </h3>
-
-              <p className="text-zinc-400 mt-1">
-                Announcement
-              </p>
-
-            </div>
-
-          </div>
+          <iframe
+            className="w-full h-full"
+            src="https://www.youtube.com/embed/SI_PhNII7Mc"
+            title="GEAR UP for RAAKA"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
 
         </div>
 
-      </section>
+        <h3 className="text-xl md:text-2xl font-semibold mt-5">
+          GEAR UP for RAAKA
+        </h3>
+
+        <p className="text-zinc-400 mt-1">
+          Announcement
+        </p>
+
+      </div>
 
 
-      {/* SONGS */}
-      <section
-        id="songs"
-        className="px-6 md:px-10 py-24"
-      >
+      {/* Welcome on board Deepika Padukone */}
+      <div>
 
-        <div className="max-w-6xl mx-auto">
+        <div className="aspect-video overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
 
-          <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
-            The Soundtrack
-          </p>
-
-          <h2 className="text-4xl md:text-5xl font-bold mb-12">
-            Songs
-          </h2>
-
-
-          <div className="grid md:grid-cols-2 gap-8">
-
-            {/* Make Way For The King */}
-            <div>
-
-              <div className="aspect-video overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
-
-                <video
-                  src="/video/raaka3.mp4"
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="w-full h-full object-cover"
-                />
-
-              </div>
-
-              <h3 className="text-xl md:text-2xl font-semibold mt-5">
-                Make Way For The King
-              </h3>
-
-              <p className="text-zinc-400 mt-1">
-                Song
-              </p>
-
-            </div>
-
-          </div>
+          <iframe
+            className="w-full h-full"
+            src="https://www.youtube.com/embed/jlmT4apm1oI"
+            title="Welcome on board Deepika Padukone"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
 
         </div>
 
-      </section>
-      <a
+        <h3 className="text-xl md:text-2xl font-semibold mt-5">
+          Welcome on board Deepika Padukone
+        </h3>
+
+        <p className="text-zinc-400 mt-1">
+          Announcement
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+{/* SONGS */}
+<section
+  id="songs"
+  className="px-6 md:px-10 py-24"
+>
+  <div className="max-w-6xl mx-auto">
+
+    <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
+      The Soundtrack
+    </p>
+
+    <h2 className="text-4xl md:text-5xl font-bold mb-12">
+      Songs
+    </h2>
+
+    <div className="grid md:grid-cols-2 gap-8">
+
+      {/* Make Way For The King */}
+      <div>
+
+        <div className="aspect-video overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
+
+          <iframe
+            className="w-full h-full"
+            src="https://www.youtube.com/embed/3UKmHZOGon4"
+            title="Make Way For The King"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+
+        </div>
+
+        <h3 className="text-xl md:text-2xl font-semibold mt-5">
+          Make Way For The King
+        </h3>
+
+        <p className="text-zinc-400 mt-1">
+          Song
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+<a
+      
   href="#countdown"
   onClick={() => setMenuOpen(false)}
   className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
