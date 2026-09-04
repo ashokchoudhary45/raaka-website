@@ -35,7 +35,7 @@ useEffect(() => {
         return;
       }
       if (audioRef.current) {
-  audioRef.current.currentTime = 2;
+  audioRef.current.currentTime = 7;
   audioRef.current.play().catch(() => {});
 }
 
