@@ -415,74 +415,83 @@ useEffect(() => {
 
         <div className="grid grid-cols-2 md:grid-cols-4">
 
-          {/* DAYS */}
-          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+         {/* DAYS */}
+<div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
 
-            <p className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]">
-              {String(timeLeft.days).padStart(3, "0")}
-            </p>
+  <p
+    key={timeLeft.days}
+    className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]"
+  >
+    {String(timeLeft.days).padStart(3, "0")}
+  </p>
 
-            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
-              Days
-            </p>
-          </div>
+  <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
+    Days
+  </p>
+</div>
 
-          {/* HOURS */}
-          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+{/* HOURS */}
+<div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
 
-            <p className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]">
-              {String(timeLeft.hours).padStart(2, "0")}
-            </p>
+  <p
+    key={timeLeft.hours}
+    className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]"
+  >
+    {String(timeLeft.hours).padStart(2, "0")}
+  </p>
 
-            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
-              Hours
-            </p>
-          </div>
+  <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
+    Hours
+  </p>
+</div>
 
-          {/* MINUTES */}
-          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+{/* MINUTES */}
+<div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
 
-            <p className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]">
-              {String(timeLeft.minutes).padStart(2, "0")}
-            </p>
+  <p
+    key={timeLeft.minutes}
+    className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]"
+  >
+    {String(timeLeft.minutes).padStart(2, "0")}
+  </p>
 
-            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
-              Minutes
-            </p>
-          </div>
+  <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
+    Minutes
+  </p>
+</div>
 
-          {/* SECONDS */}
-          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-amber-100/20 bg-black/40 backdrop-blur-sm"><p
-              key={timeLeft.seconds}
-              className="raaka-countdown-seconds text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_20px_rgba(255,180,70,0.35)]"
-            >
-              {String(timeLeft.seconds).padStart(2, "0")}
-            </p>
+{/* SECONDS */}
+<div className="relative px-4 py-7 md:px-8 md:py-10 border border-amber-100/20 bg-black/40 backdrop-blur-sm">
 
-            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/70">
-              Seconds
-            </p>
-          </div>
+  <p
+    key={timeLeft.seconds}
+    className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_20px_rgba(255,180,70,0.35)]"
+  >
+    {String(timeLeft.seconds).padStart(2, "0")}
+  </p>
 
-        </div>
-      </div>
+  <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/70">
+    Seconds
+  </p>
+</div>
 
-      {/* BOTTOM TEXT */}
-      <div className="mt-14 md:mt-20 flex items-center justify-center gap-4">
-        <span className="h-px w-8 md:w-16 bg-amber-100/30" />
+     </div>
 
-        <p className="text-[10px] md:text-sm uppercase tracking-[0.45em] text-amber-50/80">
-          The Wait Is Almost Over
-        </p>
+{/* BOTTOM TEXT */}
+<div className="mt-14 md:mt-20 flex items-center justify-center gap-4">
+  <span className="h-px w-8 md:w-16 bg-amber-100/30" />
 
-        <span className="h-px w-8 md:w-16 bg-amber-100/30" />
-      </div>
+  <p className="text-[10px] md:text-sm uppercase tracking-[0.45em] text-amber-50/80">
+    The Wait Is Almost Over
+  </p>
 
-    </div>
-  </div>
+  <span className="h-px w-8 md:w-16 bg-amber-100/30" />
+</div>
+
+</div>
+</div>
+</div>
 </section>
-
-
       {/* CAST */}
       <section
         id="cast"

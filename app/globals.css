@@ -180,4 +180,26 @@ body {
 
 .raaka-countdown-seconds {
   animation: raakaCountdownSeconds 1s ease-out;
+}@keyframes raakaTimerTick {
+  0% {
+    opacity: 0.35;
+    transform: translateY(-8px) scale(1.08);
+    filter: blur(3px);
+  }
+
+  45% {
+    opacity: 1;
+    transform: translateY(2px) scale(0.98);
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.raaka-timer-number {
+  animation: raakaTimerTick 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
