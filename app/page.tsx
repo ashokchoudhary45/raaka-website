@@ -9,7 +9,7 @@ export default function Home() {
 
   // ==============================
   // RAAKA INTRO AUDIO
-  // 3rd second → 9th second
+  // 3rd second → 8th second
   // ==============================
   useEffect(() => {
     const audio = new Audio("/sounds/king.mp3");
@@ -25,7 +25,7 @@ export default function Home() {
 
       audio.play().catch(() => {});
 
-      // 6 seconds baad stop = audio ka 9th second
+      // 5 seconds baad stop = audio ka 8th second
       stopTimer = setTimeout(() => {
         audio.pause();
         audio.currentTime = 0;
