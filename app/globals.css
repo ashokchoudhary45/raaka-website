@@ -114,3 +114,70 @@ body {
   opacity: 0;
   animation: raakaBg3 18s ease-in-out infinite;
 }
+
+/* RAAKA COUNTDOWN CINEMATIC ANIMATION */
+
+@keyframes raakaCountdownZoom {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.07);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes raakaCountdownMove {
+  0% {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: scale(1.08) translate3d(-1%, -1%, 0);
+  }
+
+  100% {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes raakaCountdownGlow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+
+  50% {
+    opacity: 0.65;
+  }
+}
+
+@keyframes raakaCountdownSeconds {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.06);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.raaka-countdown-photo {
+  animation: raakaCountdownMove 18s ease-in-out infinite;
+}
+
+.raaka-countdown-glow {
+  animation: raakaCountdownGlow 5s ease-in-out infinite;
+}
+
+.raaka-countdown-seconds {
+  animation: raakaCountdownSeconds 1s ease-out;
+}

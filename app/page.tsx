@@ -351,74 +351,115 @@ useEffect(() => {
         </div>
 
       </section>
-     {/* RELEASE COUNTDOWN */}
+    {/* RELEASE COUNTDOWN */}
 <section
   id="countdown"
-  className="relative max-w-7xl mx-auto px-6 py-28"
+  className="relative max-w-7xl mx-auto px-6 py-28 overflow-hidden"
 >
-  <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/35 backdrop-blur-md px-6 py-16 md:px-12 text-center">
+  <div className="relative min-h-[720px] md:min-h-[780px] overflow-hidden rounded-[2rem] border border-white/10 bg-black">
 
-    {/* GLOW */}
-    <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-72 w-72 rounded-full bg-white/5 blur-3xl" />
+    {/* ANIMATED RAAKA PHOTO */}
+    <div className="absolute inset-0 overflow-hidden">
+      <Image
+        src="/images/raakabg2.jpg"
+        alt="Raaka"
+        fill
+        priority
+        className="raaka-countdown-photo object-cover object-center"
+      />
+    </div>
 
-    <div className="relative z-10">
+    {/* DARK CINEMATIC OVERLAY */}
+    <div className="absolute inset-0 bg-black/55" />
 
-      <p className="text-[11px] md:text-xs uppercase tracking-[0.45em] text-zinc-500 mb-6">
+    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/35 to-black/75" />
+
+    <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/90" />
+
+    {/* GOLD ATMOSPHERIC GLOW */}
+    <div className="raaka-countdown-glow pointer-events-none absolute left-1/2 top-[45%] -translate-x-1/2 -translate-y-1/2 h-[420px] w-[420px] rounded-full bg-amber-500/10 blur-[120px]" />
+
+    {/* CONTENT */}
+    <div className="relative z-10 flex min-h-[720px] md:min-h-[780px] flex-col items-center justify-center px-5 py-16 text-center">
+
+      {/* TOP TEXT */}
+      <p className="mb-7 text-[10px] md:text-xs uppercase tracking-[0.55em] text-amber-100/70">
         The Countdown Begins
       </p>
 
-      <h2 className="text-5xl md:text-7xl font-black tracking-[0.08em]">
-        RAAKA
-      </h2>
+      {/* OFFICIAL RAAKA LOGO */}
+      <div className="relative w-[280px] md:w-[500px]">
+        <Image
+          src="/images/logo2.png"
+          alt="RAAKA"
+          width={1200}
+          height={350}
+          priority
+          className="h-auto w-full object-contain drop-shadow-[0_0_25px_rgba(255,180,70,0.25)]"
+        />
+      </div>
 
-      <div className="mt-4 flex items-center justify-center gap-3">
-        <span className="h-px w-10 bg-white/20" />
-        <p className="text-sm md:text-base uppercase tracking-[0.35em] text-zinc-400">
+      {/* RELEASE DATE */}
+      <div className="mt-7 flex items-center justify-center gap-4">
+        <span className="h-px w-10 md:w-20 bg-amber-100/40" />
+
+        <p className="text-sm md:text-lg uppercase tracking-[0.35em] text-amber-50/90">
           26 January 2028
         </p>
-        <span className="h-px w-10 bg-white/20" />
+
+        <span className="h-px w-10 md:w-20 bg-amber-100/40" />
       </div>
 
       {/* COUNTDOWN */}
-      <div className="mt-14 flex justify-center">
-        <div className="grid grid-cols-2 md:grid-cols-4 items-stretch">
+      <div className="mt-14 md:mt-20 w-full max-w-5xl">
+
+        <div className="grid grid-cols-2 md:grid-cols-4">
 
           {/* DAYS */}
-          <div className="px-7 md:px-12 py-4 md:py-6 border-r border-white/15 border-b md:border-b-0">
-            <p className="text-5xl md:text-7xl font-black tracking-tight tabular-nums">
+          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+
+            <p className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]">
               {String(timeLeft.days).padStart(3, "0")}
             </p>
-            <p className="mt-3 text-[10px] md:text-xs uppercase tracking-[0.35em] text-zinc-500">
+
+            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
               Days
             </p>
           </div>
 
           {/* HOURS */}
-          <div className="px-7 md:px-12 py-4 md:py-6 md:border-r border-white/15 border-b md:border-b-0">
-            <p className="text-5xl md:text-7xl font-black tracking-tight tabular-nums">
+          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+
+            <p className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]">
               {String(timeLeft.hours).padStart(2, "0")}
             </p>
-            <p className="mt-3 text-[10px] md:text-xs uppercase tracking-[0.35em] text-zinc-500">
+
+            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
               Hours
             </p>
           </div>
 
           {/* MINUTES */}
-          <div className="px-7 md:px-12 py-4 md:py-6 border-r border-white/15">
-            <p className="text-5xl md:text-7xl font-black tracking-tight tabular-nums">
+          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+
+            <p className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]">
               {String(timeLeft.minutes).padStart(2, "0")}
             </p>
-            <p className="mt-3 text-[10px] md:text-xs uppercase tracking-[0.35em] text-zinc-500">
+
+            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
               Minutes
             </p>
           </div>
 
           {/* SECONDS */}
-          <div className="px-7 md:px-12 py-4 md:py-6">
-            <p className="text-5xl md:text-7xl font-black tracking-tight tabular-nums">
+          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-amber-100/20 bg-black/40 backdrop-blur-sm"><p
+              key={timeLeft.seconds}
+              className="raaka-countdown-seconds text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_20px_rgba(255,180,70,0.35)]"
+            >
               {String(timeLeft.seconds).padStart(2, "0")}
             </p>
-            <p className="mt-3 text-[10px] md:text-xs uppercase tracking-[0.35em] text-zinc-500">
+
+            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/70">
               Seconds
             </p>
           </div>
@@ -426,9 +467,16 @@ useEffect(() => {
         </div>
       </div>
 
-      <p className="mt-14 text-[10px] md:text-xs uppercase tracking-[0.4em] text-zinc-600">
-        The wait is almost over
-      </p>
+      {/* BOTTOM TEXT */}
+      <div className="mt-14 md:mt-20 flex items-center justify-center gap-4">
+        <span className="h-px w-8 md:w-16 bg-amber-100/30" />
+
+        <p className="text-[10px] md:text-sm uppercase tracking-[0.45em] text-amber-50/80">
+          The Wait Is Almost Over
+        </p>
+
+        <span className="h-px w-8 md:w-16 bg-amber-100/30" />
+      </div>
 
     </div>
   </div>
