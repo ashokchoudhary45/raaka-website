@@ -613,7 +613,7 @@ export default function Home() {
       </section>
     {/* TICKET BOOKING */}
 <div className="mt-4 border-t border-white/15 pt-5">
-  <p className="px-60 mb-4 text-base uppercase tracking-[0.25em] text-zinc-500">
+  <p className="px-24 mb-4 text-base uppercase tracking-[0.25em] text-zinc-500">
     Ticket Book
   </p>
 
