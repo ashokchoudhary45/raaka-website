@@ -35,7 +35,7 @@ useEffect(() => {
         return;
       }
       if (audioRef.current) {
-  audioRef.current.currentTime = 4;
+  audioRef.current.currentTime = 2;
   audioRef.current.play().catch(() => {});
 }
 
@@ -351,62 +351,84 @@ useEffect(() => {
         </div>
 
       </section>
-      {/* RELEASE COUNTDOWN */}
+     {/* RELEASE COUNTDOWN */}
 <section
   id="countdown"
-  className="relative max-w-7xl mx-auto px-6 py-24"
+  className="relative max-w-7xl mx-auto px-6 py-28"
 >
-  <div className="rounded-3xl border border-white/10 bg-black/40 backdrop-blur-md px-6 py-14 md:px-12 text-center">
-    
-    <p className="text-sm uppercase tracking-[0.35em] text-zinc-500 mb-4">
-      The Countdown Begins
-    </p>
+  <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/35 backdrop-blur-md px-6 py-16 md:px-12 text-center">
 
-    <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
-      RAAKA
-    </h2>
+    {/* GLOW */}
+    <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-72 w-72 rounded-full bg-white/5 blur-3xl" />
 
-    <p className="mt-3 text-zinc-400 text-lg">
-      Releasing 26 January 2028
-    </p>
+    <div className="relative z-10">
 
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto mt-10">
-      
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6">
-        <p className="text-4xl md:text-6xl font-bold">
-          {String(timeLeft.days).padStart(3, "0")}
+      <p className="text-[11px] md:text-xs uppercase tracking-[0.45em] text-zinc-500 mb-6">
+        The Countdown Begins
+      </p>
+
+      <h2 className="text-5xl md:text-7xl font-black tracking-[0.08em]">
+        RAAKA
+      </h2>
+
+      <div className="mt-4 flex items-center justify-center gap-3">
+        <span className="h-px w-10 bg-white/20" />
+        <p className="text-sm md:text-base uppercase tracking-[0.35em] text-zinc-400">
+          26 January 2028
         </p>
-        <p className="mt-2 text-xs uppercase tracking-[0.25em] text-zinc-500">
-          Days
-        </p>
+        <span className="h-px w-10 bg-white/20" />
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6">
-        <p className="text-4xl md:text-6xl font-bold">
-          {String(timeLeft.hours).padStart(2, "0")}
-        </p>
-        <p className="mt-2 text-xs uppercase tracking-[0.25em] text-zinc-500">
-          Hours
-        </p>
+      {/* COUNTDOWN */}
+      <div className="mt-14 flex justify-center">
+        <div className="grid grid-cols-2 md:grid-cols-4 items-stretch">
+
+          {/* DAYS */}
+          <div className="px-7 md:px-12 py-4 md:py-6 border-r border-white/15 border-b md:border-b-0">
+            <p className="text-5xl md:text-7xl font-black tracking-tight tabular-nums">
+              {String(timeLeft.days).padStart(3, "0")}
+            </p>
+            <p className="mt-3 text-[10px] md:text-xs uppercase tracking-[0.35em] text-zinc-500">
+              Days
+            </p>
+          </div>
+
+          {/* HOURS */}
+          <div className="px-7 md:px-12 py-4 md:py-6 md:border-r border-white/15 border-b md:border-b-0">
+            <p className="text-5xl md:text-7xl font-black tracking-tight tabular-nums">
+              {String(timeLeft.hours).padStart(2, "0")}
+            </p>
+            <p className="mt-3 text-[10px] md:text-xs uppercase tracking-[0.35em] text-zinc-500">
+              Hours
+            </p>
+          </div>
+
+          {/* MINUTES */}
+          <div className="px-7 md:px-12 py-4 md:py-6 border-r border-white/15">
+            <p className="text-5xl md:text-7xl font-black tracking-tight tabular-nums">
+              {String(timeLeft.minutes).padStart(2, "0")}
+            </p>
+            <p className="mt-3 text-[10px] md:text-xs uppercase tracking-[0.35em] text-zinc-500">
+              Minutes
+            </p>
+          </div>
+
+          {/* SECONDS */}
+          <div className="px-7 md:px-12 py-4 md:py-6">
+            <p className="text-5xl md:text-7xl font-black tracking-tight tabular-nums">
+              {String(timeLeft.seconds).padStart(2, "0")}
+            </p>
+            <p className="mt-3 text-[10px] md:text-xs uppercase tracking-[0.35em] text-zinc-500">
+              Seconds
+            </p>
+          </div>
+
+        </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6">
-        <p className="text-4xl md:text-6xl font-bold">
-          {String(timeLeft.minutes).padStart(2, "0")}
-        </p>
-        <p className="mt-2 text-xs uppercase tracking-[0.25em] text-zinc-500">
-          Minutes
-        </p>
-      </div>
-
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6">
-        <p className="text-4xl md:text-6xl font-bold">
-          {String(timeLeft.seconds).padStart(2, "0")}
-        </p>
-        <p className="mt-2 text-xs uppercase tracking-[0.25em] text-zinc-500">
-          Seconds
-        </p>
-      </div>
+      <p className="mt-14 text-[10px] md:text-xs uppercase tracking-[0.4em] text-zinc-600">
+        The wait is almost over
+      </p>
 
     </div>
   </div>
