@@ -1,10 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+    const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    const targetDate = new Date("2028-01-26T00:00:00+05:30").getTime();
+
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference <= 0) {
+        setTimeLeft({
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+        });
+        return;
+      }
+
+      setTimeLeft({
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor(
+          (difference / (1000 * 60 * 60)) % 24
+        ),
+        minutes: Math.floor(
+          (difference / (1000 * 60)) % 60
+        ),
+        seconds: Math.floor(
+          (difference / 1000) % 60
+        ),
+      });
+    };
+
+    updateCountdown();
+
+    const timer = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
   return (
     <>
       {/* FULL WEBSITE RAAKA BACKGROUND */}
@@ -297,6 +341,66 @@ export default function Home() {
         </div>
 
       </section>
+      {/* RELEASE COUNTDOWN */}
+<section
+  id="countdown"
+  className="relative max-w-7xl mx-auto px-6 py-24"
+>
+  <div className="rounded-3xl border border-white/10 bg-black/40 backdrop-blur-md px-6 py-14 md:px-12 text-center">
+    
+    <p className="text-sm uppercase tracking-[0.35em] text-zinc-500 mb-4">
+      The Countdown Begins
+    </p>
+
+    <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
+      RAAKA
+    </h2>
+
+    <p className="mt-3 text-zinc-400 text-lg">
+      Releasing 26 January 2028
+    </p>
+
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto mt-10">
+      
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6">
+        <p className="text-4xl md:text-6xl font-bold">
+          {String(timeLeft.days).padStart(3, "0")}
+        </p>
+        <p className="mt-2 text-xs uppercase tracking-[0.25em] text-zinc-500">
+          Days
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6">
+        <p className="text-4xl md:text-6xl font-bold">
+          {String(timeLeft.hours).padStart(2, "0")}
+        </p>
+        <p className="mt-2 text-xs uppercase tracking-[0.25em] text-zinc-500">
+          Hours
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6">
+        <p className="text-4xl md:text-6xl font-bold">
+          {String(timeLeft.minutes).padStart(2, "0")}
+        </p>
+        <p className="mt-2 text-xs uppercase tracking-[0.25em] text-zinc-500">
+          Minutes
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6">
+        <p className="text-4xl md:text-6xl font-bold">
+          {String(timeLeft.seconds).padStart(2, "0")}
+        </p>
+        <p className="mt-2 text-xs uppercase tracking-[0.25em] text-zinc-500">
+          Seconds
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
 
 
       {/* CAST */}
@@ -668,6 +772,14 @@ export default function Home() {
         </div>
 
       </section>
+      <a
+  href="#countdown"
+  onClick={() => setMenuOpen(false)}
+  className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+>
+  Release Countdown
+</a>
+
   {/* TICKET BOOKING */}
 <div className="mt-4 border-t border-white/15 pt-5">
   <p className="px-24 mb-4 text-base uppercase tracking-[0.25em] text-zinc-500">
