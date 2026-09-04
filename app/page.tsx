@@ -1138,6 +1138,12 @@ Sci-Fi
 
 <p>Allu Arjun</p>
 <p>Deepika Padukone</p>
+{/* MUSICIAN */}
+<h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+  Musician
+</h3>
+
+<p>Sai Abhyankar</p>
 
       {/* Cinematography */}
       <h3 className="col-span-full text-xl font-semibold mt-4 mb-2">
