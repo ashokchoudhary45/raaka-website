@@ -1115,6 +1115,219 @@ Sci-Fi
     </a>
   </div>
 </div>
+{/* CREW CREDITS */}
+<section
+  id="crew-credits"
+  className="px-6 md:px-10 py-24"
+>
+  <div className="max-w-6xl mx-auto">
+
+    <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
+      Behind The Film
+    </p>
+
+    <h2 className="text-4xl md:text-5xl font-bold mb-12">
+      Crew Credits
+    </h2>
+
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
+      {/* CAST */}
+<h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+  Cast
+</h3>
+
+<p>Allu Arjun</p>
+<p>Deepika Padukone</p>
+
+      {/* Cinematography */}
+      <h3 className="col-span-full text-xl font-semibold mt-4 mb-2">
+        Cinematography
+      </h3>
+      <p>G.K. Vishnu</p>
+
+      {/* Editor */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Editor
+      </h3>
+      <p>Antony L. Ruben</p>
+
+      {/* Production Designer */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Production Designer
+      </h3>
+      <p>Muthuraj</p>
+
+      {/* Costume Design */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Costume Design
+      </h3>
+      <p>Sharon Gilham</p>
+      <p>Dipika Lal</p>
+      <p>Louise Mingenbach</p>
+      <p>Anirudh Singh</p>
+
+      {/* Makeup Department */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Makeup Department
+      </h3>
+      <p>Gabriel Georgiou</p>
+      <p>Shalu Mishra</p>
+      <p>Kieran Smith</p>
+
+      {/* Production Management */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Production Management
+      </h3>
+      <p>Aakash Chandresh Dave</p>
+      <p>Dhruv Ganeshpure</p>
+      <p>Tulika Sikder</p>
+
+      {/* Second Unit / Assistant Director */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Second Unit / Assistant Director
+      </h3>
+      <p>Aryaveer Thakkarr</p>
+
+      {/* Art Department */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Art Department
+      </h3>
+      <p>Chrispin Chacko</p>
+      <p>Aniket Mitra</p>
+      <p>Abhay K Patidar</p>
+
+      {/* Sound Department */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Sound Department
+      </h3>
+      <p>Arun Alphonse</p>
+      <p>Sampath Alwar</p>
+      <p>Vijay Dharme</p>
+      <p>Bhushan Hegde</p>
+
+      {/* Special Effects */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Special Effects
+      </h3>
+      <p>Lallan Gupta</p>
+      <p>Sahil Gupta</p>
+      <p>Gagan Kohli</p>
+      <p>Lindsay Macgowan</p>
+      <p>J. Alan Scott</p>
+      <p>Vishal Tyagi</p>
+      <p>Alyssa Yule</p>
+
+      {/* Visual Effects */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Visual Effects
+      </h3>
+      <p>Demian Gordon</p>
+      <p>Staffan Linder</p>
+      <p>Neel Madhu</p>
+      <p>Sibi Naayagam</p>
+      <p>Santosh Raju</p>
+      <p>K.V. Sanjit</p>
+      <p>Rabindra Sasmal</p>
+      <p>Nilesh Tare</p>
+      <p>Arjun Tyagi</p>
+
+      {/* Stunts */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Stunts
+      </h3>
+      <p>Brandon Belieu</p>
+      <p>Yannick Ben</p>
+      <p>Felix Betancourt</p>
+      <p>Narayane Cabral</p>
+      <p>Micaiah Chau</p>
+      <p>Alvin Chon</p>
+      <p>Jenna Culotta</p>
+      <p>Melroy Dsilva</p>
+      <p>Sébastien Dugast</p>
+      <p>Bravin Robert Fonseca</p>
+      <p>Andy Gill</p>
+      <p>Maxwell Heavenrich</p>
+      <p>Caitlin Hutson</p>
+      <p>Daniel Jackson</p>
+      <p>Micah Kerns</p>
+      <p>Ashley Kim</p>
+      <p>Henry Kingi Jr.</p>
+      <p>Simphiwe Kunene</p>
+      <p>Michael Lehr</p>
+      <p>Joshua Mabie</p>
+      <p>Javier Macias</p>
+      <p>Isabella Miller</p>
+      <p>Pingl Moll</p>
+      <p>Nathan People</p>
+      <p>Joe Perez</p>
+      <p>J.J. Perry</p>
+      <p>Bradley Price</p>
+      <p>Raimundo Queirdo</p>
+      <p>Jerry Quill</p>
+      <p>Jeweliana Ramos-Ortiz</p>
+      <p>Spiro Razatos</p>
+      <p>Vlad Rimburg</p>
+      <p>Sunil Rodrigues</p>
+      <p>Stephano Rodriguez</p>{/* Camera & Electrical */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Camera & Electrical Department
+      </h3>
+      <p>Palraj Ambedkar</p>
+      <p>Ravendra Singh Bhadauria</p>
+      <p>Harkirath Bhui</p>
+      <p>Matteo Corrinth</p>
+      <p>Ankush Mandal</p>
+      <p>Raaka</p>
+      <p>Annareddygari Arun Kumar Reddy</p>
+      <p>Suraj Sharma</p>
+      <p>Sagar Singh</p>
+
+      {/* Costume & Wardrobe */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Costume & Wardrobe Department
+      </h3>
+      <p>Sharveri Dandekar</p>
+      <p>Anna Divekar</p>
+      <p>Rob Goodwin</p>
+      <p>Unnatee Karia</p>
+      <p>Emma Pallett</p>
+      <p>Sydney Conrad Shapiro</p>
+
+      {/* Music */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Music Department
+      </h3>
+      <p>Daniel D'Mello Goodwin</p>
+      <p>Pandit Shravan Mishra</p>
+
+      {/* Choreography */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Choreography
+      </h3>
+      <p>Hokuto 'Hok' Konishi</p>
+
+      {/* Publicity */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Publicity
+      </h3>
+      <p>Sanchita Trivedi</p>
+
+      {/* Additional Crew */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Additional Crew
+      </h3>
+      <p>Nayanika Biswas</p>
+
+      {/* Thanks */}
+      <h3 className="col-span-full text-xl font-semibold mt-6 mb-2">
+        Thanks
+      </h3>
+      <p>Aryan Khan</p>
+      <p>Gauri Khan</p>
+
+    </div>
+  </div>
+</section>
         
        {/* EXTRA */}
       <section id="explore" className="max-w-7xl mx-auto px-6 py-24">
