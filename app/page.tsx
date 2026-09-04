@@ -517,7 +517,7 @@ useEffect(() => {
               <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
 
                 <Image
-                  src="/images/actor1.jpg"
+                  src="/images/actor3.jpg"
                   alt="Allu Arjun"
                   width={600}
                   height={800}
