@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 export default function Home() {
@@ -11,6 +11,12 @@ export default function Home() {
     minutes: 0,
     seconds: 0,
   });
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+useEffect(() => {
+  audioRef.current = new Audio("/sounds/tick.mp3");
+  audioRef.current.volume = 0.35;
+}, []);
 
   useEffect(() => {
     const targetDate = new Date("2028-01-26T00:00:00+05:30").getTime();
@@ -28,6 +34,10 @@ export default function Home() {
         });
         return;
       }
+      if (audioRef.current) {
+  audioRef.current.currentTime = 4;
+  audioRef.current.play().catch(() => {});
+}
 
       setTimeLeft({
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
