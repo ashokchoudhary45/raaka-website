@@ -617,7 +617,7 @@ export default function Home() {
     Ticket Book
   </p>
 
-  <div className="flex items-start gap-7 px-60 ">
+  <div className="flex items-start gap-7 px-24 ">
     {/* BOOKMYSHOW */}
     <a
       href="https://in.bookmyshow.com/movies/raaka/ET00494565"
