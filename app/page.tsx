@@ -7,20 +7,25 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [intro, setIntro] = useState(true);
 
+  // ==============================
+  // RAAKA INTRO AUDIO
+  // 3rd second → 9th second
+  // ==============================
   useEffect(() => {
     const audio = new Audio("/sounds/king.mp3");
+
     audio.volume = 1;
     audio.preload = "auto";
 
     let stopTimer: ReturnType<typeof setTimeout> | null = null;
 
     const startAudio = () => {
-      // Audio file ke 3rd second se start
+      // Audio 3rd second se start
       audio.currentTime = 3;
 
       audio.play().catch(() => {});
 
-      // Audio file ke 9th second par stop
+      // 6 seconds baad stop = audio ka 9th second
       stopTimer = setTimeout(() => {
         audio.pause();
         audio.currentTime = 0;
@@ -29,7 +34,7 @@ export default function Home() {
 
     audio.addEventListener("loadedmetadata", startAudio);
 
-    // Intro sirf 3 seconds
+    // Intro 3 seconds
     const introTimer = setTimeout(() => {
       setIntro(false);
     }, 3000);
@@ -48,6 +53,9 @@ export default function Home() {
     };
   }, []);
 
+  // ==============================
+  // COUNTDOWN
+  // ==============================
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -55,14 +63,26 @@ export default function Home() {
     seconds: 0,
   });
 
+  // ==============================
+  // COUNTDOWN TICK AUDIO
+  // ==============================
   const audioRef = useRef<HTMLAudioElement | null>(null);
-useEffect(() => {
-  audioRef.current = new Audio("/sounds/tick.mp3");
-  audioRef.current.volume = 0.35;
-}, []);
 
   useEffect(() => {
-    const targetDate = new Date("2028-01-26T00:00:00+05:30").getTime();
+    audioRef.current = new Audio("/sounds/tick.mp3");
+    audioRef.current.volume = 0.35;
+  }, []);
+
+  // ==============================
+  // COUNTDOWN TIMER
+  // ==============================
+  useEffect(() => {
+    const targetDate = new Date(
+      "2028-01-26T00:00:00+05:30"
+    ).getTime();
+
+    // Website load hone ka exact time
+    const startTime = Date.now();
 
     const updateCountdown = () => {
       const now = new Date().getTime();
@@ -77,35 +97,58 @@ useEffect(() => {
         });
         return;
       }
-      if (audioRef.current) {
-  audioRef.current.currentTime = 7;
-  audioRef.current.play().catch(() => {});
-}
+
+      // ==================================
+      // FIRST 10 SECONDS: NO TICK SOUND
+      // ==================================
+      if (
+        Date.now() - startTime >= 10000 &&
+        audioRef.current
+      ) {
+        audioRef.current.currentTime = 7;
+
+        audioRef.current.play().catch(() => {});
+      }
 
       setTimeLeft({
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        days: Math.floor(
+          difference / (1000 * 60 * 60 * 24)
+        ),
+
         hours: Math.floor(
           (difference / (1000 * 60 * 60)) % 24
         ),
+
         minutes: Math.floor(
           (difference / (1000 * 60)) % 60
         ),
+
         seconds: Math.floor(
           (difference / 1000) % 60
         ),
       });
     };
 
+    // Immediately calculate countdown
     updateCountdown();
 
-    const timer = setInterval(updateCountdown, 1000);
+    // Every 1 second
+    const timer = setInterval(
+      updateCountdown,
+      1000
+    );
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+    };
   }, []);
-  return (   
- 
+
+  return (
     <>
-      {/* RAAKA INTRO */}
+      {/* ==================================
+          RAAKA INTRO
+          ================================== */}
+
       {intro && (
         <div className="fixed inset-0 z-[99999] bg-black flex items-center justify-center overflow-hidden">
 
@@ -129,7 +172,6 @@ useEffect(() => {
 
         </div>
       )}
-
       {/* FULL WEBSITE RAAKA BACKGROUND */}
       <div className="fixed inset-0 z-0 overflow-hidden bg-black pointer-events-none">
         <div className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1" style={{ backgroundImage: "url('/images/raakabg.jpg')" }} />
