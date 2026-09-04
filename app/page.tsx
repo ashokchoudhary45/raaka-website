@@ -611,64 +611,118 @@ export default function Home() {
         </div>
 
       </section>
+  
+     {/* MENU */}
+{menuOpen && (
+  <div className="absolute right-0 mt-3 w-64 rounded-2xl border border-white/20 bg-black/90 backdrop-blur-xl p-3 shadow-2xl">
+
+    <a
+      href="#cast"
+      onClick={() => setMenuOpen(false)}
+      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+    >
+      Cast
+    </a>
+
+    <a
+      href="#crew"
+      onClick={() => setMenuOpen(false)}
+      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+    >
+      Crew
+    </a>
+
+    <a
+      href="#posters"
+      onClick={() => setMenuOpen(false)}
+      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+    >
+      Posters
+    </a>
+
+    <a
+      href="#announcements"
+      onClick={() => setMenuOpen(false)}
+      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+    >
+      Latest Announcements
+    </a>
+
+    <a
+      href="#songs"
+      onClick={() => setMenuOpen(false)}
+      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+    >
+      Songs
+    </a>
+
     {/* TICKET BOOKING */}
-<div className="mt-4 border-t border-white/15 pt-5">
-  <p className="px-24 mb-4 text-base uppercase tracking-[0.25em] text-zinc-500">
-    Ticket Book
-  </p>
+    <div className="mt-4 border-t border-white/15 pt-5">
+      <p className="px-24 mb-4 text-base uppercase tracking-[0.25em] text-zinc-500">
+        Ticket Book
+      </p>
 
-  <div className="flex items-start gap-7 px-24 ">
-    {/* BOOKMYSHOW */}
-    <a
-      href="https://in.bookmyshow.com/movies/raaka/ET00494565"
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={() => setMenuOpen(false)}
-      className="group flex w-[135px] flex-col items-center"
-      title="Book Raaka on BookMyShow"
-    >
-      <div className="flex h-[80px] w-[135px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
-        <Image
-          src="/images/logo2.jpg"
-          alt="BookMyShow"
-          width={321}
-          height={157}
-          className="h-auto w-full object-contain"
-        />
+      <div className="flex items-start gap-7 px-24">
+        {/* BOOKMYSHOW */}
+        <a
+          href="https://in.bookmyshow.com/movies/raaka/ET00494565"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => setMenuOpen(false)}
+          className="group flex w-[135px] flex-col items-center"
+          title="Book Raaka on BookMyShow"
+        >
+          <div className="flex h-[80px] w-[135px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
+            <Image
+              src="/images/logo2.jpg"
+              alt="BookMyShow"
+              width={321}
+              height={157}
+              className="h-auto w-full object-contain"
+            />
+          </div>
+
+          <span className="mt-2 text-xs font-semibold text-white/80 group-hover:text-white">
+            BookMyShow
+          </span>
+        </a>
+
+        {/* DISTRICT */}
+        <a
+          href="https://www.district.in/movies/raaka-movie-tickets-MV218847"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => setMenuOpen(false)}
+          className="group flex w-[135px] flex-col items-center"
+          title="Book Raaka on District"
+        >
+          <div className="flex h-[80px] w-[135px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
+            <Image
+              src="/images/logo1.jpg"
+              alt="District"
+              width={715}
+              height={429}
+              className="h-auto w-full object-contain"
+            />
+          </div>
+
+          <span className="mt-2 text-xs font-semibold text-white/80 group-hover:text-white">
+            District
+          </span>
+        </a>
       </div>
+    </div>
 
-      <span className="mt-2 text-xs font-semibold text-white/80 group-hover:text-white">
-        BookMyShow
-      </span>
+    <a
+      href="#explore"
+      onClick={() => setMenuOpen(false)}
+      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+    >
+      Explore More
     </a>
 
-    {/* DISTRICT */}
-    <a
-      href="https://www.district.in/movies/raaka-movie-tickets-MV218847"
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={() => setMenuOpen(false)}
-      className="group flex w-[135px] flex-col items-center"
-      title="Book Raaka on District"
-    >
-      <div className="flex h-[80px] w-[135px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
-        <Image
-          src="/images/logo1.jpg"
-          alt="District"
-          width={715}
-          height={429}
-          className="h-auto w-full object-contain"
-        />
-      </div>
-
-      <span className="mt-2 text-xs font-semibold text-white/80 group-hover:text-white">
-        District
-      </span>
-    </a>
   </div>
-</div>
-    
-    
+)}
 
          
 
