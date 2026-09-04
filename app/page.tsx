@@ -5,14 +5,57 @@ import Image from "next/image";
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
-    const [timeLeft, setTimeLeft] = useState({
+  const [intro, setIntro] = useState(true);
+
+  useEffect(() => {
+    const audio = new Audio("/sounds/king.mp3");
+    audio.volume = 1;
+    audio.preload = "auto";
+
+    let stopTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const startAudio = () => {
+      // Audio file ke 3rd second se start
+      audio.currentTime = 3;
+
+      audio.play().catch(() => {});
+
+      // Audio file ke 9th second par stop
+      stopTimer = setTimeout(() => {
+        audio.pause();
+        audio.currentTime = 0;
+      }, 6000);
+    };
+
+    audio.addEventListener("loadedmetadata", startAudio);
+
+    // Intro sirf 3 seconds
+    const introTimer = setTimeout(() => {
+      setIntro(false);
+    }, 3000);
+
+    return () => {
+      audio.removeEventListener("loadedmetadata", startAudio);
+
+      if (stopTimer) {
+        clearTimeout(stopTimer);
+      }
+
+      clearTimeout(introTimer);
+
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, []);
+
+  const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
   });
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 useEffect(() => {
   audioRef.current = new Audio("/sounds/tick.mp3");
   audioRef.current.volume = 0.35;
@@ -59,8 +102,34 @@ useEffect(() => {
 
     return () => clearInterval(timer);
   }, []);
-  return (
+  return (   
+ 
     <>
+      {/* RAAKA INTRO */}
+      {intro && (
+        <div className="fixed inset-0 z-[99999] bg-black flex items-center justify-center overflow-hidden">
+
+          <div className="absolute w-[500px] h-[500px] rounded-full bg-orange-600/20 blur-[140px] animate-pulse" />
+
+          <div className="relative flex flex-col items-center animate-raaka-intro">
+
+            <img
+              src="/images/logo2.png"
+              alt="RAAKA"
+              className="w-52 md:w-72 object-contain"
+            />
+
+            <div className="mt-6 w-24 h-[1px] bg-white/40 animate-pulse" />
+
+            <p className="mt-4 text-[10px] md:text-xs tracking-[0.5em] text-white/50 uppercase">
+              A New World Begins
+            </p>
+
+          </div>
+
+        </div>
+      )}
+
       {/* FULL WEBSITE RAAKA BACKGROUND */}
       <div className="fixed inset-0 z-0 overflow-hidden bg-black pointer-events-none">
         <div className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1" style={{ backgroundImage: "url('/images/raakabg.jpg')" }} />
@@ -70,8 +139,7 @@ useEffect(() => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
       </div>
 
-<div className="fixed top-6 right-6 z-50">
-
+      <div className="fixed top-6 right-6 z-50">
   {/* 3 LINE BUTTON */}
   <button
     onClick={() => setMenuOpen(!menuOpen)}
@@ -1108,6 +1176,7 @@ Sci-Fi
     </a>
   </div>
 </div>
+
 {/* CREW CREDITS */}
 <section
   id="crew-credits"

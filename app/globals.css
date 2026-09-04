@@ -202,4 +202,31 @@ body {
 
 .raaka-timer-number {
   animation: raakaTimerTick 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}@keyframes raakaIntro {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+    filter: blur(15px);
+  }
+
+  25% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.15);
+    filter: blur(8px);
+  }
+}
+
+.animate-raaka-intro {
+  animation: raakaIntro 3s ease-in-out forwards;
 }
