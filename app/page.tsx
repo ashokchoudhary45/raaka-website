@@ -224,8 +224,7 @@ useEffect(() => {
           </h1>
 
           <p className="mt-5 max-w-xl text-zinc-300 text-lg">
-            Explore the world of Raaka — posters, teasers, trailers,
-            glimpses, songs, cast, characters and everything about the movie.
+           Born of fire, shaped by the cosmos, and forged in sacrifice, a divine warrior rises to restore balance to a universe threatened by primordial chaos-before faith itself is extinguished.
           </p>
 
           <div className="flex gap-4 mt-8 flex-wrap">
