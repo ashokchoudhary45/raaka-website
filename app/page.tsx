@@ -1050,14 +1050,7 @@ Sci-Fi
 
   </div>
 </section>
-<a
-      
-  href="#countdown"
-  onClick={() => setMenuOpen(false)}
-  className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
->
-  Release Countdown
-</a>
+
 
   {/* TICKET BOOKING */}
 <div className="mt-4 border-t border-white/15 pt-5">
