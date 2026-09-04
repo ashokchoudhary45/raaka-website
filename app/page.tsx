@@ -310,7 +310,8 @@ useEffect(() => {
                 </p>
 
                 <p className="font-semibold mt-1">
-                  Movie
+                  
+Sci-Fi
                 </p>
 
               </div>
@@ -403,7 +404,7 @@ useEffect(() => {
         <span className="h-px w-10 md:w-20 bg-amber-100/40" />
 
         <p className="text-sm md:text-lg uppercase tracking-[0.35em] text-amber-50/90">
-          26 January 2028
+          26 january 2028
         </p>
 
         <span className="h-px w-10 md:w-20 bg-amber-100/40" />
@@ -684,6 +685,77 @@ useEffect(() => {
         </div>
 
       </section>
+      {/* CREATIVE TEAM */}
+<section
+  id="creative-team"
+  className="px-6 md:px-10 py-24"
+>
+  <div className="max-w-6xl mx-auto">
+
+    <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
+      Behind The Film
+    </p>
+
+    <h2 className="text-4xl md:text-5xl font-bold mb-4">
+      Creative Team
+    </h2>
+
+    <p className="text-zinc-400 max-w-2xl mb-12">
+      The creative minds shaping the world and visual language of RAAKA.
+    </p>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+      {/* Cinematographer */}
+      <div className="group rounded-2xl border border-white/10 bg-white/[0.03] p-7 transition duration-300 hover:bg-white/[0.07] hover:border-white/20">
+        <p className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-6">
+          Cinematographer
+        </p>
+
+        <h3 className="text-2xl font-semibold">
+          G.K. Vishnu
+        </h3>
+
+        <p className="text-sm text-zinc-500 mt-3">
+          Director of Photography
+        </p>
+      </div>
+
+
+      {/* Editor */}
+      <div className="group rounded-2xl border border-white/10 bg-white/[0.03] p-7 transition duration-300 hover:bg-white/[0.07] hover:border-white/20">
+        <p className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-6">
+          Editor
+        </p>
+
+        <h3 className="text-2xl font-semibold">
+          Antony L. Ruben
+        </h3>
+
+        <p className="text-sm text-zinc-500 mt-3">
+          Film Editor
+        </p>
+      </div>
+
+
+      {/* Production Designer */}
+      <div className="group rounded-2xl border border-white/10 bg-white/[0.03] p-7 transition duration-300 hover:bg-white/[0.07] hover:border-white/20">
+        <p className="text-xs uppercase tracking-[0.25em] text-zinc-500 mb-6">
+          Production Designer
+        </p>
+
+        <h3 className="text-2xl font-semibold">
+          Muthuraj
+        </h3>
+
+        <p className="text-sm text-zinc-500 mt-3">
+          Production Design
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
 {/* VFX & SPECIAL EFFECTS STUDIOS */}
 <section
   id="vfx-studios"
