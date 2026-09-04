@@ -611,9 +611,68 @@ export default function Home() {
         </div>
 
       </section>
+    {/* TICKET BOOKING */}
+<div className="mt-4 border-t border-white/15 pt-5">
+  <p className="px-60 mb-4 text-base uppercase tracking-[0.25em] text-zinc-500">
+    Ticket Book
+  </p>
 
+  <div className="flex items-start gap-7 px-60">
+    {/* BOOKMYSHOW */}
+    <a
+      href="https://in.bookmyshow.com/movies/raaka/ET00494565"
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={() => setMenuOpen(false)}
+      className="group flex w-[135px] flex-col items-center"
+      title="Book Raaka on BookMyShow"
+    >
+      <div className="flex h-[80px] w-[135px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
+        <Image
+          src="/images/logo2.jpg"
+          alt="BookMyShow"
+          width={321}
+          height={157}
+          className="h-auto w-full object-contain"
+        />
+      </div>
 
-      {/* EXTRA */}
+      <span className="mt-2 text-xs font-semibold text-white/80 group-hover:text-white">
+        BookMyShow
+      </span>
+    </a>
+
+    {/* DISTRICT */}
+    <a
+      href="https://www.district.in/movies/raaka-movie-tickets-MV218847"
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={() => setMenuOpen(false)}
+      className="group flex w-[135px] flex-col items-center"
+      title="Book Raaka on District"
+    >
+      <div className="flex h-[80px] w-[135px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
+        <Image
+          src="/images/logo1.jpg"
+          alt="District"
+          width={715}
+          height={429}
+          className="h-auto w-full object-contain"
+        />
+      </div>
+
+      <span className="mt-2 text-xs font-semibold text-white/80 group-hover:text-white">
+        District
+      </span>
+    </a>
+  </div>
+</div>
+    
+    
+
+         
+
+       {/* EXTRA */}
       <section id="explore" className="max-w-7xl mx-auto px-6 py-24">
 
         <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">
