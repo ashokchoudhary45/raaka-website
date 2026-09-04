@@ -685,54 +685,178 @@ useEffect(() => {
         </div>
 
       </section>
+{/* VFX & SPECIAL EFFECTS STUDIOS */}
+<section
+  id="vfx-studios"
+  className="px-6 md:px-10 py-24"
+>
+  <div className="max-w-6xl mx-auto">
 
+    <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
+      Visual Effects & Special Effects
+    </p>
 
-      {/* POSTERS */}
-      <section id="posters" className="px-6 md:px-10 py-24">
+    <h2 className="text-4xl md:text-5xl font-bold mb-4">
+      VFX Studios
+    </h2>
 
-        <div className="max-w-6xl mx-auto">
+    <p className="text-zinc-400 max-w-2xl mb-12">
+      The visual effects and special effects studios behind the world of RAAKA.
+    </p>
 
-          <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
-            Gallery
-          </p>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
 
-          <h2 className="text-4xl md:text-5xl font-bold mb-12">
-            Posters & First Looks
-          </h2>
-
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-
-            {/* RAAKA First Look */}
-            <div className="group">
-
-              <div className="aspect-[2/3] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
-
-                <Image
-                  src="/images/RAAKAFL.jpg"
-                  alt="RAAKA First Look"
-                  width={800}
-                  height={1200}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-
-              </div>
-
-              <h3 className="text-xl font-semibold mt-4">
-                RAAKA First Look
-              </h3>
-
-              <p className="text-zinc-400 mt-1">
-                First Look
-              </p>
-
-            </div>
-
-          </div>
-
+      {/* Lola VFX */}
+      <a
+        href="https://lolavfx.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group"
+      >
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden flex items-center justify-center p-1 transition duration-300 hover:bg-white/[0.07] hover:border-white/20">
+          <img
+            src="/images/logo10.png"
+            alt="Lola VFX"
+            className="w-full h-auto object-contain transition duration-300 group-hover:scale-105"
+          />
         </div>
 
-      </section>
+        <h3 className="mt-4 text-lg font-semibold">
+          Lola VFX
+        </h3>
+
+        <p className="text-sm text-zinc-500 mt-1">
+          Los Angeles
+        </p>
+      </a>
+
+
+      {/* Spectral Motion */}
+      <a
+        href="https://www.spectralmotion.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group"
+      >
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden flex items-center justify-center p-1 transition duration-300 hover:bg-white/[0.07] hover:border-white/20">
+          <img
+            src="/images/logo11.jpg"
+            alt="Spectral Motion"
+            className="w-full h-auto object-contain transition duration-300 group-hover:scale-105"
+          />
+        </div>
+
+        <h3 className="mt-4 text-lg font-semibold">
+          Spectral Motion
+        </h3>
+
+        <p className="text-sm text-zinc-500 mt-1">
+          Los Angeles
+        </p>
+      </a>
+
+
+      {/* Fractured FX */}
+      <a
+        href="https://www.fracturedfx.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group"
+      >
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden flex items-center justify-center p-1 transition duration-300 hover:bg-white/[0.07] hover:border-white/20">
+          <img
+            src="/images/logo12.jpg"
+            alt="Fractured FX"
+            className="w-full h-auto object-contain transition duration-300 group-hover:scale-105"
+          />
+        </div>
+
+        <h3 className="mt-4 text-lg font-semibold">
+          Fractured FX
+        </h3>
+
+        <p className="text-sm text-zinc-500 mt-1">
+          Special Makeup Effects
+        </p>
+      </a>
+
+
+      {/* ILM Technoprops */}
+      <a
+        href="https://www.ilm.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group"
+      >
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden flex items-center justify-center p-1 transition duration-300 hover:bg-white/[0.07] hover:border-white/20">
+          <img
+            src="/images/logo13.jpg"
+            alt="ILM Technoprops"
+            className="w-full h-auto object-contain transition duration-300 group-hover:scale-105"
+          />
+        </div>
+
+        <h3 className="mt-4 text-lg font-semibold">
+          ILM Technoprops
+        </h3>
+
+        <p className="text-sm text-zinc-500 mt-1">
+          Industrial Light & Magic
+        </p>
+      </a>
+
+
+      {/* IronHead Studio */}
+      <a
+        href="https://ironheadstudio.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden flex items-center justify-center p-1 transition duration-300 hover:bg-white/[0.07] hover:border-white/20">
+          <img
+            src="/images/logo14.jpg"
+            alt="IronHead Studio"
+            className="w-full h-auto object-contain transition duration-300 group-hover:scale-105"
+          />
+        </div>
+
+        <h3 className="mt-4 text-lg font-semibold">
+          IronHead Studio
+        </h3>
+
+        <p className="text-sm text-zinc-500 mt-1">
+          Costume & Creature Design
+        </p>
+      </a>
+
+
+      {/* Legacy Effects */}
+      <a
+        href="https://www.legacyefx.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group"
+      >
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden flex items-center justify-center p-1 transition duration-300 hover:bg-white/[0.07] hover:border-white/20">
+          <img
+            src="/images/logo15.jpg"
+            alt="Legacy Effects"
+            className="w-full h-auto object-contain transition duration-300 group-hover:scale-105"
+          />
+        </div>
+
+        <h3 className="mt-4 text-lg font-semibold">
+          Legacy Effects
+        </h3>
+
+        <p className="text-sm text-zinc-500 mt-1">
+          Practical FX
+        </p>
+      </a>
+
+    </div>
+  </div>
+</section>
 
 
      {/* ANNOUNCEMENT VIDEOS */}
