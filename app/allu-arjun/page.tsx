@@ -54,14 +54,14 @@ export default function AlluArjunPage() {
     { year: "2003", title: "Gangotri", image: "movie1.jpg" },
     { year: "2004", title: "Arya", image: "movie2.jpg" },
     { year: "2005", title: "Bunny", image: "movie3.jpg" },
-    { year: "2006", title: "Happy", image: "movie4.jpg" },
+    { year: "2006", title: "Happy", image: "movie41.jpg" },
     { year: "2007", title: "Desamuduru", image: "movie5.jpg" },
     { year: "2008", title: "Parugu", image: "movie6.jpg" },
     { year: "2009", title: "Arya 2", image: "movie7.jpg" },
     { year: "2010", title: "Varudu", image: "movie8.jpg" },
     { year: "2010", title: "Vedam", image: "movie9.jpg" },
     { year: "2011", title: "Badrinath", image: "movie10.jpg" },
-    { year: "2012", title: "Julayi", image: "movie11.png" },
+    { year: "2012", title: "Julayi", image: "movie111.jpg" },
     {
       year: "2013",
       title: "Iddarammayilatho",
@@ -133,7 +133,7 @@ export default function AlluArjunPage() {
     {
       year: "2014",
       title: "Yevadu",
-      image: "cameo2.jpg",
+      image: "cameo3.jpg",
     },
   ];
 
