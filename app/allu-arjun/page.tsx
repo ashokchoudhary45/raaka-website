@@ -193,11 +193,10 @@ export default function AlluArjunPage() {
       {/* PAGE CONTENT */}
       <div className="relative z-10">
 
-
-      {/* HERO */}
+{/* HERO */}
 <section className="relative min-h-screen w-full overflow-hidden">
 
-  {/* FULL SCREEN BACKGROUND */}
+  {/* FULL SCREEN IMAGE */}
   <div className="absolute inset-0 w-full h-full">
     <Image
       src="/images/actor1a.jpg"
@@ -205,51 +204,55 @@ export default function AlluArjunPage() {
       fill
       priority
       sizes="100vw"
-      className="object-cover object-center"
+      className="
+        object-cover
+        object-[68%_center]
+        md:object-center
+      "
     />
   </div>
 
   {/* DARK OVERLAY */}
   <div className="absolute inset-0 bg-black/35" />
 
-  {/* LEFT CINEMATIC GRADIENT */}
-  <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/35 to-transparent" />
+  {/* LEFT GRADIENT */}
+  <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/45 to-transparent" />
 
   {/* BOTTOM GRADIENT */}
-  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/10" />
+  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
   {/* CONTENT */}
   <div className="relative z-10 min-h-screen flex items-end">
 
-    <div className="max-w-7xl mx-auto w-full px-6 md:px-10 pb-20">
+    <div className="max-w-7xl mx-auto w-full px-6 md:px-10 pb-12 md:pb-20">
 
-      <p className="text-xs uppercase tracking-[0.45em] text-amber-100/70 mb-5">
+      <p className="text-[10px] md:text-xs uppercase tracking-[0.4em] md:tracking-[0.45em] text-amber-100/70 mb-4 md:mb-5">
         Icon Star
       </p>
 
-      <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tight">
+      <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[0.9]">
         ALLU
         <br />
         ARJUN
       </h1>
 
-      <p className="mt-6 max-w-xl text-sm md:text-base leading-7 text-zinc-300">
+      <p className="mt-5 md:mt-6 max-w-xl text-sm md:text-base leading-6 md:leading-7 text-zinc-300">
         Indian actor and performer known for his powerful screen
         presence, distinctive style and memorable performances.
       </p>
 
-      <div className="mt-8 flex flex-wrap gap-4">
+      <div className="mt-7 md:mt-8 flex flex-col sm:flex-row gap-3 md:gap-4">
 
         <a
           href="#filmography"
-          className="px-6 py-3 rounded-full bg-white text-black text-sm font-semibold hover:bg-zinc-200 transition"
+          className="w-fit px-7 py-3.5 rounded-full bg-white text-black text-sm md:text-base font-semibold hover:bg-zinc-200 transition"
         >
           Filmography
         </a>
 
         <a
           href="#birthday"
-          className="px-6 py-3 rounded-full border border-white/30 bg-black/30 backdrop-blur-sm text-sm font-semibold hover:bg-white/10 transition"
+          className="w-fit px-7 py-3.5 rounded-full border border-white/30 bg-black/30 backdrop-blur-sm text-sm md:text-base font-semibold hover:bg-white/10 transition"
         >
           Birthday Countdown
         </a>
@@ -261,92 +264,6 @@ export default function AlluArjunPage() {
   </div>
 
 </section>
-
-        {/* ABOUT */}
-        <section className="px-6 md:px-10 py-24">
-
-          <div className="max-w-6xl mx-auto">
-
-            <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
-              About
-            </p>
-
-            <h2 className="text-4xl md:text-5xl font-bold">
-              The Journey
-            </h2>
-
-            <p className="mt-8 max-w-3xl text-zinc-400 leading-8">
-              From his early performances to becoming one of Indian cinema's
-              most recognisable stars, Allu Arjun has built a career defined
-              by versatility, dance, style and intense performances.
-            </p>
-
-          </div>
-
-        </section>
-
-
-        {/* FILMOGRAPHY */}
-        <section
-          id="filmography"
-          className="px-6 md:px-10 py-24 border-t border-white/10"
-        >
-
-          <div className="max-w-6xl mx-auto">
-
-            <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
-              Career
-            </p>
-
-            <h2 className="text-4xl md:text-5xl font-bold">
-              Filmography
-            </h2>
-
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6">
-
-              {movies.map((movie) => (
-                <div
-                  key={`${movie.year}-${movie.title}`}
-                  className="group"
-                >
-
-                  <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
-
-                    <Image
-                      src={`/images/${movie.image}`}
-                      alt={movie.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-
-                    {movie.year === "Coming Soon" && (
-                      <div className="absolute top-3 left-3 rounded-full border border-amber-100/30 bg-black/70 backdrop-blur-md px-3 py-1">
-
-                        <span className="text-[9px] uppercase tracking-[0.2em] text-amber-100/80">
-                          Coming Soon
-                        </span>
-
-                      </div>
-                    )}
-
-                  </div>
-
-                  <p className="mt-4 text-xs uppercase tracking-[0.25em] text-zinc-500">
-                    {movie.year}
-                  </p>
-
-                  <h3 className="mt-2 text-lg md:text-xl font-semibold leading-tight">
-                    {movie.title}
-                  </h3>
-
-                </div>
-              ))}
-
-            </div>
-
-          </div>
-
-        </section>
 
 
         {/* CAMEO / GUEST APPEARANCES */}
