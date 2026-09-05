@@ -184,7 +184,15 @@ export default function FansArtPage() {
         </header>
 
         {/* HERO */}
-        <section className="px-6 pb-16 pt-24 md:px-10 md:pb-24 md:pt-32">
+        <section className="relative px-6 pb-16 pt-24 md:px-10 md:pb-24 md:pt-32">
+          {/* ADMIN SIGN IN */}
+          <a
+            href="/admin/fans-art"
+            className="absolute right-5 top-5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40 backdrop-blur-md transition hover:border-white/20 hover:bg-white/[0.07] hover:text-white md:right-10 md:top-8"
+          >
+            Admin Sign In
+          </a>
+
           <div className="mx-auto max-w-6xl text-center">
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.45em] text-white/40">
               The Fan Community
