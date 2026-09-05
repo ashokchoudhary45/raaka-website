@@ -159,7 +159,7 @@ export default function AlluArjunPage() {
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
 
         <Image
-          src="/images/actor4.png"
+          src="/images/actor1b.jpg"
           alt=""
           fill
           priority
