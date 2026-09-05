@@ -456,7 +456,7 @@ Sci-Fi
                 </p>
 
                 <p className="font-semibold mt-1">
-                  2028
+                  coming soon
                 </p>
 
               </div>
@@ -506,10 +506,10 @@ Sci-Fi
   </div>
 </div>
       </section>
-    {/* RELEASE COUNTDOWN */}
+  {/* RELEASE COUNTDOWN */}
 <section
   id="countdown"
- className="raaka-countdown-section relative max-w-7xl mx-auto px-6 pt-2 pb-28 overflow-hidden"
+  className="raaka-countdown-section relative max-w-7xl mx-auto px-6 pt-2 pb-28 overflow-hidden"
 >
   <div className="relative min-h-[720px] md:min-h-[780px] overflow-hidden rounded-[2rem] border border-white/10 bg-black">
 
@@ -559,7 +559,7 @@ Sci-Fi
         <span className="h-px w-10 md:w-20 bg-amber-100/40" />
 
         <p className="text-sm md:text-lg uppercase tracking-[0.35em] text-amber-50/90">
-          26 january 2028
+          coming soon
         </p>
 
         <span className="h-px w-10 md:w-20 bg-amber-100/40" />
@@ -570,82 +570,65 @@ Sci-Fi
 
         <div className="grid grid-cols-2 md:grid-cols-4">
 
-         {/* DAYS */}
-<div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+          {/* DAYS */}
+          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+            <p className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]">
+              -
+            </p>
 
-  <p
-    key={timeLeft.days}
-    className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]"
-  >
-    {String(timeLeft.days).padStart(3, "0")}
-  </p>
+            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
+              Days
+            </p>
+          </div>
 
-  <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
-    Days
-  </p>
-</div>
+          {/* HOURS */}
+          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+            <p className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]">
+              -
+            </p>
 
-{/* HOURS */}
-<div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
+              Hours
+            </p>
+          </div>
 
-  <p
-    key={timeLeft.hours}
-    className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]"
-  >
-    {String(timeLeft.hours).padStart(2, "0")}
-  </p>
+          {/* MINUTES */}
+          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+            <p className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]">
+              -
+            </p>
 
-  <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
-    Hours
-  </p>
-</div>
+            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
+              Minutes
+            </p>
+          </div>
 
-{/* MINUTES */}
-<div className="relative px-4 py-7 md:px-8 md:py-10 border border-white/10 bg-black/35 backdrop-blur-sm">
+          {/* SECONDS */}
+          <div className="relative px-4 py-7 md:px-8 md:py-10 border border-amber-100/20 bg-black/40 backdrop-blur-sm">
+            <p className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_20px_rgba(255,180,70,0.35)]">
+              -
+            </p>
+            <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/70">
+              Seconds
+            </p>
+          </div>
 
-  <p
-    key={timeLeft.minutes}
-    className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]"
-  >
-    {String(timeLeft.minutes).padStart(2, "0")}
-  </p>
+        </div>
+      </div>
 
-  <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/60">
-    Minutes
-  </p>
-</div>
+      {/* BOTTOM TEXT */}
+      <div className="mt-14 md:mt-20 flex items-center justify-center gap-4">
+        <span className="h-px w-8 md:w-16 bg-amber-100/30" />
 
-{/* SECONDS */}
-<div className="relative px-4 py-7 md:px-8 md:py-10 border border-amber-100/20 bg-black/40 backdrop-blur-sm">
+        <p className="text-[10px] md:text-sm uppercase tracking-[0.45em] text-amber-50/80">
+          The Wait Is Almost Over
+        </p>
 
-  <p
-    key={timeLeft.seconds}
-    className="raaka-timer-number text-5xl sm:text-6xl md:text-8xl font-black tracking-tight tabular-nums text-white drop-shadow-[0_4px_20px_rgba(255,180,70,0.35)]"
-  >
-    {String(timeLeft.seconds).padStart(2, "0")}
-  </p>
+        <span className="h-px w-8 md:w-16 bg-amber-100/30" />
+      </div>
 
-  <p className="mt-3 text-[9px] md:text-xs uppercase tracking-[0.4em] text-amber-100/70">
-    Seconds
-  </p>
-</div>
-
-     </div>
-
-{/* BOTTOM TEXT */}
-<div className="mt-14 md:mt-20 flex items-center justify-center gap-4">
-  <span className="h-px w-8 md:w-16 bg-amber-100/30" />
-
-  <p className="text-[10px] md:text-sm uppercase tracking-[0.45em] text-amber-50/80">
-    The Wait Is Almost Over
-  </p>
-
-  <span className="h-px w-8 md:w-16 bg-amber-100/30" />
-</div>
-
-</div>
-</div>
-</div>
+    </div>
+  </div>
 </section>
       {/* CAST */}
       <section
