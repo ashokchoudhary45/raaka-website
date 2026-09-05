@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 type FanArt = {
   id: number;
@@ -28,14 +28,20 @@ export default function FansArtPage() {
   async function loadFanArts() {
     setLoadingGallery(true);
 
-    const { data, error } = await supabase
-      .from("fan_art")
-      .select("*")
-      .eq("status", "approved")
-      .order("created_at", { ascending: false });
+    try {
+      const supabase = getSupabase();
 
-    if (!error && data) {
-      setFanArts(data as FanArt[]);
+      const { data, error } = await supabase
+        .from("fan_art")
+        .select("*")
+        .eq("status", "approved")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setFanArts(data as FanArt[]);
+      }
+    } catch (error) {
+      console.error("Gallery error:", error);
     }
 
     setLoadingGallery(false);
@@ -78,12 +84,16 @@ export default function FansArtPage() {
     setLoading(true);
 
     try {
-      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const supabase = getSupabase();
 
-      const safeName = fanName
-        .trim()
-        .replace(/[^a-zA-Z0-9]/g, "-")
-        .toLowerCase();
+      const extension =
+        file.name.split(".").pop()?.toLowerCase() || "jpg";
+
+      const safeName =
+        fanName
+          .trim()
+          .replace(/[^a-zA-Z0-9]/g, "-")
+          .toLowerCase() || "fan";
 
       const fileName = `${Date.now()}-${safeName}.${extension}`;
 
@@ -95,6 +105,7 @@ export default function FansArtPage() {
         });
 
       if (uploadError) {
+        console.error("Upload error:", uploadError);
         throw uploadError;
       }
 
@@ -116,6 +127,7 @@ export default function FansArtPage() {
 
       if (insertError) {
         await supabase.storage.from("fan-art").remove([fileName]);
+        console.error("Database error:", insertError);
         throw insertError;
       }
 
@@ -136,7 +148,7 @@ export default function FansArtPage() {
         "Your fan art has been submitted! It will appear after approval."
       );
     } catch (error) {
-      console.error(error);
+      console.error("Fan art submission error:", error);
       setMessage("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
