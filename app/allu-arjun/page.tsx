@@ -197,39 +197,26 @@ export default function AlluArjunPage() {
       {/* HERO */}
 <section className="relative min-h-screen w-full overflow-hidden">
 
-  {/* BACKGROUND FILL */}
-  <div className="absolute inset-0 scale-110">
+  {/* FULL SCREEN BACKGROUND */}
+  <div className="absolute inset-0 w-full h-full">
     <Image
-      src="/images/actor4.png"
-      alt=""
-      fill
-      priority
-      className="object-cover object-center blur-2xl"
-    />
-  </div>
-
-  <div className="absolute inset-0 bg-black/60" />
-
-  {/* FULL ALLU ARJUN IMAGE - NO CROP */}
-  <div className="absolute inset-0 flex items-center justify-center">
-    <Image
-      src="/images/actor4.png"
+      src="/images/actor1a.jpg"
       alt="Allu Arjun"
       fill
       priority
       sizes="100vw"
-      className="object-contain object-center"
+      className="object-cover object-center"
     />
   </div>
 
   {/* DARK OVERLAY */}
   <div className="absolute inset-0 bg-black/35" />
 
-  {/* LEFT GRADIENT */}
-  <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/45 to-transparent" />
+  {/* LEFT CINEMATIC GRADIENT */}
+  <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/35 to-transparent" />
 
   {/* BOTTOM GRADIENT */}
-  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/10" />
 
   {/* CONTENT */}
   <div className="relative z-10 min-h-screen flex items-end">
