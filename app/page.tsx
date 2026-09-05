@@ -456,7 +456,7 @@ Sci-Fi
                 </p>
 
                 <p className="font-semibold mt-1">
-                  Coming Soon
+                  2028
                 </p>
 
               </div>
@@ -466,12 +466,50 @@ Sci-Fi
           </div>
 
         </div>
+       <div className="mt-40 mb-24 w-full">
+  <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/30 px-5 py-7 backdrop-blur-md md:px-10 md:py-9">
 
+    <div className="mb-7 text-center">
+      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/50 md:text-sm">
+        Releasing In
+      </p>
+    </div>
+
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8">
+      {[
+        "Telugu",
+        "Hindi",
+        "Tamil",
+        "Kannada",
+        "Malayalam",
+        "Bengali",
+        "Arabic",
+        "English",
+      ].map((language, index) => (
+        <div
+          key={language}
+          className="group flex min-h-[90px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-center transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08]"
+        >
+          <div>
+            <span className="mb-1 block text-[9px] uppercase tracking-[0.25em] text-white/30">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+
+            <span className="text-base font-semibold tracking-wide text-white/90 md:text-base">
+              {language}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+
+  </div>
+</div>
       </section>
     {/* RELEASE COUNTDOWN */}
 <section
   id="countdown"
-  className="raaka-countdown-section relative max-w-7xl mx-auto px-6 py-28 overflow-hidden"
+ className="raaka-countdown-section relative max-w-7xl mx-auto px-6 pt-2 pb-28 overflow-hidden"
 >
   <div className="relative min-h-[720px] md:min-h-[780px] overflow-hidden rounded-[2rem] border border-white/10 bg-black">
 
