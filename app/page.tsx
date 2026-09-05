@@ -306,6 +306,13 @@ export default function Home() {
 
   </div>
 </div>
+<a
+  href="#box-office"
+  onClick={() => setMenuOpen(false)}
+  className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+>
+  Box Office
+</a>
     <a
       href="#explore"
       onClick={() => setMenuOpen(false)}
@@ -1222,6 +1229,181 @@ Sci-Fi
   </div>
 </div>
 
+{/* BOX OFFICE COLLECTION */}
+<section
+  id="box-office"
+  className="relative mt-40 overflow-hidden px-5 py-24 md:px-10 md:py-32"
+  >
+  {/* Background Glow */}
+  <div className="pointer-events-none absolute inset-0">
+    <div className="absolute left-1/2 top-1/3 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-amber-500/10 blur-[130px]" />
+    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/60 to-black/95" />
+  </div>
+
+  <div className="relative z-10 mx-auto max-w-7xl">
+
+    {/* HEADING */}
+    <div className="mb-12 text-center">
+      <p className="mb-3 text-[10px] uppercase tracking-[0.55em] text-amber-100/60 md:text-xs">
+        Theatrical Performance
+      </p>
+
+      <h2 className="text-4xl font-black uppercase tracking-tight md:text-6xl">
+        Box Office Collection
+      </h2>
+
+      <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-white/50 md:text-base">
+        Raaka box office collections will be updated after the theatrical
+        release.
+      </p>
+    </div>
+
+    {/* MAIN COLLECTION */}
+    <div className="grid gap-4 md:grid-cols-3">
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur-xl">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-amber-100/50">
+          Worldwide Gross
+        </p>
+
+        <h3 className="mt-4 text-4xl font-black md:text-5xl">
+          ₹ TBA
+        </h3>
+
+        <p className="mt-3 text-[10px] uppercase tracking-[0.15em] text-white/30">
+          Coming After Release
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur-xl">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-amber-100/50">
+          India Gross
+        </p>
+
+        <h3 className="mt-4 text-4xl font-black md:text-5xl">
+          ₹ TBA
+        </h3>
+
+        <p className="mt-3 text-[10px] uppercase tracking-[0.15em] text-white/30">
+          Coming After Release
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur-xl">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-amber-100/50">
+          Overseas Gross
+        </p>
+
+        <h3 className="mt-4 text-4xl font-black md:text-5xl">
+          ₹ TBA
+        </h3>
+
+        <p className="mt-3 text-[10px] uppercase tracking-[0.15em] text-white/30">
+          Coming After Release
+        </p>
+      </div>
+
+    </div>
+
+    {/* LANGUAGE WISE */}
+    <div className="mt-16">
+
+      <div className="mb-7">
+        <p className="text-[10px] uppercase tracking-[0.45em] text-amber-100/50">
+          Language Wise
+        </p>
+
+        <h3 className="mt-2 text-2xl font-bold md:text-3xl">
+          Collection
+        </h3>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+
+        {[
+          ["Telugu", "Original"],
+          ["Hindi", "Dubbed"],
+          ["Tamil", "Dubbed"],
+          ["Kannada", "Dubbed"],
+          ["Malayalam", "Dubbed"],
+        ].map(([language, type]) => (
+          <div
+            key={language}
+            className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-amber-400/30"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold text-white">
+                {language}
+              </span>
+
+              <span className="text-[8px] uppercase tracking-[0.15em] text-amber-100/40">
+                {type}
+              </span>
+            </div>
+
+            <div className="mt-7 text-2xl font-black md:text-3xl">
+              ₹ TBA
+            </div>
+
+            <p className="mt-2 text-[9px] uppercase tracking-[0.2em] text-white/30">
+              Gross Collection
+            </p>
+          </div>
+        ))}
+
+      </div>
+
+    </div>
+
+    {/* OTHER COLLECTION STATS */}
+    <div className="mt-14 grid gap-4 md:grid-cols-4">
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+        <p className="text-[9px] uppercase tracking-[0.25em] text-white/35">
+          Opening Day
+        </p>
+        <h4 className="mt-3 text-2xl font-black">
+          ₹ TBA
+        </h4>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+        <p className="text-[9px] uppercase tracking-[0.25em] text-white/35">
+          First Weekend
+        </p>
+        <h4 className="mt-3 text-2xl font-black">
+          ₹ TBA
+        </h4>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+        <p className="text-[9px] uppercase tracking-[0.25em] text-white/35">
+          India Net
+        </p>
+        <h4 className="mt-3 text-2xl font-black">
+          ₹ TBA
+        </h4>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+        <p className="text-[9px] uppercase tracking-[0.25em] text-white/35">
+          Highest Day
+        </p>
+        <h4 className="mt-3 text-2xl font-black">
+          ₹ TBA
+        </h4>
+      </div>
+
+    </div>
+
+    {/* NOTE */}
+    <p className="mt-8 text-center text-[9px] uppercase tracking-[0.18em] text-white/25 md:text-xs">
+      Collection figures will be updated as official box office data becomes available.
+    </p>
+
+  </div>
+</section>
+
 {/* CREW CREDITS */}
 <section
   id="crew-credits"
@@ -1441,6 +1623,7 @@ Sci-Fi
     </div>
   </div>
 </section>
+
         
        {/* EXTRA */}
       <section id="explore" data-design-section="explore" className="max-w-7xl mx-auto px-6 py-24">
