@@ -267,7 +267,7 @@ export default function Home() {
     >
       <div className="flex h-[50px] w-[100px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
         <Image
-          src="/images/logo2.jpg"
+          src="/images/logo1.jpg"
           alt="BookMyShow"
           width={321}
           height={157}
@@ -291,7 +291,7 @@ export default function Home() {
     >
       <div className="flex h-[50px] w-[100px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
         <Image
-          src="/images/logo1.jpg"
+          src="/images/logo2.jpg"
           alt="District"
           width={715}
           height={429}
@@ -318,10 +318,10 @@ export default function Home() {
 )}
 
 </div>
-   <main className="relative z-10 min-h-screen bg-transparent text-white">
+   <main className="raaka-site relative z-10 min-h-screen bg-transparent text-white">
 
       {/* HERO */}
-      <section className="relative min-h-screen flex items-end overflow-hidden">
+      <section className="raaka-hero relative min-h-screen flex items-end overflow-hidden">
 
        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pb-20">
 
@@ -360,7 +360,7 @@ export default function Home() {
 
 
       {/* MOVIE */}
-      <section className="max-w-7xl mx-auto px-6 py-24">
+      <section className="raaka-about max-w-7xl mx-auto px-6 py-24">
 
         <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">
           The Movie
@@ -464,7 +464,7 @@ Sci-Fi
     {/* RELEASE COUNTDOWN */}
 <section
   id="countdown"
-  className="relative max-w-7xl mx-auto px-6 py-28 overflow-hidden"
+  className="raaka-countdown-section relative max-w-7xl mx-auto px-6 py-28 overflow-hidden"
 >
   <div className="relative min-h-[720px] md:min-h-[780px] overflow-hidden rounded-[2rem] border border-white/10 bg-black">
 
@@ -605,6 +605,7 @@ Sci-Fi
       {/* CAST */}
       <section
         id="cast"
+        data-design-section="cast"
         className="px-6 md:px-10 py-24"
       >
 
@@ -674,7 +675,7 @@ Sci-Fi
 
 
       {/* CREW */}
-      <section id="crew" className="px-6 md:px-10 py-24">
+      <section id="crew" data-design-section="crew" className="px-6 md:px-10 py-24">
 
         <div className="max-w-6xl mx-auto">
 
@@ -1182,7 +1183,7 @@ Sci-Fi
     >
       <div className="flex h-[80px] w-[135px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
         <Image
-          src="/images/logo2.jpg"
+          src="/images/logo1.jpg"
           alt="BookMyShow"
           width={321}
           height={157}
@@ -1206,7 +1207,7 @@ Sci-Fi
     >
       <div className="flex h-[80px] w-[135px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
         <Image
-          src="/images/logo1.jpg"
+          src="/images/logo2.jpg"
           alt="District"
           width={715}
           height={429}
@@ -1442,7 +1443,7 @@ Sci-Fi
 </section>
         
        {/* EXTRA */}
-      <section id="explore" className="max-w-7xl mx-auto px-6 py-24">
+      <section id="explore" data-design-section="explore" className="max-w-7xl mx-auto px-6 py-24">
 
         <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">
           More

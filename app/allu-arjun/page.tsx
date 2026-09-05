@@ -141,133 +141,182 @@ export default function AlluArjunPage() {
     {
       year: "1985",
       title: "Vijetha",
-      image: "child1.jpg",
     },
     {
       year: "1986",
       title: "Swathi Muthyam",
-      image: "child2.jpg",
     },
     {
       year: "2001",
       title: "Daddy",
-      image: "child3.jpg",
     },
   ];
 
   return (
-    <main className="relative min-h-screen bg-black text-white overflow-hidden">
+    <main className="allu-site relative min-h-screen bg-black text-white overflow-hidden">
 
-      {/* FULL WEBSITE BACKGROUND */}
+      {/* FULL WEBSITE ALLU ARJUN BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
 
         <Image
-          src="/images/raakabg.jpg"
+          src="/images/actor4.png"
           alt=""
           fill
           priority
-          className="object-cover object-center opacity-40 animate-raaka-bg-1"
+          sizes="100vw"
+          className="object-cover object-center"
         />
 
-        <Image
-          src="/images/raakabg1.jpg"
-          alt=""
-          fill
-          className="object-cover object-center opacity-0 animate-raaka-bg-2"
-        />
+        <div className="absolute inset-0 bg-black/60" />
 
-        <Image
-          src="/images/raakabg2.jpg"
-          alt=""
-          fill
-          className="object-cover object-center opacity-0 animate-raaka-bg-3"
-        />
-
-        <div className="absolute inset-0 bg-black/55" />
-
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/45 to-black/90" />
 
       </div>
-
 
       {/* PAGE CONTENT */}
       <div className="relative z-10">
 
-{/* HERO */}
-<section className="relative min-h-screen w-full overflow-hidden">
+        {/* HERO */}
+        <section className="relative min-h-screen w-full overflow-hidden">
 
-  {/* FULL SCREEN IMAGE */}
-  <div className="absolute inset-0 w-full h-full">
-    <Image
-      src="/images/actor1a.jpg"
-      alt="Allu Arjun"
-      fill
-      priority
-      sizes="100vw"
-      className="
-        object-cover
-        object-[68%_center]
-        md:object-center
-      "
-    />
-  </div>
+          {/* MOBILE / DESKTOP HERO IMAGE */}
+          <div className="absolute inset-0 w-full h-full">
 
-  {/* DARK OVERLAY */}
-  <div className="absolute inset-0 bg-black/35" />
+            <Image
+              src="/images/actor1a.jpg"
+              alt="Allu Arjun"
+              fill
+              priority
+              sizes="100vw"
+              className="allu-hero-image object-cover object-center"
+            />
 
-  {/* LEFT GRADIENT */}
-  <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/45 to-transparent" />
+          </div>
 
-  {/* BOTTOM GRADIENT */}
-  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+          {/* DARK OVERLAY */}
+          <div className="absolute inset-0 bg-black/40" />
 
-  {/* CONTENT */}
-  <div className="relative z-10 min-h-screen flex items-end">
+          {/* LEFT GRADIENT */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/45 to-transparent" />
 
-    <div className="max-w-7xl mx-auto w-full px-6 md:px-10 pb-12 md:pb-20">
+          {/* BOTTOM GRADIENT */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
 
-      <p className="text-[10px] md:text-xs uppercase tracking-[0.4em] md:tracking-[0.45em] text-amber-100/70 mb-4 md:mb-5">
-        Icon Star
-      </p>
+          {/* HERO CONTENT */}
+          <div className="relative z-10 min-h-screen flex items-end">
 
-      <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[0.9]">
-        ALLU
-        <br />
-        ARJUN
-      </h1>
+            <div className="max-w-7xl mx-auto w-full px-6 md:px-10 pb-12 md:pb-20">
 
-      <p className="mt-5 md:mt-6 max-w-xl text-sm md:text-base leading-6 md:leading-7 text-zinc-300">
-        Indian actor and performer known for his powerful screen
-        presence, distinctive style and memorable performances.
-      </p>
+              <p className="text-[10px] md:text-xs uppercase tracking-[0.4em] md:tracking-[0.45em] text-amber-100/70 mb-4 md:mb-5">
+                Icon Star
+              </p>
 
-      <div className="mt-7 md:mt-8 flex flex-col sm:flex-row gap-3 md:gap-4">
+              <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[0.9]">
+                ALLU
+                <br />
+                ARJUN
+              </h1>
 
-        <a
-          href="#filmography"
-          className="w-fit px-7 py-3.5 rounded-full bg-white text-black text-sm md:text-base font-semibold hover:bg-zinc-200 transition"
+              <p className="mt-5 md:mt-6 max-w-xl text-sm md:text-base leading-6 md:leading-7 text-zinc-300">
+                Indian actor and performer known for his powerful screen
+                presence, distinctive style and memorable performances.
+              </p>
+
+              <div className="mt-7 md:mt-8 flex flex-col sm:flex-row gap-3 md:gap-4">
+
+                <a
+                  href="#filmography"
+                  className="w-fit px-7 py-3.5 rounded-full bg-white text-black text-sm md:text-base font-semibold hover:bg-zinc-200 transition"
+                >
+                  Filmography
+                </a>
+
+                <a
+                  href="#birthday"
+                  className="w-fit px-7 py-3.5 rounded-full border border-white/30 bg-black/30 backdrop-blur-sm text-sm md:text-base font-semibold hover:bg-white/10 transition"
+                >
+                  Birthday Countdown
+                </a>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* FILMOGRAPHY */}
+        <section
+          id="filmography"
+          data-design-section="filmography"
+          className="px-6 md:px-10 py-24 border-t border-white/10"
         >
-          Filmography
-        </a>
 
-        <a
-          href="#birthday"
-          className="w-fit px-7 py-3.5 rounded-full border border-white/30 bg-black/30 backdrop-blur-sm text-sm md:text-base font-semibold hover:bg-white/10 transition"
-        >
-          Birthday Countdown
-        </a>
+          <div className="max-w-6xl mx-auto">
 
-      </div>
+            <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
+              The Journey
+            </p>
 
-    </div>
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Filmography
+            </h2>
 
-  </div>
+            <p className="mt-5 max-w-2xl text-zinc-500 leading-7">
+              A look through Allu Arjun&apos;s journey on the big screen,
+              from his debut to his upcoming projects.
+            </p>
 
-</section>
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
+
+              {movies.map((movie) => (
+
+                <div
+                  key={`${movie.year}-${movie.title}`}
+                  className="group"
+                >
+
+                  <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
+
+                    <Image
+                      src={`/images/${movie.image}`}
+                      alt={movie.title}
+                      fill
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+
+                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
+
+                    <div className="absolute top-3 left-3 rounded-full border border-white/20 bg-black/70 backdrop-blur-md px-3 py-1">
+
+                      <span className="text-[9px] uppercase tracking-[0.2em] text-white/80">
+                        {movie.year}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                  <h3 className="mt-4 text-base md:text-lg font-semibold leading-tight group-hover:text-amber-100 transition">
+                    {movie.title}
+                  </h3>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          </div>
+
+        </section>
 
 
         {/* CAMEO / GUEST APPEARANCES */}
-        <section className="px-6 md:px-10 py-24 border-t border-white/10">
+        <section className="allu-special-section px-6 md:px-10 py-24 border-t border-white/10">
 
           <div className="max-w-6xl mx-auto">
 
@@ -280,12 +329,13 @@ export default function AlluArjunPage() {
             </h2>
 
             <p className="mt-5 max-w-2xl text-zinc-500 leading-7">
-              Special appearances and cameo roles across Allu Arjun's career.
+              Special appearances and cameo roles across Allu Arjun&apos;s career.
             </p>
 
             <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6">
 
               {cameos.map((movie) => (
+
                 <div
                   key={movie.title}
                   className="group"
@@ -297,6 +347,7 @@ export default function AlluArjunPage() {
                       src={`/images/${movie.image}`}
                       alt={movie.title}
                       fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
 
@@ -319,6 +370,7 @@ export default function AlluArjunPage() {
                   </h3>
 
                 </div>
+
               ))}
 
             </div>
@@ -329,7 +381,7 @@ export default function AlluArjunPage() {
 
 
         {/* CHILD ARTIST */}
-        <section className="px-6 md:px-10 py-24 border-t border-white/10">
+        <section className="allu-special-section px-6 md:px-10 py-24 border-t border-white/10">
 
           <div className="max-w-6xl mx-auto">
 
@@ -342,12 +394,13 @@ export default function AlluArjunPage() {
             </h2>
 
             <p className="mt-5 max-w-2xl text-zinc-500 leading-7">
-              Early screen appearances from Allu Arjun's childhood.
+              Early screen appearances from Allu Arjun&apos;s childhood.
             </p>
 
             <div className="mt-12 space-y-3">
 
               {childArtist.map((movie) => (
+
                 <div
                   key={movie.title}
                   className="group flex items-center justify-between gap-6 border-b border-white/10 py-5 hover:border-white/25 transition"
@@ -370,6 +423,7 @@ export default function AlluArjunPage() {
                   </span>
 
                 </div>
+
               ))}
 
             </div>
@@ -387,7 +441,7 @@ export default function AlluArjunPage() {
 
           <div className="max-w-6xl mx-auto">
 
-            <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-10 md:p-20 text-center">
+            <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8 md:p-20 text-center">
 
               <p className="text-xs uppercase tracking-[0.45em] text-amber-100/60">
                 The Celebration Begins
@@ -476,7 +530,7 @@ export default function AlluArjunPage() {
 
 
         {/* SOCIAL MEDIA */}
-        <section className="px-6 md:px-10 py-24 border-t border-white/10">
+        <section className="allu-special-section px-6 md:px-10 py-24 border-t border-white/10">
 
           <div className="max-w-6xl mx-auto">
 
