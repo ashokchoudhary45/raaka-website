@@ -95,7 +95,7 @@ export default function AlluArjunPage() {
     {
       year: "2018",
       title: "Naa Peru Surya, Naa Illu India",
-      image: "movie18.jpg",
+      image: "movie18a.jpg",
     },
     {
       year: "2020",
