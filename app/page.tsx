@@ -744,7 +744,7 @@ Sci-Fi
             </div>
 
 
-            {/* Sai Abhyankar */}
+            {/* Sai Abhyankkar */}
             <div className="group">
 
               <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
@@ -760,7 +760,7 @@ Sci-Fi
               </div>
 
               <h3 className="text-xl md:text-2xl font-semibold mt-4">
-                Sai Abhyankar
+                Sai Abhyankkar
               </h3>
 
               <p className="text-zinc-400 text-lg mt-1">
@@ -796,7 +796,7 @@ Sci-Fi
             </div>
 
 
-            {/* Sun Picture */}
+            {/* Sun Pictures */}
             <div className="group">
 
               <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
@@ -812,7 +812,7 @@ Sci-Fi
               </div>
 
               <h3 className="text-xl md:text-2xl font-semibold mt-4">
-                Sun Picture
+                Sun Pictures
               </h3>
 
               <p className="text-zinc-400 text-lg mt-1">
