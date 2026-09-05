@@ -231,6 +231,13 @@ export default function Home() {
     >
       Posters
     </a>
+    <a
+  href="/fans-art"
+  onClick={() => setMenuOpen(false)}
+  className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+>
+  Fans Art
+</a>
 
     <a
       href="#announcements"
