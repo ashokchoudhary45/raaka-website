@@ -621,27 +621,29 @@ Sci-Fi
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 
-            {/* Allu Arjun */}
-            <div className="group">
+           {/* Allu Arjun */}
+<a
+  href="/allu-arjun"
+  className="group block"
+>
 
-              <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
+  <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
 
-                <Image
-                  src="/images/actor3.jpg"
-                  alt="Allu Arjun"
-                  width={600}
-                  height={800}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+    <Image
+      src="/images/actor3.jpg"
+      alt="Allu Arjun"
+      width={600}
+      height={800}
+      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+    />
 
-              </div>
+  </div>
 
-              <h3 className="text-lg font-semibold mt-4">
-                Allu Arjun
-              </h3>
+  <h3 className="text-lg font-semibold mt-4">
+    Allu Arjun
+  </h3>
 
-            </div>
-
+</a>
 
             {/* Deepika Padukone */}
             <div className="group">
