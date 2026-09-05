@@ -1721,7 +1721,13 @@ Sci-Fi
         </div>
 
       </section>
-
+<div className="mx-auto mt-6 max-w-3xl border-t border-white/10 pt-5 text-center">
+  <p className="text-[10px] leading-relaxed tracking-wide text-white/40 md:text-xs">
+    This is an unofficial fan-made website and is not affiliated with
+    Sun Pictures, Allu Arjun, Atlee Kumar, Deepika Padukone, or the
+    official RAAKA movie team.
+  </p>
+</div>
 
       {/* FOOTER */}
       <footer className="border-t border-white/10 py-10">
