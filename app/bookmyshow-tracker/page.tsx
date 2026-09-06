@@ -26,12 +26,15 @@ type TrackerConfig = {
   release_date: string | null;
 };
 
-const formatDate = (date: string) =>
-  new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", {
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
+};
 
 const number = (value: number | null | undefined) =>
   value == null ? "—" : value.toLocaleString("en-IN");
@@ -40,8 +43,8 @@ const interestValue = (value: number | null | undefined) =>
   value == null ? "—" : value.toLocaleString("en-IN");
 
 function daysBetween(start: string, end: string) {
-  const a = new Date(`${start}T00:00:00`).getTime();
-  const b = new Date(`${end}T00:00:00`).getTime();
+  const a = new Date(start + "T00:00:00").getTime();
+  const b = new Date(end + "T00:00:00").getTime();
   return Math.max(1, Math.floor((b - a) / 86400000) + 1);
 }
 
@@ -75,7 +78,7 @@ function Sparkline({
     .map((value, index) => {
       const x = values.length === 1 ? 0 : (index / (values.length - 1)) * 100;
       const y = 92 - ((value - min) / range) * 72;
-      return `${x},${y}`;
+      return x + "," + y;
     })
     .join(" ");
 
@@ -92,15 +95,15 @@ function Sparkline({
         className="absolute inset-x-5 bottom-7 top-14 h-[170px] w-[calc(100%-2.5rem)]"
       >
         <defs>
-          <linearGradient id={`fill-${label}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={"fill-" + label} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="white" stopOpacity="0.16" />
             <stop offset="100%" stopColor="white" stopOpacity="0" />
           </linearGradient>
         </defs>
 
         <polyline
-          points={`0,100 ${points} 100,100`}
-          fill={`url(#fill-${label})`}
+          points={"0,100 " + points + " 100,100"}
+          fill={"url(#fill-" + label + ")"}
           stroke="none"
         />
 
@@ -142,11 +145,8 @@ function StatCard({
       <p className="mt-2 text-xs text-white/35">{sub}</p>
     </div>
   );
-}
-
-export default function BookMyShowTrackerPage() {
+}export default function BookMyShowTrackerPage() {
   const supabase = getSupabase();
-
   const [config, setConfig] = useState<TrackerConfig | null>(null);
   const [interestRows, setInterestRows] = useState<InterestRow[]>([]);
   const [ticketRows, setTicketRows] = useState<TicketRow[]>([]);
@@ -158,8 +158,6 @@ export default function BookMyShowTrackerPage() {
   async function loadTracker() {
     setLoading(true);
 
-    // Creates today's Interest Day automatically.
-    // The value itself remains empty until real data is supplied.
     await supabase.rpc("ensure_bookmyshow_interest_day");
 
     const [{ data: configData }, { data: interestData }, { data: ticketData }] =
@@ -257,9 +255,7 @@ export default function BookMyShowTrackerPage() {
             BookMyShow
             <br />
             <span className="text-white/30">Tracker.</span>
-          </h1>
-
-          <p className="mt-7 max-w-2xl text-sm leading-7 text-white/45 md:text-base">
+          </h1><p className="mt-7 max-w-2xl text-sm leading-7 text-white/45 md:text-base">
             A cinematic day-by-day archive for audience interest and live
             ticket activity. Interest starts from today. Ticket Day 1 starts
             only when booking officially begins.
@@ -269,23 +265,23 @@ export default function BookMyShowTrackerPage() {
         <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Interest Day"
-            value={config ? `Day ${interestDays}` : "—"}
+            value={config ? "Day " + interestDays : "—"}
             sub="Automatic daily counter"
           />
           <StatCard
             label="Current Interest"
             value={interestValue(currentInterest)}
-            sub={interestIncrease == null ? "Waiting for data" : `+${number(interestIncrease)} today`}
+            sub={interestIncrease == null ? "Waiting for data" : "+" + number(interestIncrease) + " today"}
           />
           <StatCard
             label="Booking Day"
-            value={config?.booking_start_date ? `Day ${bookingDays}` : "—"}
+            value={config?.booking_start_date ? "Day " + bookingDays : "—"}
             sub={config?.booking_start_date ? "Booking is active" : "Booking not started"}
           />
           <StatCard
             label="Tickets Sold"
             value={number(currentTickets)}
-            sub={ticketIncrease == null ? "Waiting for booking data" : `+${number(ticketIncrease)} today`}
+            sub={ticketIncrease == null ? "Waiting for booking data" : "+" + number(ticketIncrease) + " today"}
           />
         </div>
 
@@ -302,6 +298,7 @@ export default function BookMyShowTrackerPage() {
         </div>
       </header>
 
+      {/* Interest Section with Dynamic Table */}
       <section className="relative mx-auto max-w-7xl px-5 py-12 md:px-10">
         <div className="mb-8 flex items-end justify-between gap-5">
           <div>
@@ -328,7 +325,7 @@ export default function BookMyShowTrackerPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <StatCard
               label="Daily Increase"
-              value={interestIncrease == null ? "—" : `+${number(interestIncrease)}`}
+              value={interestIncrease == null ? "—" : "+" + number(interestIncrease)}
               sub="Compared with previous day"
             />
             <StatCard
@@ -339,6 +336,7 @@ export default function BookMyShowTrackerPage() {
           </div>
         </div>
 
+        {/* Daily Interest Archive Table */}
         <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025]">
           <div className="border-b border-white/10 px-5 py-4 md:px-7">
             <div className="flex items-center justify-between">
@@ -349,23 +347,21 @@ export default function BookMyShowTrackerPage() {
                 {interestRows.length} records
               </p>
             </div>
-          </div>
-
-          <div className="max-h-[620px] overflow-auto">
-            <table className="w-full min-w-[620px] text-left">
+          </div><div className="max-h-[620px] overflow-auto">
+            <table className="w-full min-w-[680px] text-left">
               <thead className="sticky top-0 bg-[#090909]/95 backdrop-blur-md">
                 <tr className="border-b border-white/10 font-mono text-[8px] uppercase tracking-[0.2em] text-white/25">
                   <th className="px-5 py-4 md:px-7">Day</th>
                   <th className="px-5 py-4">Date</th>
-                  <th className="px-5 py-4 text-right">Interest</th>
-                  <th className="px-5 py-4 text-right">Increase</th>
+                  <th className="px-5 py-4 text-right">Interest Count</th>
+                  <th className="px-5 py-4 text-right">Daily Increase</th>
                 </tr>
               </thead>
               <tbody>
                 {interestRows.length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-5 py-16 text-center text-sm text-white/30">
-                      {loading ? "Loading tracker..." : "Day 1 will appear when the tracker is initialized."}
+                      Loading interest records...
                     </td>
                   </tr>
                 )}
@@ -379,10 +375,10 @@ export default function BookMyShowTrackerPage() {
                       {formatDate(row.record_date)}
                     </td>
                     <td className="px-5 py-4 text-right text-sm font-semibold text-white">
-                     {interestValue(row.interest)}
+                      {number(row.interest)}
                     </td>
                     <td className="px-5 py-4 text-right font-mono text-xs text-white/45">
-                      {row.increase == null ? "—" : `+${number(row.increase)}`}
+                      {row.increase == null ? "—" : "+" + number(row.increase)}
                     </td>
                   </tr>
                 ))}
@@ -392,35 +388,18 @@ export default function BookMyShowTrackerPage() {
         </div>
       </section>
 
+      {/* Ticket Booking Section with Dynamic Table */}
       <section className="relative mx-auto max-w-7xl px-5 py-12 md:px-10">
         <div className="mb-8 flex items-end justify-between gap-5">
           <div>
             <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-white/25">
-              02 / Box Office Signal
+              02 / Ticket Sales
             </p>
             <h2 className="mt-3 text-3xl font-semibold md:text-5xl">
-              Live Ticket Booking
+              Ticket Booking Archive
             </h2>
           </div>
-          <span className="hidden rounded-full border border-white/10 px-3 py-2 font-mono text-[8px] uppercase tracking-[0.2em] text-white/30 sm:block">
-            Hourly data • Daily archive
-          </span>
         </div>
-
-        {!config?.booking_start_date && (
-          <div className="mb-5 rounded-3xl border border-white/10 bg-white/[0.025] px-6 py-8">
-            <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-white/25">
-              Booking Status
-            </p>
-            <h3 className="mt-3 text-2xl font-semibold">
-              Booking Not Started
-            </h3>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/35">
-              Ticket Day 1 will automatically begin on the first day that
-              official booking data is recorded. No fake numbers are shown.
-            </p>
-          </div>
-        )}
 
         <div className="grid gap-4 lg:grid-cols-[1.3fr_.7fr]">
           <Sparkline
@@ -433,17 +412,18 @@ export default function BookMyShowTrackerPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <StatCard
               label="Daily Increase"
-              value={ticketIncrease == null ? "—" : `+${number(ticketIncrease)}`}
+              value={ticketIncrease == null ? "—" : "+" + number(ticketIncrease)}
               sub="Compared with previous day"
             />
             <StatCard
               label="Booking Started"
               value={config?.booking_start_date ? formatDate(config.booking_start_date) : "—"}
-              sub={config?.booking_start_date ? `Day 1 → Day ${bookingDays}` : "Waiting for booking"}
+              sub={config?.booking_start_date ? "Day 1 → Day " + bookingDays : "Waiting for booking"}
             />
           </div>
         </div>
 
+        {/* Ticket Booking Archive Table */}
         <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025]">
           <div className="border-b border-white/10 px-5 py-4 md:px-7">
             <div className="flex items-center justify-between">
@@ -454,9 +434,7 @@ export default function BookMyShowTrackerPage() {
                 {ticketRows.length} days
               </p>
             </div>
-          </div>
-
-          <div className="max-h-[620px] overflow-auto">
+          </div><div className="max-h-[620px] overflow-auto">
             <table className="w-full min-w-[680px] text-left">
               <thead className="sticky top-0 bg-[#090909]/95 backdrop-blur-md">
                 <tr className="border-b border-white/10 font-mono text-[8px] uppercase tracking-[0.2em] text-white/25">
@@ -487,7 +465,7 @@ export default function BookMyShowTrackerPage() {
                       {number(row.tickets_sold)}
                     </td>
                     <td className="px-5 py-4 text-right font-mono text-xs text-white/45">
-                      {row.increase == null ? "—" : `+${number(row.increase)}`}
+                      {row.increase == null ? "—" : "+" + number(row.increase)}
                     </td>
                   </tr>
                 ))}
