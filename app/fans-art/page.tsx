@@ -1,6 +1,5 @@
 "use client";
 
-
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 
@@ -30,6 +29,13 @@ export default function FansArtPage() {
   const [likedArts, setLikedArts] = useState<Record<number, boolean>>({});
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"newest" | "trending" | "most-liked">("newest");
+  const [fanPower, setFanPower] = useState({
+    percent: 0,
+    likes: 0,
+    submissions: 0,
+    quizXp: 0,
+  });
+  const [loadingPower, setLoadingPower] = useState(true);
 
   async function loadFanArts() {
     setLoadingGallery(true);
@@ -76,7 +82,53 @@ export default function FansArtPage() {
 
   useEffect(() => {
     loadFanArts();
+    loadFanPower();
   }, []);
+
+  async function loadFanPower() {
+    setLoadingPower(true);
+
+    try {
+      const supabase = getSupabase();
+
+      const [{ count: likesCount }, { count: submissionsCount }, { data: quizActivity }] =
+        await Promise.all([
+          supabase
+            .from("fan_art_likes")
+            .select("id", { count: "exact", head: true }),
+          supabase
+            .from("fan_art")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "approved"),
+          supabase
+            .from("fan_passport_activity")
+            .select("xp")
+            .ilike("activity_key", "%quiz%"),
+        ]);
+
+      const likes = likesCount || 0;
+      const submissions = submissionsCount || 0;
+      const quizXp =
+        quizActivity?.reduce((total, item) => total + (Number(item.xp) || 0), 0) || 0;
+
+      // Community Power formula:
+      // 2 power per like + 10 per approved submission + 1 per quiz XP.
+      // 1,0000 power points = 100% community power.
+      const score = likes * 2 + submissions * 10 + quizXp;
+      const percent = Math.min(100, Math.round((score / 10000) * 100));
+
+      setFanPower({
+        percent,
+        likes,
+        submissions,
+        quizXp,
+      });
+    } catch (error) {
+      console.error("Fan Power error:", error);
+    } finally {
+      setLoadingPower(false);
+    }
+  }
 
   function getVisitorId() {
     const key = "raaka-fan-art-visitor-id";
@@ -276,6 +328,14 @@ export default function FansArtPage() {
           </div>
         </header>
 
+        {/* ADMIN SIGN IN */}
+        <a
+          href="/admin/fans-art"
+          className="fixed right-5 top-5 z-50 rounded-full border border-white/10 bg-black/60 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 backdrop-blur-md transition hover:border-white/25 hover:bg-black/80 hover:text-white md:right-8 md:top-7"
+        >
+          Admin Sign In
+        </a>
+
         {/* HERO */}
         <section className="px-6 pb-16 pt-24 md:px-10 md:pb-24 md:pt-32">
           <div className="mx-auto max-w-6xl text-center">
@@ -298,6 +358,111 @@ export default function FansArtPage() {
             >
               Submit Your Fan Art
             </a>
+          </div>
+        </section>
+
+        {/* RAAKA FAN PASSPORT */}
+        <section className="px-5 pb-10 md:px-10 md:pb-16">
+          <div className="mx-auto max-w-7xl">
+            <div className="relative overflow-hidden rounded-[2rem] border border-amber-100/15 bg-gradient-to-br from-amber-100/[0.09] via-white/[0.035] to-transparent p-7 shadow-[0_0_80px_rgba(245,158,11,0.08)] md:p-12">
+              <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-amber-300/10 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-orange-400/10 blur-3xl" />
+
+              <div className="relative flex flex-col items-center justify-between gap-8 text-center md:flex-row md:text-left">
+                <div className="max-w-2xl">
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-100/15 bg-amber-100/[0.06] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.25em] text-amber-100/70">
+                    <span className="text-base">⭐</span> RAAKA Fan Passport
+                  </div>
+
+                  <h2 className="text-3xl font-black tracking-tight text-white md:text-5xl">
+                    Enter the RAAKA Universe.
+                  </h2>
+
+                  <p className="mt-4 max-w-xl text-sm leading-7 text-zinc-400 md:text-base">
+                    Create your fan identity, earn XP, unlock exclusive badges
+                    and rise from a New Initiate to a RAAKA Legend.
+                  </p>
+
+                  <div className="mt-5 flex flex-wrap justify-center gap-2 md:justify-start">
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/50">⚔️ Fan Identity</span>
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/50">🔥 Earn XP</span>
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/50">🏆 Unlock Badges</span>
+                  </div>
+                </div>
+
+                <a
+                  href="/fan-passport"
+                  className="group inline-flex shrink-0 items-center gap-3 rounded-full border border-amber-100/25 bg-amber-100/[0.08] px-7 py-4 text-xs font-bold uppercase tracking-[0.2em] text-amber-100 shadow-[0_0_30px_rgba(245,158,11,0.08)] transition duration-300 hover:border-amber-100/50 hover:bg-amber-100/[0.14] hover:shadow-[0_0_45px_rgba(245,158,11,0.16)]"
+                >
+                  <span>⭐ Create Your Fan Passport</span>
+                  <span className="text-base transition-transform duration-300 group-hover:translate-x-1">→</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* RAAKA FAN POWER */}
+        <section className="px-5 pb-8 md:px-10 md:pb-12">
+          <div className="mx-auto max-w-7xl">
+            <div className="relative overflow-hidden rounded-[2rem] border border-orange-100/15 bg-gradient-to-br from-orange-100/[0.08] via-white/[0.035] to-transparent p-7 shadow-[0_0_90px_rgba(249,115,22,0.07)] md:p-10">
+              <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-orange-400/10 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-amber-300/10 blur-3xl" />
+
+              <div className="relative">
+                <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                  <div>
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-100/15 bg-orange-100/[0.05] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.25em] text-orange-100/70">
+                      <span className="text-base">❤️</span> Community Power
+                    </div>
+                    <h2 className="text-3xl font-black tracking-tight md:text-5xl">
+                      RAAKA FAN POWER
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400">
+                      Every like, approved fan art and quiz achievement makes the RAAKA community stronger.
+                    </p>
+                  </div>
+
+                  <div className="text-left md:text-right">
+                    <div className="text-5xl font-black tracking-tight text-white md:text-6xl">
+                      {loadingPower ? "--" : `${fanPower.percent}%`}
+                    </div>
+                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-white/35">
+                      Community Strength
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-7">
+                  <div className="h-4 overflow-hidden rounded-full border border-white/10 bg-white/[0.04] p-0.5">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-orange-500 via-amber-300 to-yellow-100 shadow-[0_0_25px_rgba(251,146,60,0.45)] transition-all duration-1000 ease-out"
+                      style={{ width: `${loadingPower ? 0 : fanPower.percent}%` }}
+                    />
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
+                    <span>RAAKA Community</span>
+                    <span>{loadingPower ? "Charging..." : fanPower.percent >= 100 ? "MAX POWER" : "Keep pushing"}</span>
+                  </div>
+                </div>
+
+                <div className="mt-7 grid grid-cols-3 gap-2 md:max-w-2xl md:grid-cols-3 md:gap-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                    <p className="text-lg font-black text-white md:text-2xl">{loadingPower ? "—" : fanPower.likes}</p>
+                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/35">❤️ Likes</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                    <p className="text-lg font-black text-white md:text-2xl">{loadingPower ? "—" : fanPower.submissions}</p>
+                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/35">🎨 Artworks</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                    <p className="text-lg font-black text-white md:text-2xl">{loadingPower ? "—" : fanPower.quizXp}</p>
+                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/35">🧠 Quiz XP</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
