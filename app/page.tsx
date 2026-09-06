@@ -312,7 +312,8 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="absolute top-[23px] right-4 z-50">
+      <div className="absolute top-[22px] right-4 z-50
+      w-[calc(100vw-2rem)] max-w-[340px]">
   {/* 3 LINE BUTTON */}
   <button
     onClick={() => setMenuOpen(!menuOpen)}
@@ -463,13 +464,13 @@ export default function Home() {
       RAAKA
     </h1>
 
-    <p className="mt-7 max-w-xl text-zinc-300 text-lg">
+    <p className="mt-8 max-w-xl text-zinc-300 text-lg">
       Born of fire, shaped by the cosmos, and forged in sacrifice, a divine
       warrior rises to restore balance to a universe threatened by primordial
       chaos-before faith itself is extinguished.
     </p>
 
-    <div className="flex flex-wrap gap-4">
+    <div className="mt-7 flex flex-wrap gap-4">
 
       <a
         href="#videos"
