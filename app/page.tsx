@@ -312,7 +312,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="absolute top-[70px] right-6 z-50">
+      <div className="absolute top-[70px] right-4 z-50">
   {/* 3 LINE BUTTON */}
   <button
     onClick={() => setMenuOpen(!menuOpen)}

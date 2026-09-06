@@ -418,7 +418,7 @@ export default function FansArtPage() {
         {/* ADMIN SIGN IN */}
         <a
           href="/admin/fans-art"
-          className="fixed right-5 top-5 z-50 rounded-full border border-white/10 bg-black/60 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 backdrop-blur-md transition hover:border-white/25 hover:bg-black/80 hover:text-white md:right-8 md:top-7"
+          className="absolute right-5 top-5 z-50 rounded-full border border-white/10 bg-black/60 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 backdrop-blur-md transition hover:border-white/25 hover:bg-black/80 hover:text-white md:right-8 md:top-7"
         >
           Admin Sign In
         </a>
