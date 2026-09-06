@@ -467,10 +467,11 @@ export default function Home() {
   className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
 >
   Box Office
-</a><a
+</a>
+<a
   href="/bookmyshow-tracker"
-  className="relative flex items-center rounded-xl px-4 py-3 transition hover:bg-white/10"
   onClick={() => setMenuOpen(false)}
+  className="relative flex items-center rounded-xl px-4 py-2 transition hover:bg-white/10"
 >
   BookMyShow Tracker
   <NewBadge addedAt="2026-09-06" />
