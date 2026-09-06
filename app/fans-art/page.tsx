@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 
 type FanArt = {
@@ -11,6 +12,7 @@ type FanArt = {
   image_url: string;
   social_link: string | null;
   status: string;
+  likes?: number;
 };
 
 export default function FansArtPage() {
@@ -24,6 +26,10 @@ export default function FansArtPage() {
   const [loadingGallery, setLoadingGallery] = useState(true);
   const [message, setMessage] = useState("");
   const [selectedArt, setSelectedArt] = useState<FanArt | null>(null);
+  const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
+  const [likedArts, setLikedArts] = useState<Record<number, boolean>>({});
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"newest" | "trending" | "most-liked">("newest");
 
   async function loadFanArts() {
     setLoadingGallery(true);
@@ -38,7 +44,28 @@ export default function FansArtPage() {
         .order("created_at", { ascending: false });
 
       if (!error && data) {
-        setFanArts(data as FanArt[]);
+        const arts = data as FanArt[];
+        setFanArts(arts);
+
+        const { data: likes, error: likesError } = await supabase
+          .from("fan_art_likes")
+          .select("fan_art_id, visitor_id");
+
+        if (!likesError && likes) {
+          const counts: Record<number, number> = {};
+          const liked: Record<number, boolean> = {};
+          const visitorId = getVisitorId();
+
+          for (const like of likes as { fan_art_id: number; visitor_id: string }[]) {
+            counts[like.fan_art_id] = (counts[like.fan_art_id] || 0) + 1;
+            if (like.visitor_id === visitorId) {
+              liked[like.fan_art_id] = true;
+            }
+          }
+
+          setLikeCounts(counts);
+          setLikedArts(liked);
+        }
       }
     } catch (error) {
       console.error("Gallery error:", error);
@@ -50,6 +77,72 @@ export default function FansArtPage() {
   useEffect(() => {
     loadFanArts();
   }, []);
+
+  function getVisitorId() {
+    const key = "raaka-fan-art-visitor-id";
+    let visitorId = localStorage.getItem(key);
+
+    if (!visitorId) {
+      visitorId = crypto.randomUUID();
+      localStorage.setItem(key, visitorId);
+    }
+
+    return visitorId;
+  }
+
+  async function handleLike(artId: number) {
+    if (likedArts[artId]) return;
+
+    try {
+      const supabase = getSupabase();
+      const visitorId = getVisitorId();
+
+      const { error } = await supabase.from("fan_art_likes").insert({
+        fan_art_id: artId,
+        visitor_id: visitorId,
+      });
+
+      if (!error) {
+        setLikedArts((current) => ({ ...current, [artId]: true }));
+        setLikeCounts((current) => ({
+          ...current,
+          [artId]: (current[artId] || 0) + 1,
+        }));
+      }
+    } catch (error) {
+      console.error("Like error:", error);
+    }
+  }
+
+  const visibleFanArts = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    const filtered = fanArts.filter((art) => {
+      if (!query) return true;
+      return (
+        art.title.toLowerCase().includes(query) ||
+        art.fan_name.toLowerCase().includes(query)
+      );
+    });
+
+    return [...filtered].sort((a, b) => {
+      const aLikes = likeCounts[a.id] || 0;
+      const bLikes = likeCounts[b.id] || 0;
+
+      if (filter === "most-liked") return bLikes - aLikes;
+
+      if (filter === "trending") {
+        const now = Date.now();
+        const aAge = Math.max(1, now - new Date(a.created_at).getTime());
+        const bAge = Math.max(1, now - new Date(b.created_at).getTime());
+        const aScore = aLikes / Math.sqrt(aAge / 86400000 + 1);
+        const bScore = bLikes / Math.sqrt(bAge / 86400000 + 1);
+        return bScore - aScore;
+      }
+
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [fanArts, filter, likeCounts, search]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -184,15 +277,7 @@ export default function FansArtPage() {
         </header>
 
         {/* HERO */}
-        <section className="relative px-6 pb-16 pt-24 md:px-10 md:pb-24 md:pt-32">
-          {/* ADMIN SIGN IN */}
-          <a
-            href="/admin/fans-art"
-            className="absolute right-5 top-5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40 backdrop-blur-md transition hover:border-white/20 hover:bg-white/[0.07] hover:text-white md:right-10 md:top-8"
-          >
-            Admin Sign In
-          </a>
-
+        <section className="px-6 pb-16 pt-24 md:px-10 md:pb-24 md:pt-32">
           <div className="mx-auto max-w-6xl text-center">
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.45em] text-white/40">
               The Fan Community
@@ -229,11 +314,46 @@ export default function FansArtPage() {
               </h2>
             </div>
 
+            {!loadingGallery && fanArts.length > 0 && (
+              <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="relative w-full md:max-w-sm">
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search artwork or creator..."
+                    className="w-full rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/25"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    ["newest", "Newest"],
+                    ["trending", "🔥 Trending"],
+                    ["most-liked", "❤️ Most Liked"],
+                  ] as const).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setFilter(value)}
+                      className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                        filter === value
+                          ? "bg-white text-black"
+                          : "border border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {loadingGallery ? (
               <div className="py-20 text-center text-sm text-white/40">
                 Loading fan art...
               </div>
-            ) : fanArts.length === 0 ? (
+            ) : visibleFanArts.length === 0 ? (
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-20 text-center">
                 <p className="text-lg font-semibold">
                   No fan art yet
@@ -245,31 +365,58 @@ export default function FansArtPage() {
               </div>
             ) : (
               <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 xl:columns-4">
-                {fanArts.map((art) => (
-                  <button
+                {visibleFanArts.map((art) => (
+                  <div
                     key={art.id}
-                    type="button"
-                    onClick={() => setSelectedArt(art)}
-                    className="group mb-5 block w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 text-left"
+                    className="group mb-5 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950"
                   >
-                    <div className="relative overflow-hidden">
-                      <img
-                        src={art.image_url}
-                        alt={art.title}
-                        className="h-auto w-full transition duration-500 group-hover:scale-[1.03]"
-                      />
+                    <button
+                      type="button"
+                      onClick={() => setSelectedArt(art)}
+                      className="block w-full text-left"
+                    >
+                      <div className="relative overflow-hidden">
+                        <img
+                          src={art.image_url}
+                          alt={art.title}
+                          className="h-auto w-full transition duration-500 group-hover:scale-[1.03]"
+                        />
 
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent px-5 pb-5 pt-16 opacity-0 transition group-hover:opacity-100">
-                        <p className="text-sm font-semibold">
-                          {art.title}
-                        </p>
-
-                        <p className="mt-1 text-xs text-white/60">
-                          by {art.fan_name}
-                        </p>
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent px-5 pb-5 pt-16">
+                          <p className="text-sm font-semibold">{art.title}</p>
+                          <p className="mt-1 text-xs text-white/60">by {art.fan_name}</p>
+                        </div>
                       </div>
+                    </button>
+
+                    <div className="flex items-center justify-between border-t border-white/10 px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => handleLike(art.id)}
+                        disabled={!!likedArts[art.id]}
+                        className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                          likedArts[art.id]
+                            ? "bg-white text-black"
+                            : "bg-white/[0.06] text-white/70 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        <span>{likedArts[art.id] ? "♥" : "♡"}</span>
+                        {likeCounts[art.id] || 0}
+                      </button>
+
+                      {art.social_link && (
+                        <a
+                          href={art.social_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40 transition hover:text-white"
+                        >
+                          Creator ↗
+                        </a>
+                      )}
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -461,6 +608,19 @@ export default function FansArtPage() {
               <p className="mt-1 text-sm text-white/50">
                 by {selectedArt.fan_name}
               </p>
+
+              <button
+                type="button"
+                onClick={() => handleLike(selectedArt.id)}
+                disabled={!!likedArts[selectedArt.id]}
+                className={`mt-4 rounded-full px-5 py-2.5 text-xs font-semibold transition ${
+                  likedArts[selectedArt.id]
+                    ? "bg-white text-black"
+                    : "border border-white/15 bg-white/[0.05] text-white/70 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {likedArts[selectedArt.id] ? "♥ Liked" : "♡ Like"} · {likeCounts[selectedArt.id] || 0}
+              </button>
 
               {selectedArt.social_link && (
                 <a
