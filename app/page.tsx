@@ -1850,25 +1850,54 @@ Sci-Fi
   </p>
 </div>
 
-      {/* FOOTER */}
-      <footer className="border-t border-white/10 py-10">
+     {/* FOOTER */}
+<footer className="border-t border-white/10 py-10">
 
-        <div className="max-w-7xl mx-auto px-6 text-center">
+  <div className="max-w-7xl mx-auto px-6 text-center">
 
-          <h2 className="text-2xl font-bold">
-            WORLD OF RAAKA
-          </h2>
+    <h2 className="text-2xl font-bold">
+      WORLD OF RAAKA
+    </h2>
 
-          <p className="text-zinc-500 text-sm mt-2">
-            Everything about Raaka in one place.
-          </p>
+    <p className="text-zinc-500 text-sm mt-2">
+      Everything about Raaka in one place.
+    </p>
 
-        </div>
+    {/* FOOTER LINKS */}
+    <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs uppercase tracking-[0.2em] text-white/40">
+
+      <a
+        href="/about"
+        className="transition hover:text-white"
+      >
+        About
+      </a>
+
+      <a
+        href="/contact"
+        className="transition hover:text-white"
+      >
+        Contact
+      </a>
+
+      <a
+        href="/privacy-policy"
+        className="transition hover:text-white"
+      >
+        Privacy Policy
+      </a>
+
+    </div>
+
+    <p className="mt-6 text-[10px] tracking-[0.15em] text-white/20">
+      © {new Date().getFullYear()} The World of RAAKA. Fan-created website.
+    </p>
+
+  </div>
 
       </footer>
 
-          
     </main>
-    </>
+  </>
   );
 }
