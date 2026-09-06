@@ -344,17 +344,10 @@ export default function Home() {
       onClick={() => setMenuOpen(false)}
       className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
     >
-      Cast
+      Cast & crew
     </a>
 
-    <a
-      href="#crew"
-      onClick={() => setMenuOpen(false)}
-      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-    >
-      Crew
-    </a>
-
+   
     <a
       href="#posters"
       onClick={() => setMenuOpen(false)}
@@ -362,20 +355,13 @@ export default function Home() {
     >
       Posters
     </a>
-    <a
-  href="/fans-art"
-  onClick={() => setMenuOpen(false)}
-  className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
->
-  Fans Art
-</a>
-
+ 
     <a
       href="#announcements"
       onClick={() => setMenuOpen(false)}
       className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
     >
-      Latest Announcements
+      videos
     </a>
 
     <a
@@ -385,6 +371,11 @@ export default function Home() {
     >
       Songs
     </a>
+    
+<a href="/timeline" className="block px-4 py-3 rounded-xl hover:bg-white/10 transition">
+  Timeline
+</a>
+
 {/* TICKET BOOKING */}
 <div className="mt-1 border-t border-white/15 pt-1">
 
@@ -451,13 +442,7 @@ export default function Home() {
 >
   Box Office
 </a>
-    <a
-      href="#explore"
-      onClick={() => setMenuOpen(false)}
-      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-    >
-      Explore More
-    </a>
+   
 
   </div>
 )}
@@ -465,46 +450,62 @@ export default function Home() {
 </div>
    <main className="raaka-site relative z-10 min-h-screen bg-transparent text-white">
 
-      {/* HERO */}
-      <section className="raaka-hero relative min-h-screen flex items-end overflow-hidden">
+    {/* HERO */}
+<section className="raaka-hero relative min-h-screen flex items-end overflow-hidden">
 
-       <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pb-20">
+  <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pb-20">
 
-          <p className="text-sm uppercase tracking-[0.4em] text-zinc-400 mb-4">
-            The World of
-          </p>
+    <p className="text-sm uppercase tracking-[0.4em] text-zinc-400 mb-4">
+      The World of
+    </p>
 
-          <h1 className="text-6xl md:text-8xl font-bold tracking-tight">
-            RAAKA
-          </h1>
+    <h1 className="text-6xl md:text-8xl font-bold tracking-tight">
+      RAAKA
+    </h1>
 
-          <p className="mt-5 max-w-xl text-zinc-300 text-lg">
-           Born of fire, shaped by the cosmos, and forged in sacrifice, a divine warrior rises to restore balance to a universe threatened by primordial chaos-before faith itself is extinguished.
-          </p>
+    <p className="mt-7 max-w-xl text-zinc-300 text-lg">
+      Born of fire, shaped by the cosmos, and forged in sacrifice, a divine
+      warrior rises to restore balance to a universe threatened by primordial
+      chaos-before faith itself is extinguished.
+    </p>
 
-          <div className="flex gap-4 mt-8 flex-wrap">
+    <div className="flex flex-wrap gap-4">
 
-            <a
-              href="#announcements"
-              className="rounded-full bg-white text-black px-7 py-3 font-semibold hover:bg-zinc-200"
-            >
-              Watch Videos
-            </a>
+      <a
+        href="#videos"
+        className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
+      >
+        Watch Videos
+      </a>
 
-            <a
-              href="#cast"
-              className="rounded-full border border-white/30 px-7 py-3 font-semibold hover:bg-white/10"
-            >
-              Explore Cast
-            </a>
+      <a
+        href="#cast"
+        className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+      >
+        Explore Cast
+      </a>
 
-          </div>
+      <a
+        href="/fans-art"
+        className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+      >
+        Fan Art
+      </a>
 
-        </div>
-      </section>
+      <a
+        href="/box-office"
+        className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+      >
+        Box Office
+      </a>
 
+    </div>
 
-      {/* MOVIE */}
+  </div>
+
+</section>
+
+  {/* MOVIE */}
       <section className="raaka-about max-w-7xl mx-auto px-6 py-24">
 
         <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">

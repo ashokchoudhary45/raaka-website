@@ -28,7 +28,7 @@ export default function ContactPage() {
         <section className="mt-12 rounded-2xl border border-white/10 bg-zinc-950 p-7 md:p-10">
 
           <p className="text-xs uppercase tracking-[0.3em] text-white/35">
-             Fan Community
+            Fan Community
           </p>
 
           <h2 className="mt-3 text-2xl font-bold md:text-3xl">
@@ -73,14 +73,39 @@ export default function ContactPage() {
                 Twitter / X
               </p>
 
-              <a
-                href="https://x.com/WorldOfRaaka"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 inline-block text-base text-white/80 transition hover:text-white"
-              >
-                @WorldOfRaaka
-              </a>
+              <div className="mt-3 space-y-5">
+
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.15em] text-white/30">
+                    World of RAAKA
+                  </p>
+
+                  <a
+                    href="https://x.com/WorldOfRaaka"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block text-base text-white/80 transition hover:text-white"
+                  >
+                    @WorldOfRaaka
+                  </a>
+                </div>
+
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.15em] text-white/30">
+                    Fan Community
+                  </p>
+
+                  <a
+                    href="https://x.com/DracoUnbothered"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block text-base text-white/80 transition hover:text-white"
+                  >
+                    @DracoUnbothered
+                  </a>
+                </div>
+
+              </div>
             </div>
 
           </div>
@@ -100,18 +125,16 @@ export default function ContactPage() {
           <div className="mt-8 space-y-5">
 
             {/* Email */}
-<div>
-  <p className="text-xs uppercase tracking-[0.2em] text-white/35">
-    Email
-  </p>
-
-  <a
-    href="mailto:worldofraakaverse@gmail.com"
-    className="mt-1 inline-block text-base text-white/80 transition hover:text-white"
-  >
-    worldofraakaverse@gmail.com
-  </a>
-</div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-white/35">
+                Email
+              </p><a
+                href="mailto:worldofraakaverse@gmail.com"
+                className="mt-1 inline-block text-base text-white/80 transition hover:text-white"
+              >
+                worldofraakaverse@gmail.com
+              </a>
+            </div>
 
             {/* Instagram */}
             <div>
@@ -133,7 +156,9 @@ export default function ContactPage() {
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-white/35">
                 Twitter / X
-              </p><a
+              </p>
+
+              <a
                 href="https://x.com/Cricvizanalys"
                 target="_blank"
                 rel="noopener noreferrer"

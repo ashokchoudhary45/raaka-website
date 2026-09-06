@@ -230,6 +230,12 @@ export default function AlluArjunPage() {
                 >
                   Filmography
                 </a>
+                <a
+  href="/allu-arjun/awards"
+  className="group inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-6 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/70 backdrop-blur-md transition hover:border-white/30 hover:bg-white/10 hover:text-white"
+>
+  🏆 Awards
+</a>
 
                 <a
                   href="#birthday"
@@ -529,7 +535,178 @@ export default function AlluArjunPage() {
         </section>
 
 
-        {/* SOCIAL MEDIA */}
+       
+
+{/* ALLU ARJUN — AWARDS WON */}
+<section
+  id="awards"
+  className="max-w-7xl mx-auto px-6 py-24"
+>
+  <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">
+    Achievements
+  </p>
+
+  <h2 className="text-4xl md:text-5xl font-bold mt-3">
+    ALLU ARJUN — AWARDS WON
+  </h2>
+
+  <p className="mt-4 max-w-2xl text-zinc-500">
+    A movie-wise collection of awards won by Allu Arjun throughout his career.
+  </p>
+
+  <div className="grid md:grid-cols-2 gap-5 mt-10">
+
+    {/* Gangotri */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">1. Gangotri</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>CineMAA Award – Best Male Debut</li>
+        <li>Nandi Award – Special Jury Award</li>
+        <li>Santosham Film Award – Best Male Debut</li>
+      </ul>
+    </div>
+
+    {/* Arya */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">2. Arya</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>CineMAA Award – Best Actor (Jury)</li>
+        <li>Nandi Award – Special Jury Award</li>
+        <li>Santosham Film Award – Best Young Performer</li>
+      </ul>
+    </div>
+
+    {/* Bunny */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">3. Bunny</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>Santosham Film Award – Best Young Performer</li>
+      </ul>
+    </div>
+
+    {/* Desamuduru */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">4. Desamuduru</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>CineMAA Award – Best Actor (Jury)</li>
+      </ul>
+    </div>
+
+    {/* Parugu */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">5. Parugu</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>Filmfare Award South – Best Actor (Telugu)</li>
+        <li>CineMAA Award – Best Actor</li>
+        <li>Nandi Award – Special Jury Award</li>
+        <li>South Scope Lifestyle Award – Best Actor</li>
+      </ul>
+    </div>
+
+    {/* Arya 2 */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">6. Arya 2</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>South Scope Lifestyle Award – Best Stylish Actor</li>
+      </ul>
+    </div>
+
+    {/* Vedam */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">7. Vedam</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>Filmfare Award South – Best Actor (Telugu)</li>
+        <li>Nandi Award – Special Jury Award</li>
+        <li>South Scope Lifestyle Award – Best Actor</li>
+      </ul>
+    </div>
+
+    {/* Race Gurram */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">8. Race Gurram</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>Filmfare Award South – Best Actor (Telugu)</li>
+        <li>CineMAA Award – Best Actor</li>
+        <li>Mirchi Music Award South – Youth Icon of the Year</li>
+        <li>TSR–TV9 National Film Award – Best Hero</li>
+        <li>SIIMA – Stylish Youth Icon of South Indian Cinema (Male)</li>
+      </ul>
+    </div>
+
+    {/* Rudhramadevi */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">9. Rudhramadevi</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>Filmfare Award South – Best Supporting Actor (Telugu)</li>
+        <li>CineMAA Award – Best Actor (Jury)</li>
+        <li>Nandi Award – Best Character Actor</li>
+        <li>IIFA Utsavam – Performance in a Supporting Role (Male)</li>
+        <li>SIIMA – Best Actor (Critics – Telugu)</li>
+        <li>TSR–TV9 National Film Award – Best Outstanding Performance</li>
+      </ul>
+    </div>
+
+    {/* S/O Satyamurthy */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">10. S/O Satyamurthy</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>TSR–TV9 National Film Award – Best Hero</li>
+      </ul>
+    </div>
+
+    {/* Sarrainodu */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">11. Sarrainodu</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>Filmfare Critics Award South – Best Actor (Telugu)</li>
+        <li>Sakshi Excellence Award – Most Popular Actor of the Year (Male)</li>
+      </ul>
+    </div>
+
+    {/* DJ */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">12. DJ: Duvvada Jagannadham</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>Zee Cine Awards Telugu – Favourite Actor</li>
+      </ul>
+    </div>
+
+    {/* Ala Vaikunthapurramuloo */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">13. Ala Vaikunthapurramuloo</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>Sakshi Excellence Award – Most Popular Actor of the Year (Male)</li>
+        <li>SIIMA – Best Actor (Telugu)</li>
+      </ul>
+    </div>
+
+    {/* Pushpa: The Rise */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">14. Pushpa: The Rise</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>National Film Award – Best Actor</li>
+        <li>Filmfare Award South – Best Actor (Telugu)</li>
+        <li>SIIMA – Best Actor (Telugu)</li>
+        <li>Santosham Film Award – Best Actor</li>
+        <li>GAMA Award – Best Actor</li>
+        <li>Sakshi Excellence Award – Most Popular Actor of the Year (Male)</li>
+      </ul>
+    </div>
+
+    {/* Pushpa 2 */}
+    <div className="rounded-2xl bg-zinc-900 p-7 border border-white/10">
+      <h3 className="text-xl font-bold">15. Pushpa 2: The Rule</h3>
+      <ul className="mt-4 space-y-2 text-sm text-zinc-400 list-disc list-inside">
+        <li>Filmfare Award South – Best Actor (Telugu)</li>
+        <li>SIIMA – Best Actor (Telugu)</li>
+        <li>Gaddar Telangana Film Award – Best Actor</li>
+        <li>Sakshi Excellence Award – Most Popular Actor of the Year (Male)</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+ {/* SOCIAL MEDIA */}
         <section className="allu-special-section px-6 md:px-10 py-24 border-t border-white/10">
 
           <div className="max-w-6xl mx-auto">
@@ -619,8 +796,7 @@ export default function AlluArjunPage() {
 
           </div>
 
-        </section>
-
+</section>
 
         {/* BACK TO RAAKA */}
         <section className="px-6 py-20 text-center border-t border-white/10">
