@@ -209,6 +209,14 @@ export default function Home() {
   <div className="absolute right-0 mt-3 w-[340px] rounded-2xl border border-white/20 bg-black/90 backdrop-blur-xl p-3 shadow-2xl">
 
     <a
+      href="#home"
+      onClick={() => setMenuOpen(false)}
+      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
+    >
+      Home
+    </a>
+
+    <a
       href="#cast"
       onClick={() => setMenuOpen(false)}
       className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
@@ -332,7 +340,7 @@ export default function Home() {
 )}
 
 </div>
-   <main className="raaka-site relative z-10 min-h-screen bg-transparent text-white">
+   <main id="home" className="raaka-site relative z-10 min-h-screen bg-transparent text-white">
 
       {/* HERO */}
       <section className="raaka-hero relative min-h-screen flex items-end overflow-hidden">
@@ -1737,7 +1745,6 @@ Sci-Fi
       </footer>
 
           
-    </main>
-    </>
+    </main>  </>
   );
 }
