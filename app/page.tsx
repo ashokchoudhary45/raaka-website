@@ -1,11 +1,60 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [intro, setIntro] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // ==============================
+  // GLOBAL WEBSITE SEARCH
+  // ==============================
+  const searchItems = [
+    { title: "Allu Arjun", type: "Cast", section: "cast", keywords: "allu arjun actor hero pushpa" },
+    { title: "Deepika Padukone", type: "Cast", section: "cast", keywords: "deepika padukone actress" },
+    { title: "Cast & Characters", type: "Cast", section: "cast", keywords: "cast characters actors" },
+    { title: "Atlee Kumar", type: "Crew", section: "crew", keywords: "atlee kumar director" },
+    { title: "Sai Abhyankkar", type: "Crew", section: "crew", keywords: "sai abhyankkar musician music" },
+    { title: "Kalanithi Maran", type: "Crew", section: "crew", keywords: "kalanithi maran producer" },
+    { title: "Sun Pictures", type: "Crew", section: "crew", keywords: "sun pictures producer" },
+    { title: "Creative Team", type: "Crew", section: "creative-team", keywords: "creative team gk vishnu antony ruben muthuraj" },
+    { title: "VFX Studios", type: "Crew", section: "vfx-studios", keywords: "vfx visual effects special effects lola spectral fractured ilm ironhead legacy" },
+    { title: "Crew Credits", type: "Crew", section: "crew-credits", keywords: "crew credits cinematography editor costume makeup production art sound stunts visual effects choreography publicity" },
+    { title: "Characters", type: "Characters", section: "explore", keywords: "characters roles" },
+    { title: "Songs", type: "Songs", section: "songs", keywords: "songs soundtrack music lyrical" },
+    { title: "Make Way For The King", type: "Song", section: "songs", keywords: "make way for the king song soundtrack" },
+    { title: "Posters", type: "Posters", section: "posters", keywords: "poster posters first look artwork" },
+    { title: "Latest Announcements", type: "Announcements", section: "announcements", keywords: "announcements news updates videos" },
+    { title: "GEAR UP for RAAKA", type: "Announcement", section: "announcements", keywords: "gear up raaka announcement video" },
+    { title: "Welcome on board Deepika Padukone", type: "Announcement", section: "announcements", keywords: "welcome on board deepika padukone announcement video" },
+    { title: "News & Updates", type: "Explore", section: "explore", keywords: "news updates latest announcement" },
+  ];
+
+  const filteredSearchItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
+
+    return searchItems
+      .filter((item) =>
+        `${item.title} ${item.type} ${item.keywords}`.toLowerCase().includes(query)
+      )
+      .slice(0, 8);
+  }, [searchQuery]);
+
+  const goToSearchResult = (section: string) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+
+    requestAnimationFrame(() => {
+      document.getElementById(section)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
 
   // ==============================
   // RAAKA INTRO AUDIO
@@ -181,6 +230,88 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
       </div>
 
+      {/* GLOBAL SEARCH */}
+      <div className="fixed left-1/2 top-5 z-[60] w-[calc(100%-7rem)] max-w-xl -translate-x-1/2 md:top-6 md:w-[min(520px,calc(100%-180px))]">
+        <div className="relative">
+          <div className="flex items-center rounded-full border border-white/15 bg-black/65 px-4 py-2.5 shadow-2xl backdrop-blur-xl transition focus-within:border-white/30 focus-within:bg-black/80">
+            <svg
+              className="mr-3 h-4 w-4 shrink-0 text-white/45"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <input
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setSearchOpen(true);
+              }}
+              onFocus={() => setSearchOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setSearchOpen(false);
+                  setSearchQuery("");
+                }
+              }}
+              type="search"
+              placeholder="Search cast, crew, characters, songs, posters..."
+              aria-label="Search Raaka website"
+              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/35"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSearchOpen(false);
+                }}
+                className="ml-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white/45 transition hover:bg-white/10 hover:text-white"
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {searchOpen && searchQuery.trim() && (
+            <div className="absolute left-0 right-0 top-[calc(100%+10px)] overflow-hidden rounded-2xl border border-white/10 bg-black/90 p-2 shadow-2xl backdrop-blur-2xl">
+              {filteredSearchItems.length > 0 ? (
+                filteredSearchItems.map((item) => (
+                  <button
+                    key={`${item.type}-${item.title}`}
+                    type="button"
+                    onClick={() => goToSearchResult(item.section)}
+                    className="flex w-full items-center justify-between gap-4 rounded-xl px-4 py-3 text-left transition hover:bg-white/10"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-white">
+                        {item.title}
+                      </span>
+                      <span className="mt-0.5 block text-[10px] uppercase tracking-[0.2em] text-white/35">
+                        {item.type}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-white/30">→</span>
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-5 text-center">
+                  <p className="text-sm text-white/60">No results found</p>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/25">
+                    Try another name or keyword
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="fixed top-6 right-6 z-50">
   {/* 3 LINE BUTTON */}
   <button
@@ -207,14 +338,6 @@ export default function Home() {
 {/* MENU */}
 {menuOpen && (
   <div className="absolute right-0 mt-3 w-[340px] rounded-2xl border border-white/20 bg-black/90 backdrop-blur-xl p-3 shadow-2xl">
-
-    <a
-      href="#home"
-      onClick={() => setMenuOpen(false)}
-      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-    >
-      Home
-    </a>
 
     <a
       href="#cast"
@@ -340,7 +463,7 @@ export default function Home() {
 )}
 
 </div>
-   <main id="home" className="raaka-site relative z-10 min-h-screen bg-transparent text-white">
+   <main className="raaka-site relative z-10 min-h-screen bg-transparent text-white">
 
       {/* HERO */}
       <section className="raaka-hero relative min-h-screen flex items-end overflow-hidden">
@@ -1745,6 +1868,7 @@ Sci-Fi
       </footer>
 
           
-    </main>  </>
+    </main>
+    </>
   );
 }
