@@ -231,7 +231,7 @@ export default function Home() {
       </div>
 
       {/* GLOBAL SEARCH */}
-      <div className="fixed left-1/2 top-5 z-[60] w-[calc(100%-7rem)] max-w-xl -translate-x-1/2 md:top-6 md:w-[min(520px,calc(100%-180px))]">
+    <div className="absolute left-1/2 top-4 z-[60] w-[calc(100%-7rem)] max-w-xl -translate-x-1/2 translate-y-0 md:top-6 md:w-[min(520px,calc(100%-180px))]">
         <div className="relative">
           <div className="flex items-center rounded-full border border-white/15 bg-black/65 px-4 py-2.5 shadow-2xl backdrop-blur-xl transition focus-within:border-white/30 focus-within:bg-black/80">
             <svg
@@ -312,7 +312,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="fixed top-6 right-6 z-50">
+      <div className="absolute top-[70px] right-6 z-50">
   {/* 3 LINE BUTTON */}
   <button
     onClick={() => setMenuOpen(!menuOpen)}
