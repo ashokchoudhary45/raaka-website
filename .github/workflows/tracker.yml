@@ -1,0 +1,33 @@
+name: Daily Raaka Interest Tracker
+
+on:
+  schedule:
+    # 0 18 * * * ka matlab hai UTC time ke mutabiq roz raat 12:00 AM IST (Indian Standard Time)
+    - cron: '30 18 * * *'
+  workflow_dispatch: # Isse aap jab chahein GitHub se manually bhi click karke run kar sakenge
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies inside raaka-tracker
+        run: |
+          cd raaka-tracker
+          npm install
+
+      - name: Run tracking script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          cd raaka-tracker
+          node index.js
