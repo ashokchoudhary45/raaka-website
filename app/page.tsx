@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import NewBadge from "@/components/NewBadge";
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [intro, setIntro] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [ticketsOpen, setTicketsOpen] = useState(false);
 
   // ==============================
   // GLOBAL WEBSITE SEARCH
@@ -313,7 +315,7 @@ export default function Home() {
       </div>
 
       <div className="absolute top-[22px] right-4 z-50
-      w-[calc(100vw-2rem)] max-w-[340px]">
+      w-[calc(100vw-40rem)] max-w-[340px]">
   {/* 3 LINE BUTTON */}
   <button
     onClick={() => setMenuOpen(!menuOpen)}
@@ -373,69 +375,92 @@ export default function Home() {
       Songs
     </a>
     
-<a href="/timeline" className="block px-4 py-3 rounded-xl hover:bg-white/10 transition">
+<a
+  href="/timeline"
+  className="block rounded-xl px-4 py-1.5 transition hover:bg-white/10"
+>
   Timeline
+  <NewBadge addedAt="2026-09-06" />
 </a>
-
 {/* TICKET BOOKING */}
-<div className="mt-1 border-t border-white/15 pt-1">
+<div className="mt-1 pt-1">
 
-  <div className="block px-4 py-3 rounded-xl hover:bg-white/10 transition">
+  {/* BOOK TICKETS */}
+  <button
+  type="button"
+  onClick={() => setTicketsOpen(!ticketsOpen)}
+  className="flex w-full items-center justify-between rounded-xl px-4 py-2 text-left transition hover:bg-white/10"
+>
+  <span className="flex items-center">
     Book Tickets
-  </div>
+    <NewBadge addedAt="2026-09-06" />
+  </span>
 
-  <div className="flex items-start gap-3 px-4 pb-3">
+  <span
+    className={`text-white/50 transition-transform duration-300 ${
+      ticketsOpen ? "rotate-180" : ""
+    }`}
+  >
+    ⌄
+  </span>
+</button>
+  {/* TICKET OPTIONS */}
+  {ticketsOpen && (
+    <div className="flex items-start gap-3 px-4 pb-3">
 
-    {/* BOOKMYSHOW */}
-    <a
-      href="https://in.bookmyshow.com/movies/raaka/ET00494565"
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={() => setMenuOpen(false)}
-      className="group flex w-[100px] flex-col items-center"
-      title="Book Raaka on BookMyShow"
-    >
-      <div className="flex h-[50px] w-[100px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
-        <Image
-          src="/images/logo1.jpg"
-          alt="BookMyShow"
-          width={321}
-          height={157}
-          className="h-auto w-full object-contain"
-        />
-      </div>
+      {/* BOOKMYSHOW */}
+      <a
+        href="https://in.bookmyshow.com/movies/raaka/ET00494565"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => setMenuOpen(false)}
+        className="group flex w-[100px] flex-col items-center"
+        title="Book Raaka on BookMyShow"
+      >
+        <div className="flex h-[50px] w-[100px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
+          <Image
+            src="/images/logo1.jpg"
+            alt="BookMyShow"
+            width={321}
+            height={157}
+            className="h-auto w-full object-contain"
+          />
+        </div>
 
-      <span className="mt-1 text-xs font-semibold text-white/80 group-hover:text-white">
-        BookMyShow
-      </span>
-    </a>
+        <span className="mt-1 text-xs font-semibold text-white/80 group-hover:text-white">
+          BookMyShow
+        </span>
+      </a>
 
-    {/* DISTRICT */}
-    <a
-      href="https://www.district.in/movies/raaka-movie-tickets-MV218847"
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={() => setMenuOpen(false)}
-      className="group flex w-[100px] flex-col items-center"
-      title="Book Raaka on District"
-    >
-      <div className="flex h-[50px] w-[100px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
-        <Image
-          src="/images/logo2.jpg"
-          alt="District"
-          width={715}
-          height={429}
-          className="h-auto w-full object-contain"
-        />
-      </div>
+      {/* DISTRICT */}
+      <a
+        href="https://www.district.in/movies/raaka-movie-tickets-MV218847"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => setMenuOpen(false)}
+        className="group flex w-[100px] flex-col items-center"
+        title="Book Raaka on District"
+      >
+        <div className="flex h-[50px] w-[100px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
+          <Image
+            src="/images/logo2.jpg"
+            alt="District"
+            width={715}
+            height={429}
+            className="h-auto w-full object-contain"
+          />
+        </div>
 
-      <span className="mt-1 text-xs font-semibold text-white/80 group-hover:text-white">
-        District
-      </span>
-    </a>
+        <span className="mt-1 text-xs font-semibold text-white/80 group-hover:text-white">
+          District
+        </span>
+      </a>
 
-  </div>
+    </div>
+  )}
+
 </div>
+ 
 <a
   href="#box-office"
   onClick={() => setMenuOpen(false)}
@@ -486,19 +511,21 @@ export default function Home() {
         Explore Cast
       </a>
 
-      <a
-        href="/fans-art"
-        className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-      >
-        Fan Art
-      </a>
+     <a
+  href="/fans-art"
+  className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+>
+  Fan Art
+  <NewBadge addedAt="2026-09-06" />
+</a>
 
-      <a
-        href="/box-office"
-        className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-      >
-        Box Office
-      </a>
+<a
+  href="/box-office"
+  className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+>
+  Box Office
+  <NewBadge addedAt="2026-09-06" />
+</a>
 
     </div>
 
