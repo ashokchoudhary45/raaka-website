@@ -585,266 +585,437 @@ export default function Home() {
         </div>
 
 
-        {/* =========================
-            TITLE SUBLINE
-            ========================= */}
-        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 md:mb-4 md:gap-4">
-
-          <span className="text-[7px] font-medium uppercase tracking-[0.4em] text-orange-300/65 md:text-[9px]">
-            Born of Fire
-          </span>
-
-          <span className="h-1 w-1 rounded-full bg-orange-400/70" />
-
-          <span className="text-[7px] font-medium uppercase tracking-[0.4em] text-white/35 md:text-[9px]">
-            Forged by Sacrifice
-          </span>
-
-          <span className="hidden h-1 w-1 rounded-full bg-white/20 sm:block" />
-
-          <span className="hidden text-[7px] font-medium uppercase tracking-[0.4em] text-white/25 sm:block md:text-[9px]">
-            Chosen by Destiny
-          </span>
-
-        </div>
-
-
-        {/* =========================
-            DESCRIPTION
-            ========================= */}
-        <p className="max-w-2xl text-[12px] leading-5 text-white/60 md:text-[15px] md:leading-6">
-
-          Born of fire, shaped by the cosmos, and forged in sacrifice, a divine
-          warrior rises to restore balance to a universe threatened by primordial
-          chaos—before faith itself is extinguished.
-
-        </p>
-
-
        {/* =========================
+    TITLE SUBLINE
+    ========================= */}
+
+<div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 md:mb-4 md:gap-3">
+
+  <span className="text-[7px] font-medium uppercase tracking-[0.32em] text-orange-300/70 md:text-[9px] md:tracking-[0.4em]">
+    Born of Fire
+  </span>
+
+  <span className="h-1 w-1 shrink-0 rounded-full bg-orange-400/70" />
+
+  <span className="text-[7px] font-medium uppercase tracking-[0.32em] text-white/35 md:text-[9px] md:tracking-[0.4em]">
+    Forged by Sacrifice
+  </span>
+
+  <span className="h-1 w-1 shrink-0 rounded-full bg-white/20" />
+
+  <span className="text-[7px] font-medium uppercase tracking-[0.32em] text-white/25 md:text-[9px] md:tracking-[0.4em]">
+    Chosen by Destiny
+  </span>
+
+</div>
+
+
+{/* =========================
+    DESCRIPTION
+    ========================= */}
+
+<p
+  className="
+    max-w-[680px]
+    text-[13px]
+    font-normal
+    leading-[1.65]
+    text-white/60
+    md:text-[15px]
+    md:leading-6
+  "
+>
+  Born of fire, shaped by the cosmos, and forged in sacrifice, a divine
+  warrior rises to restore balance to a universe threatened by primordial
+  chaos—before faith itself is extinguished.
+</p>
+
+
+{/* =========================
     ACTION CARDS
     ========================= */}
+
 <div
   className="
-    mt-6
+    mt-5
     grid
     w-full
-    max-w-[920px]
+    max-w-[900px]
     grid-cols-1
-    gap-3
+    gap-2.5
     sm:grid-cols-2
     lg:grid-cols-3
-    md:mt-7
+    md:mt-6
+    md:gap-3
   "
 >
 
-  {/* WATCH VIDEOS */}
+
+  {/* =========================
+      WATCH VIDEOS
+      ========================= */}
+
   <a
     href="#videos"
     className="
       group
       relative
-      block
-      min-w-0
+      flex
+      h-[76px]
       w-full
+      min-w-0
+      items-center
       overflow-hidden
-      rounded-2xl
+      rounded-xl
       border
-      border-white/[0.12]
-      bg-black/45
-      p-3
+      border-white/[0.13]
+      bg-black/50
+      px-3
       backdrop-blur-xl
       transition-all
-      duration-500
-      hover:-translate-y-1
+      duration-300
+      hover:-translate-y-0.5
       hover:border-orange-400/50
-      hover:bg-black/60
+      hover:bg-black/65
+      md:h-[88px]
+      md:px-4
     "
   >
 
-    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-orange-500/[0.08] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+    {/* Hover glow */}
+    <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-orange-500/[0.08] via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-    <div className="relative flex items-center gap-3">
 
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-orange-400/30 bg-orange-500/[0.08] text-orange-300 transition-all duration-500 group-hover:border-orange-400/60 group-hover:bg-orange-500/[0.16]">
+    {/* Icon */}
+    <div
+      className="
+        relative
+        z-10
+        flex
+        h-11
+        w-11
+        shrink-0
+        items-center
+        justify-center
+        rounded-xl
+        border
+        border-orange-400/35
+        bg-orange-500/[0.08]
+        text-orange-300
+        md:h-12
+        md:w-12
+      "
+    >
 
-        <svg
-          className="ml-0.5 h-5 w-5"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-        >
-          <path d="M8 5.5v13l11-6.5z" />
-        </svg>
-
-      </div>
-
-      <div className="min-w-0 flex-1">
-
-        <p className="truncate text-[8px] uppercase tracking-[0.28em] text-white/30">
-          Trailers & More
-        </p>
-
-        <h3 className="mt-1 truncate text-sm font-semibold text-white">
-          Watch Videos
-        </h3>
-
-      </div>
-
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.14] text-sm text-white/45 transition-all group-hover:border-orange-400/50 group-hover:text-white">
-        →
-      </span>
+      <svg
+        className="ml-0.5 h-4 w-4 md:h-5 md:w-5"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path d="M8 5.5v13l11-6.5z" />
+      </svg>
 
     </div>
 
-    <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-orange-400 transition-all duration-500 group-hover:w-full" />
+
+    {/* Text */}
+    <div className="relative z-10 ml-3 min-w-0 flex-1 md:ml-4">
+
+      <p className="truncate text-[7px] font-medium uppercase tracking-[0.28em] text-white/35 md:text-[8px]">
+        Trailers & More
+      </p>
+
+      <h3 className="mt-1 truncate text-[14px] font-semibold text-white md:text-[15px]">
+        Watch Videos
+      </h3>
+
+    </div>
+
+
+    {/* Arrow */}
+    <div
+      className="
+        relative
+        z-10
+        flex
+        h-8
+        w-8
+        shrink-0
+        items-center
+        justify-center
+        rounded-full
+        border
+        border-white/[0.14]
+        text-sm
+        text-white/40
+        transition-all
+        group-hover:border-orange-400/50
+        group-hover:text-white
+        md:h-9
+        md:w-9
+      "
+    >
+      →
+    </div>
+
+
+    {/* Bottom accent */}
+    <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-orange-400 transition-all duration-500 group-hover:w-full" />
 
   </a>
 
 
-  {/* FAN ART */}
+
+  {/* =========================
+      FAN ART
+      ========================= */}
+
   <a
     href="/fans-art"
     className="
       group
       relative
-      block
-      min-w-0
+      flex
+      h-[76px]
       w-full
+      min-w-0
+      items-center
       overflow-hidden
-      rounded-2xl
+      rounded-xl
       border
-      border-white/[0.12]
-      bg-black/45
-      p-3
+      border-white/[0.13]
+      bg-black/50
+      px-3
       backdrop-blur-xl
       transition-all
-      duration-500
-      hover:-translate-y-1
+      duration-300
+      hover:-translate-y-0.5
       hover:border-purple-400/50
-      hover:bg-black/60
+      hover:bg-black/65
+      md:h-[88px]
+      md:px-4
     "
   >
 
-    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-500/[0.08] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+    {/* Hover glow */}
+    <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-purple-500/[0.08] via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-    <div className="relative flex items-center gap-3">
 
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-purple-400/30 bg-purple-500/[0.08] text-purple-300 transition-all duration-500 group-hover:border-purple-400/60 group-hover:bg-purple-500/[0.16]">
+    {/* Icon */}
+    <div
+      className="
+        relative
+        z-10
+        flex
+        h-11
+        w-11
+        shrink-0
+        items-center
+        justify-center
+        rounded-xl
+        border
+        border-purple-400/35
+        bg-purple-500/[0.08]
+        text-purple-300
+        md:h-12
+        md:w-12
+      "
+    >
 
-        <svg
-          className="h-5 w-5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-        >
-          <path d="M12 3.5l2.4 5.1 5.6.8-4 4 1 5.6-5-2.7-5 2.7 1-5.6-4-4 5.6-.8z" />
-        </svg>
-
-      </div>
-
-      <div className="min-w-0 flex-1">
-
-        <div className="flex min-w-0 items-center gap-2">
-
-          <p className="truncate text-[8px] uppercase tracking-[0.28em] text-white/30">
-            Art by the Fans
-          </p>
-
-          <NewBadge addedAt="2026-09-06" />
-
-        </div>
-
-        <h3 className="mt-1 truncate text-sm font-semibold text-white">
-          Fan Art
-        </h3>
-
-      </div>
-
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.14] text-sm text-white/45 transition-all group-hover:border-purple-400/50 group-hover:text-white">
-        →
-      </span>
+      <svg
+        className="h-4 w-4 md:h-5 md:w-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      >
+        <path d="M12 3.5l2.4 5.1 5.6.8-4 4 1 5.6-5-2.7-5 2.7 1-5.6-4-4 5.6-.8z" />
+      </svg>
 
     </div>
 
-    <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-purple-400 transition-all duration-500 group-hover:w-full" />
+
+    {/* Text */}
+    <div className="relative z-10 ml-3 min-w-0 flex-1 md:ml-4">
+
+      <div className="flex min-w-0 items-center gap-2">
+
+        <p className="truncate text-[7px] font-medium uppercase tracking-[0.28em] text-white/35 md:text-[8px]">
+          Art by the Fans
+        </p>
+
+        <NewBadge addedAt="2026-09-06" />
+
+      </div>
+
+      <h3 className="mt-1 truncate text-[14px] font-semibold text-white md:text-[15px]">
+        Fan Art
+      </h3>
+
+    </div>
+
+
+    {/* Arrow */}
+    <div
+      className="
+        relative
+        z-10
+        flex
+        h-8
+        w-8
+        shrink-0
+        items-center
+        justify-center
+        rounded-full
+        border
+        border-white/[0.14]
+        text-sm
+        text-white/40
+        transition-all
+        group-hover:border-purple-400/50
+        group-hover:text-white
+        md:h-9
+        md:w-9
+      "
+    >
+      →
+    </div>
+
+
+    {/* Bottom accent */}
+    <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-purple-400 transition-all duration-500 group-hover:w-full" />
 
   </a>
 
 
-  {/* BOX OFFICE */}
+
+  {/* =========================
+      BOX OFFICE
+      ========================= */}
+
   <a
     href="/box-office"
     className="
       group
       relative
-      block
-      min-w-0
+      flex
+      h-[76px]
       w-full
+      min-w-0
+      items-center
       overflow-hidden
-      rounded-2xl
+      rounded-xl
       border
-      border-white/[0.12]
-      bg-black/45
-      p-3
+      border-white/[0.13]
+      bg-black/50
+      px-3
       backdrop-blur-xl
       transition-all
-      duration-500
-      hover:-translate-y-1
+      duration-300
+      hover:-translate-y-0.5
       hover:border-yellow-400/50
-      hover:bg-black/60
+      hover:bg-black/65
+      md:h-[88px]
+      md:px-4
     "
   >
 
-    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-yellow-500/[0.07] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+    {/* Hover glow */}
+    <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-yellow-500/[0.07] via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-    <div className="relative flex items-center gap-3">
 
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-yellow-400/30 bg-yellow-500/[0.08] text-yellow-300 transition-all duration-500 group-hover:border-yellow-400/60 group-hover:bg-yellow-500/[0.16]">
+    {/* Icon */}
+    <div
+      className="
+        relative
+        z-10
+        flex
+        h-11
+        w-11
+        shrink-0
+        items-center
+        justify-center
+        rounded-xl
+        border
+        border-yellow-400/35
+        bg-yellow-500/[0.08]
+        text-yellow-300
+        md:h-12
+        md:w-12
+      "
+    >
 
-        <svg
-          className="h-5 w-5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-        >
-          <path d="M5 19V10" />
-          <path d="M12 19V5" />
-          <path d="M19 19v-7" />
-        </svg>
-
-      </div>
-
-      <div className="min-w-0 flex-1">
-
-        <div className="flex min-w-0 items-center gap-2">
-
-          <p className="truncate text-[8px] uppercase tracking-[0.28em] text-white/30">
-            Track the Numbers
-          </p>
-
-          <NewBadge addedAt="2026-09-06" />
-
-        </div>
-
-        <h3 className="mt-1 truncate text-sm font-semibold text-white">
-          Box Office
-        </h3>
-
-      </div>
-
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.14] text-sm text-white/45 transition-all group-hover:border-yellow-400/50 group-hover:text-white">
-        →
-      </span>
+      <svg
+        className="h-4 w-4 md:h-5 md:w-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      >
+        <path d="M5 19V10" />
+        <path d="M12 19V5" />
+        <path d="M19 19v-7" />
+      </svg>
 
     </div>
 
-    <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-yellow-400 transition-all duration-500 group-hover:w-full" />
+
+    {/* Text */}
+    <div className="relative z-10 ml-3 min-w-0 flex-1 md:ml-4">
+
+      <div className="flex min-w-0 items-center gap-2">
+
+        <p className="truncate text-[7px] font-medium uppercase tracking-[0.28em] text-white/35 md:text-[8px]">
+          Track the Numbers
+        </p>
+
+        <NewBadge addedAt="2026-09-06" />
+
+      </div>
+
+      <h3 className="mt-1 truncate text-[14px] font-semibold text-white md:text-[15px]">
+        Box Office
+      </h3>
+
+    </div>
+
+
+    {/* Arrow */}
+    <div
+      className="
+        relative
+        z-10
+        flex
+        h-8
+        w-8
+        shrink-0
+        items-center
+        justify-center
+        rounded-full
+        border
+        border-white/[0.14]
+        text-sm
+        text-white/40
+        transition-all
+        group-hover:border-yellow-400/50
+        group-hover:text-white
+        md:h-9
+        md:w-9
+      "
+    >
+      →
+    </div>
+
+
+    {/* Bottom accent */}
+    <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-yellow-400 transition-all duration-500 group-hover:w-full" />
 
   </a>
 
 </div>
+
+      
+
       </div>
 
     </div>
