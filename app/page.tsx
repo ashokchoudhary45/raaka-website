@@ -424,145 +424,163 @@ export default function Home() {
 
    <main id="home" className="raaka-site relative z-10 min-h-screen bg-transparent text-white">
 {/* HERO */}
-<section className="raaka-hero relative min-h-screen overflow-hidden">
+<section className="raaka-hero relative h-screen min-h-[620px] overflow-hidden">
+
+  <div className="relative z-10 flex h-full w-full items-center">
+
+    <div className="mx-auto w-full max-w-7xl px-6 py-20 md:px-8">
+
+      <div className="max-w-5xl">
+
+    {/* =========================
+    THE WORLD OF RAAKA
+    ========================= */}
+
+<div className="relative max-w-4xl">
+
+  {/* Subtle cinematic atmosphere */}
+  <div
+    className="
+      pointer-events-none
+      absolute
+      -left-20
+      top-1/2
+      -z-10
+      h-56
+      w-[620px]
+      -translate-y-1/2
+      rounded-full
+      bg-orange-500/[0.055]
+      blur-[100px]
+    "
+  />
 
   {/* =========================
-      HERO CONTENT
+      THE WORLD OF
       ========================= */}
-  <div className="relative z-10 flex min-h-screen w-full items-end">
+  <div className="mb-4 flex items-center gap-3 md:mb-5 md:gap-4">
 
-    <div className="mx-auto w-full max-w-7xl px-6 pb-10 pt-32 md:pb-16 lg:px-8">
+    <span
+      className="
+        h-px
+        w-8
+        bg-gradient-to-r
+        from-transparent
+        to-orange-400/75
+        md:w-14
+      "
+    />
 
-      {/* Main hero width */}
-      <div className="max-w-4xl">
+    <span
+      className="
+        text-[8px]
+        font-medium
+        uppercase
+        tracking-[0.58em]
+        text-white/50
+        md:text-[10px]
+      "
+    >
+      The World of
+    </span>
+
+    <span
+      className="
+        relative
+        h-px
+        w-8
+        bg-gradient-to-l
+        from-transparent
+        to-orange-400/75
+        md:w-14
+      "
+    >
+      <span
+        className="
+          absolute
+          -right-1
+          -top-[2px]
+          h-[5px]
+          w-[5px]
+          rounded-full
+          bg-orange-400
+          shadow-[0_0_12px_rgba(251,146,60,0.9)]
+        "
+      />
+    </span>
+
+  </div>
+
+
+  {/* =========================
+      RAAKA LOGO
+      ========================= */}
+  <div
+    className="
+      relative
+      w-[min(82vw,560px)]
+      md:w-[min(58vw,640px)]
+    "
+  >
+
+    {/* Soft logo glow */}
+    <div
+      className="
+        pointer-events-none
+        absolute
+        -inset-x-10
+        -inset-y-8
+        rounded-full
+        bg-orange-500/[0.045]
+        blur-[55px]
+      "
+    />
+
+    {/* Deep logo shadow */}
+    <div
+      className="
+        pointer-events-none
+        absolute
+        inset-x-4
+        bottom-0
+        h-10
+        rounded-full
+        bg-black/70
+        blur-[22px]
+      "
+    />
+
+    {/* Actual RAAKA logo */}
+    <img
+      src="/images/raaka-logo.png"
+      alt="RAAKA"
+      className="
+        relative
+        z-10
+        block
+        h-auto
+        w-full
+        object-contain
+        drop-shadow-[0_10px_16px_rgba(0,0,0,0.95)]
+        drop-shadow-[0_0_24px_rgba(255,130,20,0.10)]
+      "
+    />
+
+  </div>
+
+</div>
+
 
         {/* =========================
-            THE WORLD OF
+            ORANGE TITLE LINE
             ========================= */}
-        <div className="mb-5 flex items-center gap-3 md:mb-7 md:gap-4">
+        <div className="mb-3 flex items-center md:mb-4">
 
-          <span className="h-px w-8 bg-gradient-to-r from-transparent to-orange-400/80 md:w-14" />
+          <span className="h-[3px] w-12 bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.85)] md:w-20" />
 
-          <p className="text-[9px] font-medium uppercase tracking-[0.58em] text-white/50 md:text-[11px]">
-            The World of
-          </p>
+          <span className="mx-2 h-[7px] w-[7px] rotate-45 bg-orange-300 shadow-[0_0_14px_rgba(251,146,60,0.9)]" />
 
-          <span className="relative h-px w-8 bg-gradient-to-l from-transparent to-orange-400/80 md:w-14">
-            <span className="absolute -right-1 -top-[2px] h-[5px] w-[5px] rounded-full bg-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.9)]" />
-          </span>
-
-        </div>
-
-
-        {/* =========================
-            RAAKA TITLE
-            ========================= */}
-        <div className="relative mb-8 inline-block md:mb-10">
-
-          {/* Atmospheric glow */}
-          <div
-            className="
-              pointer-events-none
-              absolute
-              -inset-x-16
-              -inset-y-10
-              -z-10
-              rounded-full
-              bg-orange-600/[0.08]
-              blur-[90px]
-            "
-          />
-
-          {/* Secondary shadow word */}
-          <div
-            className="
-              pointer-events-none
-              absolute
-              left-1
-              top-3
-              -z-10
-              select-none
-              text-[clamp(5.2rem,15vw,10.5rem)]
-              font-black
-              uppercase
-              leading-[0.72]
-              tracking-[-0.085em]
-              text-black/70
-              blur-[2px]
-            "
-          >
-            RAAKA
-          </div>
-
-          {/* Main wordmark */}
-          <h1
-            className="
-              relative
-              select-none
-              text-[clamp(5.2rem,15vw,10.5rem)]
-              font-black
-              uppercase
-              leading-[0.72]
-              tracking-[-0.085em]
-              text-transparent
-              bg-clip-text
-              bg-gradient-to-b
-              from-white
-              via-[#e9e9e9]
-              to-[#737373]
-            "
-            style={{
-              WebkitTextStroke: "1px rgba(255,255,255,0.28)",
-              textShadow: `
-                0 2px 0 rgba(255,255,255,0.35),
-                0 5px 0 rgba(60,60,60,0.22),
-                0 12px 24px rgba(0,0,0,0.95),
-                0 24px 45px rgba(0,0,0,0.7),
-                0 0 55px rgba(255,90,0,0.15)
-              `,
-            }}
-          >
-            RAAKA
-          </h1>
-
-
-          {/* Metallic reflection */}
-          <div
-            className="
-              pointer-events-none
-              absolute
-              left-[5%]
-              right-[7%]
-              top-[8%]
-              h-[9%]
-              bg-gradient-to-r
-              from-transparent
-              via-white/45
-              to-transparent
-              opacity-60
-              blur-[1px]
-            "
-          />
-
-
-          {/* Fiery title line */}
-          <div className="absolute -bottom-4 left-[3%] flex items-center md:-bottom-5">
-
-            <span className="h-[3px] w-10 bg-orange-500 shadow-[0_0_16px_rgba(249,115,22,0.9)] md:w-20" />
-
-            <span className="mx-2 h-[7px] w-[7px] rotate-45 bg-orange-300 shadow-[0_0_15px_rgba(251,146,60,1)]" />
-
-            <span className="h-[2px] w-28 bg-gradient-to-r from-orange-400 via-orange-500/50 to-transparent shadow-[0_0_12px_rgba(249,115,22,0.5)] md:w-56" />
-
-          </div>
-
-
-          {/* Cosmic insignia */}
-          <div className="absolute -right-4 -top-4 flex h-7 w-7 items-center justify-center md:-right-8 md:-top-6">
-
-            <span className="h-2.5 w-2.5 rotate-45 border border-orange-400/80 bg-orange-400/10 shadow-[0_0_18px_rgba(251,146,60,0.9)]" />
-
-          </div>
+          <span className="h-px w-28 bg-gradient-to-r from-orange-400/70 via-orange-500/30 to-transparent md:w-52" />
 
         </div>
 
@@ -570,21 +588,21 @@ export default function Home() {
         {/* =========================
             TITLE SUBLINE
             ========================= */}
-        <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 md:mb-6 md:gap-3">
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 md:mb-4 md:gap-4">
 
-          <span className="text-[8px] font-medium uppercase tracking-[0.42em] text-orange-300/60 md:text-[9px]">
+          <span className="text-[7px] font-medium uppercase tracking-[0.4em] text-orange-300/65 md:text-[9px]">
             Born of Fire
           </span>
 
           <span className="h-1 w-1 rounded-full bg-orange-400/70" />
 
-          <span className="text-[8px] font-medium uppercase tracking-[0.42em] text-white/35 md:text-[9px]">
+          <span className="text-[7px] font-medium uppercase tracking-[0.4em] text-white/35 md:text-[9px]">
             Forged by Sacrifice
           </span>
 
           <span className="hidden h-1 w-1 rounded-full bg-white/20 sm:block" />
 
-          <span className="hidden text-[8px] font-medium uppercase tracking-[0.42em] text-white/25 sm:block md:text-[9px]">
+          <span className="hidden text-[7px] font-medium uppercase tracking-[0.4em] text-white/25 sm:block md:text-[9px]">
             Chosen by Destiny
           </span>
 
@@ -594,7 +612,7 @@ export default function Home() {
         {/* =========================
             DESCRIPTION
             ========================= */}
-        <p className="max-w-2xl text-sm leading-7 text-white/60 md:text-[17px] md:leading-8">
+        <p className="max-w-2xl text-[12px] leading-5 text-white/60 md:text-[15px] md:leading-6">
 
           Born of fire, shaped by the cosmos, and forged in sacrifice, a divine
           warrior rises to restore balance to a universe threatened by primordial
@@ -604,333 +622,210 @@ export default function Home() {
 
 
         {/* =========================
-            HERO ACTION CARDS
+            ACTION CARDS
             ========================= */}
-        <div className="mt-8 grid w-full max-w-[620px] gap-3 md:mt-9">
+        <div className="mt-4 grid w-full max-w-5xl grid-cols-3 gap-2.5 md:mt-5 md:gap-3">
 
-          {/* =========================
-              WATCH VIDEOS
-              ========================= */}
+
+          {/* WATCH VIDEOS */}
           <a
             href="#videos"
             className="
               group
               relative
               block
-              w-full
+              min-w-0
               overflow-hidden
-              rounded-2xl
+              rounded-xl
               border
               border-white/[0.12]
               bg-black/45
-              p-3
+              p-2.5
               backdrop-blur-xl
               transition-all
               duration-500
-              hover:-translate-y-0.5
+              hover:-translate-y-1
               hover:border-orange-400/50
               hover:bg-black/60
             "
           >
 
-            {/* Ambient hover glow */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-orange-500/[0.07] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-orange-500/[0.08] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-            <div className="relative flex items-center gap-4">
+            <div className="relative">
 
-              {/* Icon */}
-              <div
-                className="
-                  flex
-                  h-12
-                  w-12
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-xl
-                  border
-                  border-orange-400/30
-                  bg-orange-500/[0.08]
-                  text-orange-300
-                  transition-all
-                  duration-500
-                  group-hover:border-orange-400/60
-                  group-hover:bg-orange-500/[0.16]
-                "
-              >
-                <svg
-                  className="ml-0.5 h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M8 5.5v13l11-6.5z" />
-                </svg>
-              </div>
+              <div className="mb-2 flex items-center justify-between">
 
-              {/* Text */}
-              <div className="min-w-0 flex-1">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-orange-400/30 bg-orange-500/[0.08] text-orange-300 transition-all duration-500 group-hover:border-orange-400/60 group-hover:bg-orange-500/[0.16]">
 
-                <p className="text-[8px] uppercase tracking-[0.32em] text-white/30">
-                  Trailers & More
-                </p>
+                  <svg
+                    className="ml-0.5 h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M8 5.5v13l11-6.5z" />
+                  </svg>
 
-                <h3 className="mt-1 text-[15px] font-semibold text-white md:text-base">
-                  Watch Videos
-                </h3>
+                </div>
 
-              </div>
-
-              {/* Arrow */}
-              <div
-                className="
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-full
-                  border
-                  border-white/[0.14]
-                  text-white/50
-                  transition-all
-                  duration-300
-                  group-hover:border-orange-400/50
-                  group-hover:text-white
-                "
-              >
-                <span className="text-base transition-transform duration-300 group-hover:translate-x-1">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.14] text-xs text-white/45 transition-all group-hover:border-orange-400/50 group-hover:text-white">
                   →
                 </span>
+
               </div>
+
+              <p className="text-[6px] uppercase tracking-[0.25em] text-white/30 md:text-[7px]">
+                Trailers & More
+              </p>
+
+              <h3 className="mt-1 text-xs font-semibold text-white md:text-sm">
+                Watch Videos
+              </h3>
 
             </div>
 
-            {/* Bottom accent */}
             <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-orange-400 transition-all duration-500 group-hover:w-full" />
 
           </a>
 
 
-          {/* =========================
-              FAN ART
-              ========================= */}
+          {/* FAN ART */}
           <a
             href="/fans-art"
             className="
               group
               relative
               block
-              w-full
+              min-w-0
               overflow-hidden
-              rounded-2xl
+              rounded-xl
               border
               border-white/[0.12]
               bg-black/45
-              p-3
+              p-2.5
               backdrop-blur-xl
               transition-all
               duration-500
-              hover:-translate-y-0.5
+              hover:-translate-y-1
               hover:border-purple-400/50
               hover:bg-black/60
             "
           >
 
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-purple-500/[0.07] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-500/[0.08] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-            <div className="relative flex items-center gap-4">
+            <div className="relative">
 
-              {/* Icon */}
-              <div
-                className="
-                  flex
-                  h-12
-                  w-12
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-xl
-                  border
-                  border-purple-400/30
-                  bg-purple-500/[0.08]
-                  text-purple-300
-                  transition-all
-                  duration-500
-                  group-hover:border-purple-400/60
-                  group-hover:bg-purple-500/[0.16]
-                "
-              >
-                <svg
-                  className="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                >
-                  <path d="M12 3.5l2.4 5.1 5.6.8-4 4 1 5.6-5-2.7-5 2.7 1-5.6-4-4 5.6-.8z" />
-                </svg>
-              </div>
+              <div className="mb-2 flex items-center justify-between">
 
-              {/* Text */}
-              <div className="min-w-0 flex-1">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-purple-400/30 bg-purple-500/[0.08] text-purple-300 transition-all duration-500 group-hover:border-purple-400/60 group-hover:bg-purple-500/[0.16]">
 
-                <div className="flex flex-wrap items-center gap-2">
-
-                  <p className="text-[8px] uppercase tracking-[0.32em] text-white/30">
-                    Art by the Fans
-                  </p>
-
-                  <NewBadge addedAt="2026-09-06" />
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                  >
+                    <path d="M12 3.5l2.4 5.1 5.6.8-4 4 1 5.6-5-2.7-5 2.7 1-5.6-4-4 5.6-.8z" />
+                  </svg>
 
                 </div>
 
-                <h3 className="mt-1 text-[15px] font-semibold text-white md:text-base">
-                  Fan Art
-                </h3>
+                <div className="flex items-center gap-1">
+
+                  <NewBadge addedAt="2026-09-06" />
+
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.14] text-xs text-white/45 transition-all group-hover:border-purple-400/50 group-hover:text-white">
+                    →
+                  </span>
+
+                </div>
 
               </div>
 
-              {/* Arrow */}
-              <div
-                className="
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-full
-                  border
-                  border-white/[0.14]
-                  text-white/50
-                  transition-all
-                  duration-300
-                  group-hover:border-purple-400/50
-                  group-hover:text-white
-                "
-              >
-                <span className="text-base transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
-              </div>
+              <p className="text-[6px] uppercase tracking-[0.25em] text-white/30 md:text-[7px]">
+                Art by the Fans
+              </p>
+
+              <h3 className="mt-1 text-xs font-semibold text-white md:text-sm">
+                Fan Art
+              </h3>
 
             </div>
 
-            {/* Bottom accent */}
             <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-purple-400 transition-all duration-500 group-hover:w-full" />
 
           </a>
 
 
-          {/* =========================
-              BOX OFFICE
-              ========================= */}
+          {/* BOX OFFICE */}
           <a
             href="/box-office"
             className="
               group
               relative
               block
-              w-full
+              min-w-0
               overflow-hidden
-              rounded-2xl
+              rounded-xl
               border
               border-white/[0.12]
               bg-black/45
-              p-3
+              p-2.5
               backdrop-blur-xl
               transition-all
               duration-500
-              hover:-translate-y-0.5
+              hover:-translate-y-1
               hover:border-yellow-400/50
               hover:bg-black/60
             "
           >
 
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-yellow-500/[0.06] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-yellow-500/[0.07] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-            <div className="relative flex items-center gap-4">
+            <div className="relative">
 
-              {/* Icon */}
-              <div
-                className="
-                  flex
-                  h-12
-                  w-12
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-xl
-                  border
-                  border-yellow-400/30
-                  bg-yellow-500/[0.08]
-                  text-yellow-300
-                  transition-all
-                  duration-500
-                  group-hover:border-yellow-400/60
-                  group-hover:bg-yellow-500/[0.16]
-                "
-              >
-                <svg
-                  className="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <path d="M5 19V10" />
-                  <path d="M12 19V5" />
-                  <path d="M19 19v-7" />
-                </svg>
-              </div>
+              <div className="mb-2 flex items-center justify-between">
 
-              {/* Text */}
-              <div className="min-w-0 flex-1">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-yellow-400/30 bg-yellow-500/[0.08] text-yellow-300 transition-all duration-500 group-hover:border-yellow-400/60 group-hover:bg-yellow-500/[0.16]">
 
-                <div className="flex flex-wrap items-center gap-2">
-
-                  <p className="text-[8px] uppercase tracking-[0.32em] text-white/30">
-                    Track the Numbers
-                  </p>
-
-                  <NewBadge addedAt="2026-09-06" />
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
+                    <path d="M5 19V10" />
+                    <path d="M12 19V5" />
+                    <path d="M19 19v-7" />
+                  </svg>
 
                 </div>
 
-                <h3 className="mt-1 text-[15px] font-semibold text-white md:text-base">
-                  Box Office
-                </h3>
+                <div className="flex items-center gap-1">
+
+                  <NewBadge addedAt="2026-09-06" />
+
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.14] text-xs text-white/45 transition-all group-hover:border-yellow-400/50 group-hover:text-white">
+                    →
+                  </span>
+
+                </div>
 
               </div>
 
-              {/* Arrow */}
-              <div
-                className="
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-full
-                  border
-                  border-white/[0.14]
-                  text-white/50
-                  transition-all
-                  duration-300
-                  group-hover:border-yellow-400/50
-                  group-hover:text-white
-                "
-              >
-                <span className="text-base transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
-              </div>
+              <p className="text-[6px] uppercase tracking-[0.25em] text-white/30 md:text-[7px]">
+                Track the Numbers
+              </p>
+
+              <h3 className="mt-1 text-xs font-semibold text-white md:text-sm">
+                Box Office
+              </h3>
 
             </div>
 
-            {/* Bottom accent */}
             <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-yellow-400 transition-all duration-500 group-hover:w-full" />
 
           </a>
