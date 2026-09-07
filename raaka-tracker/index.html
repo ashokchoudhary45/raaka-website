@@ -2,61 +2,353 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Raaka Movie Interest Tracker</title>
+
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-        table { margin: 0 auto; border-collapse: collapse; width: 50%; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        th { background-color: #f4f4f4; }
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background: #050505;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            margin-bottom: 30px;
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .status {
+            margin: 0 auto 25px;
+            max-width: 500px;
+            padding: 12px 16px;
+            border: 1px solid #222;
+            border-radius: 10px;
+            background: #0d0d0d;
+            text-align: center;
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid #222;
+            border-radius: 14px;
+            background: #0a0a0a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #222;
+            text-align: center;
+        }
+
+        th {
+            background: #111;
+            color: #ccc;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        td {
+            color: #eee;
+            font-size: 14px;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #111;
+        }
+
+        .count {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .empty {
+            padding: 30px;
+            color: #777;
+            text-align: center;
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
     </style>
 </head>
+
 <body>
 
-    <h2>Raaka Movie - Day Wise Interest Count</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Interest / Likes Count</th>
-            </tr>
-        </thead>
-        <tbody id="table-body">
-            <!-- Data yahan JavaScript se load hoga -->
-        </tbody>
-    </table>
+    <main class="container">
 
-    <!-- Supabase CDN JS SDK -->
+        <h1>Raaka Movie</h1>
+
+        <div class="subtitle">
+            BookMyShow Day Wise Interest Count
+        </div>
+
+        <div id="status" class="status">
+            Loading...
+        </div>
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Day</th>
+                        <th>Interest Count</th>
+                    </tr>
+                </thead>
+
+                <tbody id="table-body">
+                    <tr>
+                        <td
+                            colspan="3"
+                            class="empty"
+                        >
+                            Loading data...
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </main>
+
+    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
-        const SUPABASE_URL = 'AAPKA_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'AAPKA_SUPABASE_ANON_KEY';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        /*
+         * IMPORTANT:
+         * Supabase URL and ANON key are intentionally
+         * kept here only if this HTML is being served
+         * as a public frontend.
+         *
+         * NEVER put SUPABASE SERVICE_ROLE key here.
+         */
+
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+
+        const SUPABASE_ANON_KEY =
+            'YOUR_SUPABASE_ANON_KEY';
+
+        const supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_ANON_KEY
+            );
+
+
+        function formatDate(dateString) {
+
+            if (!dateString) {
+                return '—';
+            }
+
+            const date = new Date(
+                ${dateString}T00:00:00
+            );return date.toLocaleDateString(
+                'en-IN',
+                {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                }
+            );
+        }
+
+
+        function formatNumber(value) {
+
+            if (
+                value === null ||
+                value === undefined ||
+                value === ''
+            ) {
+                return '—';
+            }
+
+            return Number(value).toLocaleString('en-IN');
+        }
+
 
         async function fetchInterests() {
-            const { data, error } = await supabase
-                .from('raaka_interests')
-                .select('*')
-                .order('date', { ascending: false });
+
+            const status =
+                document.getElementById('status');
+
+            const tbody =
+                document.getElementById('table-body');
+
+
+            status.textContent =
+                'Loading interest data...';
+
+
+            const {
+                data,
+                error
+            } = await supabaseClient
+
+                .from('bookmyshow_interest_daily')
+
+                .select(
+                    'day_number, interest_date, interest_count'
+                )
+
+                .order(
+                    'interest_date',
+                    {
+                        ascending: false
+                    }
+                );
+
 
             if (error) {
-                console.error('Error fetching data:', error);
+
+                console.error(
+                    'Supabase error:',
+                    error
+                );
+
+                status.textContent =
+                    'Unable to load interest data.';
+
+                status.classList.add('error');
+
+
+                tbody.innerHTML = 
+                    <tr>
+                        <td
+                            colspan="3"
+                            class="empty error"
+                        >
+                            Failed to load data.
+                        </td>
+                    </tr>
+                ;
+
                 return;
             }
 
-            const tbody = document.getElementById('table-body');
-            tbody.innerHTML = '';
 
-            data.forEach(row => {
-                tbody.innerHTML += 
+            if (!data || data.length === 0) {
+
+                status.textContent =
+                    'No interest data available yet.';
+
+                tbody.innerHTML = 
                     <tr>
-                        <td>${row.date}</td>
-                        <td>${row.interest_count}</td>
+                        <td
+                            colspan="3"
+                            class="empty"
+                        >
+                            No data available yet.
+                        </td>
                     </tr>
                 ;
+
+                return;
+            }
+
+
+            status.textContent =
+                ${data.length} day(s) recorded;
+
+
+            tbody.innerHTML = '';
+
+
+            data.forEach(row => {
+
+                const tr =
+                    document.createElement('tr');
+
+
+                const dateCell =
+                    document.createElement('td');
+
+                dateCell.textContent =
+                    formatDate(row.interest_date);
+
+
+                const dayCell =
+                    document.createElement('td');
+
+                dayCell.textContent =
+                    row.day_number
+                        ? Day ${row.day_number}
+                        : '—';
+
+
+                const countCell =
+                    document.createElement('td');
+
+                countCell.className =
+                    'count';
+
+                countCell.textContent =
+                    formatNumber(
+                        row.interest_count
+                    );
+
+
+                tr.appendChild(dateCell);
+                tr.appendChild(dayCell);
+                tr.appendChild(countCell);
+
+                tbody.appendChild(tr);
+
             });
+
         }
 
+
         fetchInterests();
+
     </script>
+
 </body>
 </html>

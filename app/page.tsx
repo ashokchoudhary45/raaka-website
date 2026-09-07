@@ -1,62 +1,14 @@
+
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import NewBadge from "@/components/NewBadge";
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [intro, setIntro] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
   const [ticketsOpen, setTicketsOpen] = useState(false);
-
-  // ==============================
-  // GLOBAL WEBSITE SEARCH
-  // ==============================
-  const searchItems = [
-    { title: "Allu Arjun", type: "Cast", section: "cast", keywords: "allu arjun actor hero pushpa" },
-    { title: "Deepika Padukone", type: "Cast", section: "cast", keywords: "deepika padukone actress" },
-    { title: "Cast & Characters", type: "Cast", section: "cast", keywords: "cast characters actors" },
-    { title: "Atlee Kumar", type: "Crew", section: "crew", keywords: "atlee kumar director" },
-    { title: "Sai Abhyankkar", type: "Crew", section: "crew", keywords: "sai abhyankkar musician music" },
-    { title: "Kalanithi Maran", type: "Crew", section: "crew", keywords: "kalanithi maran producer" },
-    { title: "Sun Pictures", type: "Crew", section: "crew", keywords: "sun pictures producer" },
-    { title: "Creative Team", type: "Crew", section: "creative-team", keywords: "creative team gk vishnu antony ruben muthuraj" },
-    { title: "VFX Studios", type: "Crew", section: "vfx-studios", keywords: "vfx visual effects special effects lola spectral fractured ilm ironhead legacy" },
-    { title: "Crew Credits", type: "Crew", section: "crew-credits", keywords: "crew credits cinematography editor costume makeup production art sound stunts visual effects choreography publicity" },
-    { title: "Characters", type: "Characters", section: "explore", keywords: "characters roles" },
-    { title: "Songs", type: "Songs", section: "songs", keywords: "songs soundtrack music lyrical" },
-    { title: "Make Way For The King", type: "Song", section: "songs", keywords: "make way for the king song soundtrack" },
-    { title: "Posters", type: "Posters", section: "posters", keywords: "poster posters first look artwork" },
-    { title: "Latest Announcements", type: "Announcements", section: "announcements", keywords: "announcements news updates videos" },
-    { title: "GEAR UP for RAAKA", type: "Announcement", section: "announcements", keywords: "gear up raaka announcement video" },
-    { title: "Welcome on board Deepika Padukone", type: "Announcement", section: "announcements", keywords: "welcome on board deepika padukone announcement video" },
-    { title: "News & Updates", type: "Explore", section: "explore", keywords: "news updates latest announcement" },
-  ];
-
-  const filteredSearchItems = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return [];
-
-    return searchItems
-      .filter((item) =>
-        `${item.title} ${item.type} ${item.keywords}`.toLowerCase().includes(query)
-      )
-      .slice(0, 8);
-  }, [searchQuery]);
-
-  const goToSearchResult = (section: string) => {
-    setSearchOpen(false);
-    setSearchQuery("");
-
-    requestAnimationFrame(() => {
-      document.getElementById(section)?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
-  };
 
   // ==============================
   // RAAKA INTRO AUDIO
@@ -232,316 +184,767 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
       </div>
 
-      {/* GLOBAL SEARCH */}
-    <div className="absolute left-1/2 top-4 z-[60] w-[calc(100%-8rem)] max-w-xl -translate-x-1/2 translate-y-0 md:top-6 md:w-[min(520px,calc(100%-180px))]">
-        <div className="relative">
-          <div className="flex items-center rounded-full border border-white/15 bg-black/65 px-4 py-2 shadow-2xl backdrop-blur-xl transition focus-within:border-white/30 focus-within:bg-black/80">
-            <svg
-              className="mr-3 h-4 w-4 shrink-0 text-white/45"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3.5-3.5" />
-            </svg>
-            <input
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setSearchOpen(true);
-              }}
-              onFocus={() => setSearchOpen(true)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setSearchOpen(false);
-                  setSearchQuery("");
-                }
-              }}
-              type="search"
-              placeholder="Search cast, crew, characters, songs, posters..."
-              aria-label="Search Raaka website"
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/35"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery("");
-                  setSearchOpen(false);
-                }}
-                className="ml-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white/45 transition hover:bg-white/10 hover:text-white"
-                aria-label="Clear search"
-              >
-                ×
-              </button>
-            )}
-          </div>
+      {/* ==================================
+          PREMIUM HEADER — NO HAMBURGER
+          ================================== */}
 
-          {searchOpen && searchQuery.trim() && (
-            <div className="absolute left-0 right-0 top-[calc(100%+10px)] overflow-hidden rounded-2xl border border-white/10 bg-black/90 p-2 shadow-2xl backdrop-blur-2xl">
-              {filteredSearchItems.length > 0 ? (
-                filteredSearchItems.map((item) => (
-                  <button
-                    key={`${item.type}-${item.title}`}
-                    type="button"
-                    onClick={() => goToSearchResult(item.section)}
-                    className="flex w-full items-center justify-between gap-4 rounded-xl px-4 py-3 text-left transition hover:bg-white/10"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-white">
-                        {item.title}
-                      </span>
-                      <span className="mt-0.5 block text-[10px] uppercase tracking-[0.2em] text-white/35">
-                        {item.type}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-white/30">→</span>
-                  </button>
-                ))
-              ) : (
-                <div className="px-4 py-5 text-center">
-                  <p className="text-sm text-white/60">No results found</p>
-                  <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/25">
-                    Try another name or keyword
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+      {/* PREMIUM MENU BUTTON — TEXT BASED, NO 3-LINE ICON */}
+      <div className="fixed right-5 top-5 z-[90] md:right-7 md:top-6">
+        <button
+          type="button"
+          onClick={() => {
+            setMenuOpen((value) => !value);
+          }}
+          className="group flex h-11 items-center gap-3 rounded-full border border-white/20 bg-black/65 px-4 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/90 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-white/40 hover:bg-white hover:text-black md:px-5"
+          aria-expanded={menuOpen}
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+        >
+          <span>{menuOpen ? "Close" : "Menu"}</span>
+
+          <span className="relative flex h-4 w-4 items-center justify-center overflow-hidden">
+            <span
+              className={`absolute text-sm leading-none transition-all duration-300 ${
+                menuOpen
+                  ? "translate-y-0 rotate-0 opacity-100"
+                  : "-translate-y-3 opacity-0"
+              }`}
+            >
+              ×
+            </span>
+            <span
+              className={`absolute text-sm leading-none transition-all duration-300 ${
+                menuOpen
+                  ? "translate-y-3 opacity-0"
+                  : "translate-y-0 opacity-100"
+              }`}
+            >
+              →
+            </span>
+          </span>
+        </button>
       </div>
 
-      <div className="absolute top-[22px] right-4 z-50
-      w-[calc(100vw-40rem)] max-w-[340px]">
-  {/* 3 LINE BUTTON */}
-  <button
-    onClick={() => setMenuOpen(!menuOpen)}
-    className="w-9 h-9 rounded-full border border-white/30 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center gap-1.5 hover:bg-white hover:text-black transition"
-    aria-label="Open Menu"
-  >
-    <span
-      className={`block w-4 h-0.5 bg-current transition ${
-        menuOpen ? "rotate-45 translate-y-2" : ""
-      }`}
-    />
-    <span
-      className={`block w-4 h-0.5 bg-current transition ${
-        menuOpen ? "opacity-0" : ""
-      }`}
-    />
-    <span
-      className={`block w-4 h-0.5 bg-current transition ${
-        menuOpen ? "-rotate-45 -translate-y-2" : ""
-      }`}
-    />
-  </button>
-{/* MENU */}
-{menuOpen && (
-  <div className="absolute right-0 mt-3 w-[340px] rounded-2xl border border-white/20 bg-black/90 backdrop-blur-xl p-3 shadow-2xl">
-
-    <a
-      href="#cast"
-      onClick={() => setMenuOpen(false)}
-      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-    >
-      Cast & crew
-    </a>
-
-   
-    <a
-      href="#posters"
-      onClick={() => setMenuOpen(false)}
-      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-    >
-      Posters
-    </a>
- 
-    <a
-      href="#announcements"
-      onClick={() => setMenuOpen(false)}
-      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-    >
-      videos
-    </a>
-
-    <a
-      href="#songs"
-      onClick={() => setMenuOpen(false)}
-      className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
-    >
-      Songs
-    </a>
-    
-<a
-  href="/timeline"
-  className="block rounded-xl px-4 py-1.5 transition hover:bg-white/10"
->
-  Timeline
-  <NewBadge addedAt="2026-09-06" />
-</a>
-{/* TICKET BOOKING */}
-<div className="mt-1 pt-1">
-
-  {/* BOOK TICKETS */}
-  <button
-  type="button"
-  onClick={() => setTicketsOpen(!ticketsOpen)}
-  className="flex w-full items-center justify-between rounded-xl px-4 py-2 text-left transition hover:bg-white/10"
->
-  <span className="flex items-center">
-    Book Tickets
-    <NewBadge addedAt="2026-09-06" />
-  </span>
-
-  <span
-    className={`text-white/50 transition-transform duration-300 ${
-      ticketsOpen ? "rotate-180" : ""
-    }`}
-  >
-    ⌄
-  </span>
-</button>
-  {/* TICKET OPTIONS */}
-  {ticketsOpen && (
-    <div className="flex items-start gap-3 px-4 pb-3">
-
-      {/* BOOKMYSHOW */}
-      <a
-        href="https://in.bookmyshow.com/movies/raaka/ET00494565"
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => setMenuOpen(false)}
-        className="group flex w-[100px] flex-col items-center"
-        title="Book Raaka on BookMyShow"
-      >
-        <div className="flex h-[50px] w-[100px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
-          <Image
-            src="/images/logo1.jpg"
-            alt="BookMyShow"
-            width={321}
-            height={157}
-            className="h-auto w-full object-contain"
+      {/* MENU OVERLAY + PANEL */}
+      {menuOpen && (
+        <>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+            className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-[2px]"
           />
+
+          <aside className="fixed right-4 top-[76px] z-[85] w-[calc(100vw-32px)] max-w-[380px] overflow-hidden rounded-3xl border border-white/15 bg-black/90 p-3 shadow-[0_25px_80px_rgba(0,0,0,0.65)] backdrop-blur-2xl">
+            <div className="border-b border-white/10 px-4 pb-4 pt-3">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-[9px] uppercase tracking-[0.35em] text-white/35">
+                    Explore
+                  </p>
+                  <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">
+                    RAAKA
+                  </h2>
+                </div>
+                <p className="pb-1 text-[9px] uppercase tracking-[0.22em] text-white/25">
+                  The World of RAAKA
+                </p>
+              </div>
+            </div>
+
+            <nav className="mt-2 space-y-1">
+              <a
+                href="#home"
+                onClick={() => setMenuOpen(false)}
+                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
+              >
+                <span className="text-sm font-medium">Home</span>
+                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
+                  →
+                </span>
+              </a>
+
+              <a
+                href="#cast"
+                onClick={() => setMenuOpen(false)}
+                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
+              >
+                <span className="text-sm font-medium">Cast & Crew</span>
+                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
+                  →
+                </span>
+              </a>
+
+              <a
+                href="#posters"
+                onClick={() => setMenuOpen(false)}
+                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
+              >
+                <span className="text-sm font-medium">Posters</span>
+                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
+                  →
+                </span>
+              </a>
+
+              <a
+                href="#announcements"
+                onClick={() => setMenuOpen(false)}
+                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
+              >
+                <span className="text-sm font-medium">Videos</span>
+                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
+                  →
+                </span>
+              </a>
+
+              <a
+                href="#songs"
+                onClick={() => setMenuOpen(false)}
+                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
+              >
+                <span className="text-sm font-medium">Songs</span>
+                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
+                  →
+                </span>
+              </a>
+
+              <a
+                href="/timeline"
+                onClick={() => setMenuOpen(false)}
+                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
+              >
+                <span className="flex items-center text-sm font-medium">
+                  Timeline
+                  <NewBadge addedAt="2026-09-06" />
+                </span>
+                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
+                  →
+                </span>
+              </a>
+
+              {/* TICKET BOOKING */}
+              <div className="rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => setTicketsOpen((value) => !value)}
+                  className="flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left transition hover:bg-white/10"
+                >
+                  <span className="flex items-center text-sm font-medium">
+                    Book Tickets
+                    <NewBadge addedAt="2026-09-06" />
+                  </span>
+
+                  <span
+                    className={`text-white/40 transition-transform duration-300 ${
+                      ticketsOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    ⌄
+                  </span>
+                </button>
+
+                {ticketsOpen && (
+                  <div className="grid grid-cols-2 gap-3 px-4 pb-4 pt-1">
+                    {/* BOOKMYSHOW */}
+                    <a
+                      href="https://in.bookmyshow.com/movies/raaka/ET00494565"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMenuOpen(false)}
+                      className="group rounded-2xl border border-white/10 bg-white/[0.03] p-2 text-center transition hover:border-white/20 hover:bg-white/[0.07]"
+                      title="Book Raaka on BookMyShow"
+                    >
+                      <div className="flex h-[54px] items-center justify-center overflow-hidden rounded-xl">
+                        <Image
+                          src="/images/logo1.jpg"
+                          alt="BookMyShow"
+                          width={321}
+                          height={157}
+                          className="h-auto max-h-full w-full object-contain transition duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                      <span className="mt-2 block text-xs font-semibold text-white/75 group-hover:text-white">
+                        BookMyShow
+                      </span>
+                    </a>
+
+                    {/* DISTRICT */}
+                    <a
+                      href="https://www.district.in/movies/raaka-movie-tickets-MV218847"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMenuOpen(false)}
+                      className="group rounded-2xl border border-white/10 bg-white/[0.03] p-2 text-center transition hover:border-white/20 hover:bg-white/[0.07]"
+                      title="Book Raaka on District"
+                    >
+                      <div className="flex h-[54px] items-center justify-center overflow-hidden rounded-xl">
+                        <Image
+                          src="/images/logo2.jpg"
+                          alt="District"
+                          width={715}
+                          height={429}
+                          className="h-auto max-h-full w-full object-contain transition duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                      <span className="mt-2 block text-xs font-semibold text-white/75 group-hover:text-white">
+                        District
+                      </span>
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              <a
+                href="#box-office"
+                onClick={() => setMenuOpen(false)}
+                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
+              >
+                <span className="text-sm font-medium">Box Office</span>
+                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
+                  →
+                </span>
+              </a>
+
+              <a
+                href="/bookmyshow-tracker"
+                onClick={() => setMenuOpen(false)}
+                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
+              >
+                <span className="flex items-center text-sm font-medium">
+                  BookMyShow Tracker
+                  <NewBadge addedAt="2026-09-06" />
+                </span>
+                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
+                  →
+                </span>
+              </a>
+            </nav>
+          </aside>
+        </>
+      )}
+
+   <main id="home" className="raaka-site relative z-10 min-h-screen bg-transparent text-white">
+{/* HERO */}
+<section className="raaka-hero relative min-h-screen overflow-hidden">
+
+  {/* =========================
+      HERO CONTENT
+      ========================= */}
+  <div className="relative z-10 flex min-h-screen w-full items-end">
+
+    <div className="mx-auto w-full max-w-7xl px-6 pb-10 pt-32 md:pb-16 lg:px-8">
+
+      {/* Main hero width */}
+      <div className="max-w-4xl">
+
+        {/* =========================
+            THE WORLD OF
+            ========================= */}
+        <div className="mb-5 flex items-center gap-3 md:mb-7 md:gap-4">
+
+          <span className="h-px w-8 bg-gradient-to-r from-transparent to-orange-400/80 md:w-14" />
+
+          <p className="text-[9px] font-medium uppercase tracking-[0.58em] text-white/50 md:text-[11px]">
+            The World of
+          </p>
+
+          <span className="relative h-px w-8 bg-gradient-to-l from-transparent to-orange-400/80 md:w-14">
+            <span className="absolute -right-1 -top-[2px] h-[5px] w-[5px] rounded-full bg-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.9)]" />
+          </span>
+
         </div>
 
-        <span className="mt-1 text-xs font-semibold text-white/80 group-hover:text-white">
-          BookMyShow
-        </span>
-      </a>
 
-      {/* DISTRICT */}
-      <a
-        href="https://www.district.in/movies/raaka-movie-tickets-MV218847"
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => setMenuOpen(false)}
-        className="group flex w-[100px] flex-col items-center"
-        title="Book Raaka on District"
-      >
-        <div className="flex h-[50px] w-[100px] items-center justify-center overflow-hidden rounded-xl transition duration-300 group-hover:scale-105">
-          <Image
-            src="/images/logo2.jpg"
-            alt="District"
-            width={715}
-            height={429}
-            className="h-auto w-full object-contain"
+        {/* =========================
+            RAAKA TITLE
+            ========================= */}
+        <div className="relative mb-8 inline-block md:mb-10">
+
+          {/* Atmospheric glow */}
+          <div
+            className="
+              pointer-events-none
+              absolute
+              -inset-x-16
+              -inset-y-10
+              -z-10
+              rounded-full
+              bg-orange-600/[0.08]
+              blur-[90px]
+            "
           />
+
+          {/* Secondary shadow word */}
+          <div
+            className="
+              pointer-events-none
+              absolute
+              left-1
+              top-3
+              -z-10
+              select-none
+              text-[clamp(5.2rem,15vw,10.5rem)]
+              font-black
+              uppercase
+              leading-[0.72]
+              tracking-[-0.085em]
+              text-black/70
+              blur-[2px]
+            "
+          >
+            RAAKA
+          </div>
+
+          {/* Main wordmark */}
+          <h1
+            className="
+              relative
+              select-none
+              text-[clamp(5.2rem,15vw,10.5rem)]
+              font-black
+              uppercase
+              leading-[0.72]
+              tracking-[-0.085em]
+              text-transparent
+              bg-clip-text
+              bg-gradient-to-b
+              from-white
+              via-[#e9e9e9]
+              to-[#737373]
+            "
+            style={{
+              WebkitTextStroke: "1px rgba(255,255,255,0.28)",
+              textShadow: `
+                0 2px 0 rgba(255,255,255,0.35),
+                0 5px 0 rgba(60,60,60,0.22),
+                0 12px 24px rgba(0,0,0,0.95),
+                0 24px 45px rgba(0,0,0,0.7),
+                0 0 55px rgba(255,90,0,0.15)
+              `,
+            }}
+          >
+            RAAKA
+          </h1>
+
+
+          {/* Metallic reflection */}
+          <div
+            className="
+              pointer-events-none
+              absolute
+              left-[5%]
+              right-[7%]
+              top-[8%]
+              h-[9%]
+              bg-gradient-to-r
+              from-transparent
+              via-white/45
+              to-transparent
+              opacity-60
+              blur-[1px]
+            "
+          />
+
+
+          {/* Fiery title line */}
+          <div className="absolute -bottom-4 left-[3%] flex items-center md:-bottom-5">
+
+            <span className="h-[3px] w-10 bg-orange-500 shadow-[0_0_16px_rgba(249,115,22,0.9)] md:w-20" />
+
+            <span className="mx-2 h-[7px] w-[7px] rotate-45 bg-orange-300 shadow-[0_0_15px_rgba(251,146,60,1)]" />
+
+            <span className="h-[2px] w-28 bg-gradient-to-r from-orange-400 via-orange-500/50 to-transparent shadow-[0_0_12px_rgba(249,115,22,0.5)] md:w-56" />
+
+          </div>
+
+
+          {/* Cosmic insignia */}
+          <div className="absolute -right-4 -top-4 flex h-7 w-7 items-center justify-center md:-right-8 md:-top-6">
+
+            <span className="h-2.5 w-2.5 rotate-45 border border-orange-400/80 bg-orange-400/10 shadow-[0_0_18px_rgba(251,146,60,0.9)]" />
+
+          </div>
+
         </div>
 
-        <span className="mt-1 text-xs font-semibold text-white/80 group-hover:text-white">
-          District
-        </span>
-      </a>
 
-    </div>
-  )}
+        {/* =========================
+            TITLE SUBLINE
+            ========================= */}
+        <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 md:mb-6 md:gap-3">
 
-</div>
- 
-<a
-  href="#box-office"
-  onClick={() => setMenuOpen(false)}
-  className="block px-4 py-3 rounded-xl hover:bg-white/10 transition"
->
-  Box Office
-</a>
-<a
-  href="/bookmyshow-tracker"
-  onClick={() => setMenuOpen(false)}
-  className="relative flex items-center rounded-xl px-4 py-2 transition hover:bg-white/10"
->
-  BookMyShow Tracker
-  <NewBadge addedAt="2026-09-06" />
-</a>
-   
+          <span className="text-[8px] font-medium uppercase tracking-[0.42em] text-orange-300/60 md:text-[9px]">
+            Born of Fire
+          </span>
 
-  </div>
-)}
+          <span className="h-1 w-1 rounded-full bg-orange-400/70" />
 
-</div>
-   <main className="raaka-site relative z-10 min-h-screen bg-transparent text-white">
+          <span className="text-[8px] font-medium uppercase tracking-[0.42em] text-white/35 md:text-[9px]">
+            Forged by Sacrifice
+          </span>
 
-    {/* HERO */}
-<section className="raaka-hero relative min-h-screen flex items-end overflow-hidden">
+          <span className="hidden h-1 w-1 rounded-full bg-white/20 sm:block" />
 
-  <div className="relative z-10 w-full max-w-7xl mx-auto px-6 pb-20">
+          <span className="hidden text-[8px] font-medium uppercase tracking-[0.42em] text-white/25 sm:block md:text-[9px]">
+            Chosen by Destiny
+          </span>
 
-    <p className="text-sm uppercase tracking-[0.4em] text-zinc-400 mb-4">
-      The World of
-    </p>
+        </div>
 
-    <h1 className="text-6xl md:text-8xl font-bold tracking-tight">
-      RAAKA
-    </h1>
 
-    <p className="mt-8 max-w-xl text-zinc-300 text-lg">
-      Born of fire, shaped by the cosmos, and forged in sacrifice, a divine
-      warrior rises to restore balance to a universe threatened by primordial
-      chaos-before faith itself is extinguished.
-    </p>
+        {/* =========================
+            DESCRIPTION
+            ========================= */}
+        <p className="max-w-2xl text-sm leading-7 text-white/60 md:text-[17px] md:leading-8">
 
-    <div className="mt-7 flex flex-wrap gap-4">
+          Born of fire, shaped by the cosmos, and forged in sacrifice, a divine
+          warrior rises to restore balance to a universe threatened by primordial
+          chaos—before faith itself is extinguished.
 
-      <a
-        href="#videos"
-        className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
-      >
-        Watch Videos
-      </a>
+        </p>
 
-      <a
-        href="#cast"
-        className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-      >
-        Explore Cast
-      </a>
 
-     <a
-  href="/fans-art"
-  className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
->
-  Fan Art
-  <NewBadge addedAt="2026-09-06" />
-</a>
+        {/* =========================
+            HERO ACTION CARDS
+            ========================= */}
+        <div className="mt-8 grid w-full max-w-[620px] gap-3 md:mt-9">
 
-<a
-  href="/box-office"
-  className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
->
-  Box Office
-  <NewBadge addedAt="2026-09-06" />
-</a>
+          {/* =========================
+              WATCH VIDEOS
+              ========================= */}
+          <a
+            href="#videos"
+            className="
+              group
+              relative
+              block
+              w-full
+              overflow-hidden
+              rounded-2xl
+              border
+              border-white/[0.12]
+              bg-black/45
+              p-3
+              backdrop-blur-xl
+              transition-all
+              duration-500
+              hover:-translate-y-0.5
+              hover:border-orange-400/50
+              hover:bg-black/60
+            "
+          >
+
+            {/* Ambient hover glow */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-orange-500/[0.07] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+            <div className="relative flex items-center gap-4">
+
+              {/* Icon */}
+              <div
+                className="
+                  flex
+                  h-12
+                  w-12
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-xl
+                  border
+                  border-orange-400/30
+                  bg-orange-500/[0.08]
+                  text-orange-300
+                  transition-all
+                  duration-500
+                  group-hover:border-orange-400/60
+                  group-hover:bg-orange-500/[0.16]
+                "
+              >
+                <svg
+                  className="ml-0.5 h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M8 5.5v13l11-6.5z" />
+                </svg>
+              </div>
+
+              {/* Text */}
+              <div className="min-w-0 flex-1">
+
+                <p className="text-[8px] uppercase tracking-[0.32em] text-white/30">
+                  Trailers & More
+                </p>
+
+                <h3 className="mt-1 text-[15px] font-semibold text-white md:text-base">
+                  Watch Videos
+                </h3>
+
+              </div>
+
+              {/* Arrow */}
+              <div
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  border-white/[0.14]
+                  text-white/50
+                  transition-all
+                  duration-300
+                  group-hover:border-orange-400/50
+                  group-hover:text-white
+                "
+              >
+                <span className="text-base transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
+              </div>
+
+            </div>
+
+            {/* Bottom accent */}
+            <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-orange-400 transition-all duration-500 group-hover:w-full" />
+
+          </a>
+
+
+          {/* =========================
+              FAN ART
+              ========================= */}
+          <a
+            href="/fans-art"
+            className="
+              group
+              relative
+              block
+              w-full
+              overflow-hidden
+              rounded-2xl
+              border
+              border-white/[0.12]
+              bg-black/45
+              p-3
+              backdrop-blur-xl
+              transition-all
+              duration-500
+              hover:-translate-y-0.5
+              hover:border-purple-400/50
+              hover:bg-black/60
+            "
+          >
+
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-purple-500/[0.07] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+            <div className="relative flex items-center gap-4">
+
+              {/* Icon */}
+              <div
+                className="
+                  flex
+                  h-12
+                  w-12
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-xl
+                  border
+                  border-purple-400/30
+                  bg-purple-500/[0.08]
+                  text-purple-300
+                  transition-all
+                  duration-500
+                  group-hover:border-purple-400/60
+                  group-hover:bg-purple-500/[0.16]
+                "
+              >
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                >
+                  <path d="M12 3.5l2.4 5.1 5.6.8-4 4 1 5.6-5-2.7-5 2.7 1-5.6-4-4 5.6-.8z" />
+                </svg>
+              </div>
+
+              {/* Text */}
+              <div className="min-w-0 flex-1">
+
+                <div className="flex flex-wrap items-center gap-2">
+
+                  <p className="text-[8px] uppercase tracking-[0.32em] text-white/30">
+                    Art by the Fans
+                  </p>
+
+                  <NewBadge addedAt="2026-09-06" />
+
+                </div>
+
+                <h3 className="mt-1 text-[15px] font-semibold text-white md:text-base">
+                  Fan Art
+                </h3>
+
+              </div>
+
+              {/* Arrow */}
+              <div
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  border-white/[0.14]
+                  text-white/50
+                  transition-all
+                  duration-300
+                  group-hover:border-purple-400/50
+                  group-hover:text-white
+                "
+              >
+                <span className="text-base transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
+              </div>
+
+            </div>
+
+            {/* Bottom accent */}
+            <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-purple-400 transition-all duration-500 group-hover:w-full" />
+
+          </a>
+
+
+          {/* =========================
+              BOX OFFICE
+              ========================= */}
+          <a
+            href="/box-office"
+            className="
+              group
+              relative
+              block
+              w-full
+              overflow-hidden
+              rounded-2xl
+              border
+              border-white/[0.12]
+              bg-black/45
+              p-3
+              backdrop-blur-xl
+              transition-all
+              duration-500
+              hover:-translate-y-0.5
+              hover:border-yellow-400/50
+              hover:bg-black/60
+            "
+          >
+
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-yellow-500/[0.06] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+            <div className="relative flex items-center gap-4">
+
+              {/* Icon */}
+              <div
+                className="
+                  flex
+                  h-12
+                  w-12
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-xl
+                  border
+                  border-yellow-400/30
+                  bg-yellow-500/[0.08]
+                  text-yellow-300
+                  transition-all
+                  duration-500
+                  group-hover:border-yellow-400/60
+                  group-hover:bg-yellow-500/[0.16]
+                "
+              >
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <path d="M5 19V10" />
+                  <path d="M12 19V5" />
+                  <path d="M19 19v-7" />
+                </svg>
+              </div>
+
+              {/* Text */}
+              <div className="min-w-0 flex-1">
+
+                <div className="flex flex-wrap items-center gap-2">
+
+                  <p className="text-[8px] uppercase tracking-[0.32em] text-white/30">
+                    Track the Numbers
+                  </p>
+
+                  <NewBadge addedAt="2026-09-06" />
+
+                </div>
+
+                <h3 className="mt-1 text-[15px] font-semibold text-white md:text-base">
+                  Box Office
+                </h3>
+
+              </div>
+
+              {/* Arrow */}
+              <div
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  border-white/[0.14]
+                  text-white/50
+                  transition-all
+                  duration-300
+                  group-hover:border-yellow-400/50
+                  group-hover:text-white
+                "
+              >
+                <span className="text-base transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
+              </div>
+
+            </div>
+
+            {/* Bottom accent */}
+            <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-yellow-400 transition-all duration-500 group-hover:w-full" />
+
+          </a>
+
+        </div>
+
+      </div>
 
     </div>
 
   </div>
 
 </section>
-
-  {/* MOVIE */}
+{/* MOVIE */}
       <section className="raaka-about max-w-7xl mx-auto px-6 py-24">
 
         <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">
