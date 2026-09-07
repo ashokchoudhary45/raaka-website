@@ -5,10 +5,17 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import NewBadge from "@/components/NewBadge";
 
+type Theme = "obsidian" | "ember" | "cosmic" | "ivory" | "onyx";
+
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [intro, setIntro] = useState(true);
   const [ticketsOpen, setTicketsOpen] = useState(false);
+
+  // ==============================
+  // RAAKA BACKGROUND THEME
+  // ==============================
+  const [theme, setTheme] = useState<Theme>("obsidian");
 
   // ==============================
   // RAAKA INTRO AUDIO
@@ -55,6 +62,30 @@ export default function Home() {
       audio.currentTime = 0;
     };
   }, []);
+
+  // ==============================
+  // LOAD SAVED BACKGROUND THEME
+  // ==============================
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("raaka-theme");
+
+    if (
+      savedTheme === "obsidian" ||
+      savedTheme === "ember" ||
+      savedTheme === "cosmic" ||
+      savedTheme === "ivory" ||
+      savedTheme === "onyx"
+    ) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  // ==============================
+  // SAVE BACKGROUND THEME
+  // ==============================
+  useEffect(() => {
+    localStorage.setItem("raaka-theme", theme);
+  }, [theme]);
 
   // ==============================
   // COUNTDOWN
@@ -147,83 +178,301 @@ export default function Home() {
   }, []);
 
   return (
-    <>
-      {/* ==================================
-          RAAKA INTRO
-          ================================== */}
+  <>
+    {/* =================================
+        RAAKA CINEMATIC BACKGROUND
+    ================================== */}
 
-      {intro && (
-        <div className="fixed inset-0 z-[99999] bg-black flex items-center justify-center overflow-hidden">
+    <style>{`
+      /* =================================
+         GRAPHITE LUXURY THEME
+      ================================== */
 
-          <div className="absolute w-[500px] h-[500px] rounded-full bg-orange-600/20 blur-[140px] animate-pulse" />
+      .raaka-theme-graphite .raaka-site {
+        color: #f5f5f5;
+      }
 
-          <div className="relative flex flex-col items-center animate-raaka-intro">
+      .raaka-theme-graphite .raaka-site .text-white {
+        color: #f5f5f5 !important;
+      }
 
-            <img
-              src="/images/logo2.png"
-              alt="RAAKA"
-              className="w-52 md:w-72 object-contain"
-            />
+      .raaka-theme-graphite .raaka-site [class*="text-white/"] {
+        color: rgba(245, 245, 245, 0.72) !important;
+      }
 
-            <div className="mt-6 w-24 h-[1px] bg-white/40 animate-pulse" />
+      .raaka-theme-graphite .raaka-site .border-white\\/10 {
+        border-color: rgba(255, 255, 255, 0.12) !important;
+      }
 
-            <p className="mt-4 text-[10px] md:text-xs tracking-[0.5em] text-white/50 uppercase">
-              A New World Begins
-            </p>
+      .raaka-theme-graphite .raaka-site .border-white\\/\\[0\\.13\\] {
+        border-color: rgba(255, 255, 255, 0.14) !important;
+      }
 
-          </div>
+      .raaka-theme-graphite .raaka-site .border-white\\/\\[0\\.14\\] {
+        border-color: rgba(255, 255, 255, 0.15) !important;
+      }
+
+      .raaka-theme-graphite .raaka-site .bg-black\\/50 {
+        background-color: rgba(0, 0, 0, 0.52) !important;
+      }
+
+      .raaka-theme-graphite .raaka-site .bg-black\\/65 {
+        background-color: rgba(0, 0, 0, 0.68) !important;
+      }
+    `}</style>
+
+    {/* ==================================
+        RAAKA INTRO
+    ================================== */}
+
+    {intro && (
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center overflow-hidden bg-black">
+
+        <div className="absolute h-[500px] w-[500px] rounded-full bg-orange-600/20 blur-[140px] animate-pulse" />
+
+        <div className="relative flex flex-col items-center animate-raaka-intro">
+
+          <img
+            src="/images/logo2.png"
+            alt="RAAKA"
+            className="w-52 object-contain md:w-72"
+          />
+
+          <div className="mt-6 h-[1px] w-24 bg-white/40 animate-pulse" />
+
+          <p className="mt-4 text-[10px] uppercase tracking-[0.5em] text-white/50 md:text-xs">
+            A New World Begins
+          </p>
 
         </div>
-      )}
-      {/* FULL WEBSITE RAAKA BACKGROUND */}
-      <div className="fixed inset-0 z-0 overflow-hidden bg-black pointer-events-none">
-        <div className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1" style={{ backgroundImage: "url('/images/raakabg.jpg')" }} />
-        <div className="absolute inset-0 bg-cover bg-center animate-raaka-bg-2" style={{ backgroundImage: "url('/images/raakabg1.jpg')" }} />
-        <div className="absolute inset-0 bg-cover bg-center animate-raaka-bg-3" style={{ backgroundImage: "url('/images/raakabg2.jpg')" }} />
+      </div>
+    )}
+
+    {/* ==================================
+        RAAKA BACKGROUND THEMES
+        OBSIDIAN • EMBER • COSMIC • GRAPHITE • ONYX
+    ================================== */}
+
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-black">
+
+      {/* OBSIDIAN */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-1000 ${
+          theme === "obsidian" ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="absolute inset-0 bg-[#020202]" />
+
+        <div className="absolute left-1/2 top-[8%] h-[620px] w-[900px] -translate-x-1/2 rounded-full bg-white/[0.025] blur-[150px]" />
+
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,rgba(255,255,255,0.045),transparent_42%)]" />
+
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.18)_55%,rgba(0,0,0,0.92)_100%)]" />
+      </div>
+
+      {/* EMBER */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-1000 ${
+          theme === "ember" ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center animate-raaka-bg-1"
+          style={{ backgroundImage: "url('/images/raakabg.jpg')" }}
+        />
+
+        <div
+          className="absolute inset-0 bg-cover bg-center animate-raaka-bg-2"
+          style={{ backgroundImage: "url('/images/raakabg1.jpg')" }}
+        />
+
+        <div
+          className="absolute inset-0 bg-cover bg-center animate-raaka-bg-3"
+          style={{ backgroundImage: "url('/images/raakabg2.jpg')" }}
+        />
+
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_48%_35%,rgba(255,76,0,0.16),transparent_48%)]" />
+
         <div className="absolute inset-0 bg-black/45" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/85" />
       </div>
 
-      {/* ==================================
-          PREMIUM HEADER — NO HAMBURGER
-          ================================== */}
+      {/* COSMIC */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-1000 ${
+          theme === "cosmic" ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="absolute inset-0 bg-[#02040b]" />
 
-      {/* PREMIUM MENU BUTTON — TEXT BASED, NO 3-LINE ICON */}
-      <div className="fixed right-5 top-5 z-[90] md:right-7 md:top-6">
-        <button
-          type="button"
-          onClick={() => {
-            setMenuOpen((value) => !value);
-          }}
-          className="group flex h-11 items-center gap-3 rounded-full border border-white/20 bg-black/65 px-4 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/90 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-white/40 hover:bg-white hover:text-black md:px-5"
-          aria-expanded={menuOpen}
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-        >
-          <span>{menuOpen ? "Close" : "Menu"}</span>
+        <div className="absolute left-[18%] top-[8%] h-[520px] w-[520px] rounded-full bg-indigo-700/[0.10] blur-[150px]" />
 
-          <span className="relative flex h-4 w-4 items-center justify-center overflow-hidden">
-            <span
-              className={`absolute text-sm leading-none transition-all duration-300 ${
-                menuOpen
-                  ? "translate-y-0 rotate-0 opacity-100"
-                  : "-translate-y-3 opacity-0"
-              }`}
-            >
-              ×
-            </span>
-            <span
-              className={`absolute text-sm leading-none transition-all duration-300 ${
-                menuOpen
-                  ? "translate-y-3 opacity-0"
-                  : "translate-y-0 opacity-100"
-              }`}
-            >
-              →
-            </span>
+        <div className="absolute right-[8%] top-[28%] h-[460px] w-[460px] rounded-full bg-violet-700/[0.08] blur-[145px]" />
+
+        <div className="absolute bottom-[-12%] left-1/2 h-[520px] w-[850px] -translate-x-1/2 rounded-full bg-blue-700/[0.06] blur-[160px]" />
+
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(90,110,255,0.09),transparent_44%)]" />
+
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(1,3,12,0.05),rgba(0,0,0,0.88))]" />
+      </div>
+
+      {/* GRAPHITE SILVER */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-1000 ${
+          theme === "graphite" ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="absolute inset-0 bg-[#111214]" />
+
+        <div className="absolute left-[-10%] top-[-18%] h-[700px] w-[700px] rounded-full bg-white/[0.055] blur-[120px]" />
+
+        <div className="absolute right-[-8%] top-[8%] h-[600px] w-[600px] rounded-full bg-zinc-400/[0.07] blur-[130px]" />
+
+        <div className="absolute bottom-[-20%] left-1/2 h-[700px] w-[1100px] -translate-x-1/2 rounded-full bg-slate-300/[0.045] blur-[160px]" />
+
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_8%,rgba(255,255,255,0.09),transparent_45%)]" />
+
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.025),rgba(17,18,20,0.08)_45%,rgba(0,0,0,0.45)_100%)]" />
+
+        <div className="absolute inset-0 opacity-[0.035] bg-[repeating-linear-gradient(115deg,transparent_0px,transparent_2px,rgba(255,255,255,0.18)_3px,transparent_4px)]" />
+      </div>
+
+      {/* ONYX GOLD */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-1000 ${
+          theme === "onyx" ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="absolute inset-0 bg-[#070706]" />
+
+        <div className="absolute left-1/2 top-[-14%] h-[680px] w-[920px] -translate-x-1/2 rounded-full bg-amber-500/[0.06] blur-[155px]" />
+
+        <div className="absolute left-[-8%] top-[34%] h-[500px] w-[500px] rounded-full bg-yellow-700/[0.04] blur-[145px]" />
+
+        <div className="absolute bottom-[5%] right-[-5%] h-[520px] w-[520px] rounded-full bg-orange-600/[0.04] blur-[155px]" />
+
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(245,190,70,0.08),transparent_43%)]" />
+
+        <div className="absolute inset-0 bg-[linear-gradient(115deg,transparent_15%,rgba(255,214,120,0.02)_48%,transparent_70%)]" />
+
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.22)_55%,rgba(0,0,0,0.97)_100%)]" />
+      </div>
+
+      {/* Universal cinematic vignette */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_18%,rgba(0,0,0,0.72)_100%)]" />
+    </div>
+
+    {/* ==================================
+        PREMIUM HEADER — NO HAMBURGER
+    ================================== */}
+
+    {/* PREMIUM AURA THEME SWITCHER */}
+    <div className="fixed left-5 top-5 z-[90] md:left-7 md:top-6">
+      <button
+        type="button"
+        onClick={() =>
+          setTheme((current) => {
+            const order: Theme[] = [
+              "obsidian",
+              "ember",
+              "cosmic",
+              "graphite",
+              "onyx",
+            ];
+
+            const index = order.indexOf(current);
+
+            return order[(index + 1) % order.length];
+          })
+        }
+        className="group relative flex h-12 items-center gap-3 overflow-hidden rounded-full border border-white/15 bg-black/65 px-4 text-white shadow-[0_15px_50px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-all duration-500 hover:border-white/35 hover:bg-black/80"
+        aria-label={`Change visual aura. Current: ${theme}`}
+        title="Change visual aura"
+      >
+        {/* Luxury shine */}
+        <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+        {/* Aura icon */}
+        <span className="relative flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-white/[0.04]">
+          <span className="absolute inset-[3px] rounded-full border border-white/10 transition-transform duration-700 group-hover:rotate-180" />
+
+          <span
+            className={`relative h-2.5 w-2.5 rounded-full transition-all duration-500 ${
+              theme === "obsidian"
+                ? "bg-white shadow-[0_0_15px_rgba(255,255,255,0.95)]"
+                : theme === "ember"
+                ? "bg-orange-400 shadow-[0_0_16px_rgba(251,146,60,1)]"
+                : theme === "cosmic"
+                ? "bg-indigo-400 shadow-[0_0_16px_rgba(129,140,248,1)]"
+                : theme === "graphite"
+                ? "bg-zinc-300 shadow-[0_0_16px_rgba(212,212,216,0.9)]"
+                : "bg-yellow-400 shadow-[0_0_16px_rgba(250,204,21,1)]"
+            }`}
+          />
+        </span>
+
+        {/* Label */}
+        <span className="relative hidden sm:block">
+          <span className="block font-mono text-[8px] uppercase tracking-[0.35em] text-white/35">
+            Visual
           </span>
-        </button>
-      </div>
 
+          <span className="mt-0.5 block text-[10px] font-medium uppercase tracking-[0.22em] text-white/85">
+            Aura
+          </span>
+        </span>
+
+        {/* Current theme */}
+        <span className="relative hidden h-3.5 w-px bg-white/15 sm:block" />
+
+        <span className="relative hidden text-[8px] uppercase tracking-[0.18em] text-white/40 sm:block">
+          {theme}
+        </span>
+
+        {/* Premium symbol */}
+        <span className="relative ml-1 text-[11px] text-white/30 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-white/70">
+          ✦
+        </span>
+      </button>
+    </div>
+
+    {/* PREMIUM MENU BUTTON — TEXT BASED, NO 3-LINE ICON */}
+    <div className="fixed right-5 top-5 z-[90] md:right-7 md:top-6">
+      <button
+        type="button"
+        onClick={() => {
+          setMenuOpen((value) => !value);
+        }}
+        className="group flex h-11 items-center gap-3 rounded-full border border-white/20 bg-black/65 px-4 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/90 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-white/40 hover:bg-white hover:text-black md:px-5"
+        aria-expanded={menuOpen}
+        aria-label={menuOpen ? "Close menu" : "Open menu"}
+      >
+        <span>{menuOpen ? "Close" : "Menu"}</span>
+
+        <span className="relative flex h-4 w-4 items-center justify-center overflow-hidden">
+          <span
+            className={`absolute text-sm leading-none transition-all duration-300 ${
+              menuOpen
+                ? "translate-y-0 rotate-0 opacity-100"
+                : "-translate-y-3 opacity-0"
+            }`}
+          >
+            ×
+          </span>
+
+          <span
+            className={`absolute text-sm leading-none transition-all duration-300 ${
+              menuOpen
+                ? "translate-y-3 opacity-0"
+                : "translate-y-0 opacity-100"
+            }`}
+          >
+            →
+          </span>
+        </span>
+      </button>
+    </div>
       {/* MENU OVERLAY + PANEL */}
       {menuOpen && (
         <>
@@ -234,7 +483,7 @@ export default function Home() {
             className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-[2px]"
           />
 
-          <aside className="fixed right-4 top-[76px] z-[85] w-[calc(100vw-32px)] max-w-[380px] overflow-hidden rounded-3xl border border-white/15 bg-black/90 p-3 shadow-[0_25px_80px_rgba(0,0,0,0.65)] backdrop-blur-2xl">
+         <aside className="fixed right-4 top-[76px] z-[85] w-[calc(100vw-32px)] max-w-[380px] max-h-[calc(100vh-90px)] overflow-y-auto raaka-menu-scroll rounded-3xl border border-white/15 bg-black/90 p-3 shadow-[0_25px_80px_rgba(0,0,0,0.65)] backdrop-blur-2xl">
             <div className="border-b border-white/10 px-4 pb-4 pt-3">
               <div className="flex items-end justify-between gap-4">
                 <div>
