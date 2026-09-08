@@ -495,16 +495,7 @@ export default function Home() {
                 </span>
               </a>
 
-              <a
-                href="#songs"
-                onClick={() => setMenuOpen(false)}
-                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
-              >
-                <span className="text-sm font-medium">Songs</span>
-                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
-                  →
-                </span>
-              </a>
+            
 
               <a
                 href="/timeline"
@@ -612,6 +603,16 @@ export default function Home() {
                   BookMyShow Tracker
                   <NewBadge addedAt="2026-09-06" />
                 </span>
+                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
+                  →
+                </span>
+              </a>
+                <a
+                href="/contact"
+                onClick={() => setMenuOpen(false)}
+                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
+              >
+                <span className="text-sm font-medium">Contact</span>
                 <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
                   →
                 </span>
