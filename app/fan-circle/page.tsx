@@ -15,7 +15,7 @@ const fans = [
   },
   {
     username: "@Cricvizanalys",
-    name: "Cricviz Analys",
+    name: "Ashok",
     role: "RAAKA Creator",
     bio: "Cinema, fandom & conversations.",
   },
@@ -57,13 +57,13 @@ const fans = [
   },
   {
     username: "@RajMav07",
-    name: "Raj Mav",
+    name: "Raj",
     role: "RAAKA Fan",
     bio: "Part of the RAAKA journey.",
   },
   {
     username: "@AaoGhumaKLeLu",
-    name: "Aao Ghuma K Le Lu",
+    name: "Mangu Ram",
     role: "RAAKA Fan",
     bio: "Here for the ride.",
   },
@@ -75,7 +75,7 @@ const fans = [
   },
   {
     username: "@mosiac1234",
-    name: "mosiac1234",
+    name: "AArya",
     role: "RAAKA Fan",
     bio: "RAAKA enthusiast.",
   },
@@ -87,7 +87,7 @@ const fans = [
   },
   {
     username: "@RohitSa52200019",
-    name: "Rohit Sa",
+    name: "Rohit Saha",
     role: "RAAKA Fan",
     bio: "A voice inside the circle.",
   },
@@ -128,17 +128,40 @@ const fans = [
 },
 {
   username: "@Morfine68339115",
-  name: "Morfine68339115",
+  name: "Morfine",
   role: "RAAKA Fan",
   bio: "A dedicated RAAKA supporter.",
 },
 {
   username: "@bunnykk59",
-  name: "bunnykk59",
+  name: "KK",
   role: "RAAKA Fan",
   bio: "A proud voice in the RAAKA fan circle.",
 },
-   
+   {
+  username: "@MusuguDhonga",
+  name: "MusuguDhonga",
+  role: "RAAKA Fan",
+  bio: "A passionate voice from the RAAKA fan community.",
+},
+{
+  username: "@v_is_h_w_a",
+  name: "vishwa",
+  role: "RAAKA Fan",
+  bio: "A dedicated RAAKA supporter.",
+},
+{
+  username: "@cultAAkash",
+  name: "AAkash",
+  role: "RAAKA Fan",
+  bio: "A proud voice in the RAAKA fan circle.",
+},
+{
+  username: "@subhAAi666",
+  name: "CB",
+  role: "RAAKA Fan",
+  bio: "A passionate RAAKA fan.",
+},
 ];
 
 function avatarUrl(username: string) {
