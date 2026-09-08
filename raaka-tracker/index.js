@@ -91,6 +91,24 @@ async function getBookMyShowInterest(page) {
   };
 }
 
+async function ensureTodayDailyRecord() {
+  console.log("");
+  console.log("Ensuring today's daily record exists...");
+
+  const { error } = await supabase.rpc(
+    "ensure_bookmyshow_interest_day"
+  );
+
+  if (error) {
+    throw new Error(
+      "Could not ensure today's daily record: " +
+        error.message
+    );
+  }
+
+  console.log("Daily record check completed.");
+}
+
 async function getDailyRecords() {
   const { data, error } = await supabase
     .from("bookmyshow_interest_daily")
@@ -102,38 +120,12 @@ async function getDailyRecords() {
 
   if (error) {
     throw new Error(
-      "Supabase records error: " + error.message
-    );
-  }
-
-  return data || [];
-}
-
-async function createDailyRecord() {
-  console.log("");
-  console.log("No daily record found.");
-  console.log("Creating a daily record...");
-
-  const { error } = await supabase.rpc(
-    "ensure_bookmyshow_interest_day"
-  );
-
-  if (error) {
-    throw new Error(
-      "Could not create daily record: " +
+      "Supabase records error: " +
         error.message
     );
   }
 
-  const records = await getDailyRecords();
-
-  if (!records || records.length === 0) {
-    throw new Error(
-      "Daily record was not created."
-    );
-  }
-
-  return records;
+  return data || [];
 }
 
 async function saveInterestCount(
@@ -141,7 +133,7 @@ async function saveInterestCount(
   previousRow,
   interestCount
 ) {
-  let increase = interestCount;
+  let increase = 0;
 
   if (previousRow) {
     const previousInterest = Number(
@@ -166,7 +158,8 @@ async function saveInterestCount(
 
   if (error) {
     throw new Error(
-      "Supabase update error: " + error.message
+      "Supabase update error: " +
+        error.message
     );
   }
 
@@ -195,6 +188,17 @@ async function trackInterest() {
       );
     }
 
+    /*
+     * IMPORTANT:
+     * Always create/check today's row BEFORE
+     * fetching the daily records.
+     *
+     * Earlier code only called the RPC when
+     * the table was completely empty.
+     */
+    await ensureTodayDailyRecord();
+
+    console.log("");
     console.log(
       "Opening BookMyShow Mumbai page..."
     );
@@ -282,14 +286,20 @@ async function trackInterest() {
       "Getting daily records from Supabase..."
     );
 
-    let records = await getDailyRecords();
+    /*
+     * At this point today's row MUST exist.
+     */
+    const records =
+      await getDailyRecords();
 
     if (!records || records.length === 0) {
-      records =
-        await createDailyRecord();
+      throw new Error(
+        "No daily records found after ensuring today's record."
+      );
     }
 
     const latestRow = records[0];
+
     const previousRow =
       records.length > 1
         ? records[1]
@@ -299,6 +309,11 @@ async function trackInterest() {
     console.log(
       "Latest Day:",
       latestRow.day_number
+    );
+
+    console.log(
+      "Latest Date:",
+      latestRow.record_date
     );
 
     console.log(
@@ -324,7 +339,9 @@ async function trackInterest() {
     console.log(
       "========================================"
     );
+
     console.log("SUCCESS");
+
     console.log(
       "========================================"
     );
@@ -332,6 +349,11 @@ async function trackInterest() {
     console.log(
       "Day:",
       latestRow.day_number
+    );
+
+    console.log(
+      "Date:",
+      latestRow.record_date
     );
 
     console.log(
@@ -354,12 +376,15 @@ async function trackInterest() {
     );
 
     console.log("");
+
   } catch (error) {
     console.log("");
     console.log(
       "========================================"
     );
+
     console.log("TRACKER ERROR");
+
     console.log(
       "========================================"
     );
@@ -375,6 +400,7 @@ async function trackInterest() {
     );
 
     console.log("");
+
   } finally {
     if (browser) {
       await browser.close();
