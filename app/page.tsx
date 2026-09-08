@@ -351,7 +351,7 @@ export default function Home() {
       {/* ==================================
           BACKGROUND THEME SWITCHER
           ================================== */}
-      <div className="fixed right-[105px] top-5 z-[90] md:right-[135px] md:top-6">
+      <div className="fixed left-5 top-5 z-[90] md:left-7 md:top-6">
         <button
           type="button"
           onClick={() => setTheme((current) => {
@@ -621,13 +621,16 @@ export default function Home() {
         </>
       )}
 
-   <main id="home" className="raaka-site relative z-10 min-h-screen bg-transparent text-white">
+   <main
+  id="home"
+  className="raaka-site relative z-10 min-h-screen w-full max-w-full overflow-x-hidden bg-transparent text-white"
+>
 {/* HERO */}
 <section className="raaka-hero relative h-screen min-h-[620px] overflow-hidden">
 
   <div className="relative z-10 flex h-full w-full items-center">
 
-    <div className="mx-auto w-full max-w-7xl px-6 py-20 md:px-8">
+   <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-20 md:px-8 translate-y-8 md:translate-y-6">
 
       <div className="max-w-5xl">
 
@@ -838,7 +841,7 @@ export default function Home() {
   className="
     mt-5
     grid
-    w-full
+    w-[calc(100%+24px)]
     max-w-[900px]
     grid-cols-1
     gap-2.5
@@ -846,6 +849,7 @@ export default function Home() {
     lg:grid-cols-3
     md:mt-6
     md:gap-3
+    md:w-full
   "
 >
 
@@ -861,7 +865,7 @@ export default function Home() {
       relative
       flex
       h-[76px]
-      w-full
+      w-[95%]
       min-w-0
       items-center
       overflow-hidden
@@ -976,7 +980,7 @@ export default function Home() {
       relative
       flex
       h-[76px]
-      w-full
+      w-[95%]
       min-w-0
       items-center
       overflow-hidden
@@ -1099,7 +1103,7 @@ export default function Home() {
       relative
       flex
       h-[76px]
-      w-full
+      w-[95%]
       min-w-0
       items-center
       overflow-hidden
