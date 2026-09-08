@@ -592,16 +592,16 @@ export default function Home() {
                 )}
               </div>
 
-              <a
-                href="#box-office"
-                onClick={() => setMenuOpen(false)}
-                className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10"
-              >
-                <span className="text-sm font-medium">Box Office</span>
-                <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70">
-                  →
-                </span>
-              </a>
+            <a 
+  href="/fan-circle" 
+  onClick={() => setMenuOpen(false)} 
+  className="group flex items-center justify-between rounded-2xl px-4 py-3.5 transition hover:bg-white/10" 
+>
+  <span className="text-sm font-medium">Fan Circle</span> 
+  <span className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70"> 
+    → 
+  </span> 
+</a>
 
               <a
                 href="/bookmyshow-tracker"
