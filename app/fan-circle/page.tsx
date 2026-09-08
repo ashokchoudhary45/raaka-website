@@ -119,8 +119,26 @@ const fans = [
     username: "@duaflora",
     name: "duaflora",
     role: "RAAKA Fan",
-    bio: "Another voice in the circle.",
-  },
+    bio: "Another voice in the circle.",},
+    {
+  username: "@AArjunEra",
+  name: "AArjunEra",
+  role: "RAAKA Fan",
+  bio: "A passionate voice from the RAAKA fan community.",
+},
+{
+  username: "@Morfine68339115",
+  name: "Morfine68339115",
+  role: "RAAKA Fan",
+  bio: "A dedicated RAAKA supporter.",
+},
+{
+  username: "@bunnykk59",
+  name: "bunnykk59",
+  role: "RAAKA Fan",
+  bio: "A proud voice in the RAAKA fan circle.",
+},
+   
 ];
 
 function avatarUrl(username: string) {
@@ -347,6 +365,56 @@ export default function FanCirclePage() {
           })}
         </div>
       </section>
+      {/* FAN CIRCLE COMMUNITY NOTICE */}
+<section className="px-5 pb-8 md:px-10 md:pb-12">
+  <div className="mx-auto max-w-7xl">
+    <div className="relative overflow-hidden rounded-2xl border border-orange-400/20 bg-orange-500/[0.06] px-5 py-5 backdrop-blur-xl md:px-7">
+      
+      {/* Ambient glow */}
+      <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
+
+      <div className="relative flex gap-4">
+        
+        {/* Icon */}
+        <div className="mt-0.5 shrink-0 text-orange-400">
+          💛
+        </div>
+
+        {/* Content */}
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-white">
+            Fan Circle — A Little Note
+          </h3>
+
+          <p className="mt-2 text-sm leading-6 text-white/60">
+            If you’ve uploaded Fan Art on{" "}
+            <span className="font-semibold text-white/80">
+              worldofraaka.online
+            </span>
+            , regularly visit the website, or have supported/promoted the
+            website on X, we’d love to hear from you.
+          </p>
+
+          <p className="mt-2 text-sm leading-6 text-white/60">
+            Simply reply under any tweet from{" "}
+            <span className="font-semibold text-orange-300">
+              @WorldOfRaaka
+            </span>
+            {" "}and let us know. Your name may be featured in a future{" "}
+            <span className="font-semibold text-white/80">
+              Fan Circle / Supporters
+            </span>
+            {" "}section on World of RAAKA.
+          </p>
+
+          <p className="mt-3 text-xs leading-5 text-orange-200/60">
+            Thank you for being part of the journey. Every fan matters. ❤️
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Manifesto */}
       <section className="relative z-10 mx-auto max-w-[1400px] px-6 pb-20 md:px-10 md:pb-28">
