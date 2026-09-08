@@ -388,7 +388,7 @@ export default function Home() {
       </div>
 
       {/* PREMIUM MENU BUTTON — TEXT BASED, NO 3-LINE ICON */}
-      <div className="fixed right-5 top-5 z-[90] md:right-7 md:top-6">
+      <div className="absolute right-5 top-5 z-[90] md:right-7 md:top-6">
         <button
           type="button"
           onClick={() => {
