@@ -76,7 +76,7 @@ export default function ContactPage() {
 
                 <div>
                   <p className="font-medium text-white">
-                    45 Editz
+                    Ashok
                   </p>
 
                   <p className="text-sm text-white/45">
@@ -106,7 +106,7 @@ export default function ContactPage() {
 
                 <div>
                   <p className="font-medium text-white">
-                    Cricvizanalys
+                    Ashok
                   </p>
 
                   <p className="text-sm text-white/45">
