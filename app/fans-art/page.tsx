@@ -355,38 +355,42 @@ export default function FansArtPage() {
           </div>
         </section>
 
-        {/* TEMPORARY STORAGE NOTICE */}
-        <section className="px-5 pb-8 md:px-10 md:pb-12">
-          <div className="mx-auto max-w-7xl">
-            <div className="relative overflow-hidden rounded-2xl border border-orange-400/20 bg-orange-500/[0.06] px-5 py-5 backdrop-blur-xl md:px-7">
-              <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
+      {/* FAN ART STORAGE UPDATE */}
+<section className="px-5 pb-8 md:px-10 md:pb-12">
+  <div className="mx-auto max-w-7xl">
+    <div className="relative overflow-hidden rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.05] px-5 py-5 backdrop-blur-xl md:px-7">
+      
+      <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-emerald-400/10 blur-3xl" />
 
-              <div className="relative flex gap-4">
-                <div className="mt-0.5 shrink-0 text-orange-400">
-                  ⚠
-                </div>
+      <div className="relative flex gap-4">
+        <div className="mt-0.5 shrink-0 text-emerald-400 text-lg">
+          ✓
+        </div>
 
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-white">
-                    Fan Art — Temporary Notice
-                  </h3>
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-white">
+            Fan Art Uploads Are Back
+          </h3>
 
-                  <p className="mt-2 text-sm leading-6 text-white/60">
-                    Due to a temporary storage limitation, uploaded artworks may
-                    currently be compressed and appear in lower quality than intended.
-                    We are working on an upgrade and will restore the image quality soon.
-                  </p>
+          <p className="mt-2 text-sm leading-6 text-white/60">
+            Our Fan Art storage issue has been successfully resolved.
+            You can now upload your artwork again with improved,
+            high-quality image storage.
+          </p>
 
-                  <p className="mt-2 text-sm leading-6 text-orange-300/80">
-                    Until the issue is resolved, we kindly recommend avoiding new photo
-                    uploads if you want to preserve the original quality of your artwork.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+          <p className="mt-2 text-sm leading-6 text-white/60">
+            Thank you for your patience and for continuing to be part of
+            the <span className="font-semibold text-white/80">World of RAAKA</span>.
+          </p>
 
+          <p className="mt-3 text-xs leading-5 text-emerald-300/70">
+            Upload your art. Share your creativity. Be part of the journey. ❤️
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
         {/* RAAKA FAN PASSPORT */}
         <section className="px-5 pb-10 md:px-10 md:pb-16">
           <div className="mx-auto max-w-7xl">
