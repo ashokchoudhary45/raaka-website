@@ -15,89 +15,6 @@ type FanArt = {
 };
 
 
-const TARGET_IMAGE_BYTES = 20 * 1024;
-const MAX_IMAGE_DIMENSION = 1200;
-
-async function compressFanArtImage(file: File): Promise<File> {
-  // Always optimize fan art for gallery delivery.
-  // Even small source images are recompressed so new uploads stay lightweight.
-  if (file.size <= TARGET_IMAGE_BYTES && file.type === "image/jpeg") {
-    return file;
-  }
-
-  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Could not read the selected image."));
-    };
-
-    img.src = url;
-  });
-
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-
-  if (!context) {
-    throw new Error("Your browser could not prepare the image for upload.");
-  }
-
-  // Keep gallery images lightweight while preserving a usable resolution.
-  let maxDimension = Math.min(
-    MAX_IMAGE_DIMENSION,
-    Math.max(image.naturalWidth, image.naturalHeight)
-  );
-
-  for (let sizeAttempt = 0; sizeAttempt < 8; sizeAttempt++) {
-    const scale = Math.min(
-      1,
-      maxDimension / Math.max(image.naturalWidth, image.naturalHeight)
-    );
-
-    const width = Math.max(1, Math.round(image.naturalWidth * scale));
-    const height = Math.max(1, Math.round(image.naturalHeight * scale));
-
-    canvas.width = width;
-    canvas.height = height;
-    context.clearRect(0, 0, width, height);
-    context.drawImage(image, 0, 0, width, height);
-
-    // Try increasingly aggressive JPEG compression until the file is <= 20 KB.
-    for (const quality of [0.72, 0.60, 0.48, 0.38, 0.30, 0.24, 0.18, 0.12, 0.08, 0.05]) {
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, "image/jpeg", quality);
-      });
-
-      if (!blob) {
-        throw new Error("Could not compress the selected image.");
-      }
-
-      if (blob.size <= TARGET_IMAGE_BYTES) {
-        const baseName = file.name.replace(/\.[^/.]+$/, "");
-
-        return new File([blob], `${baseName}.jpg`, {
-          type: "image/jpeg",
-          lastModified: Date.now(),
-        });
-      }
-    }
-
-    // Still too large: reduce dimensions and try again.
-    maxDimension = Math.floor(maxDimension * 0.70);
-  }
-
-  throw new Error(
-    "This image is too large to compress below 20 KB. Please choose a smaller image."
-  );
-}
-
 export default function FansArtPage() {
   const [fanName, setFanName] = useState("");
   const [title, setTitle] = useState("");
@@ -314,34 +231,23 @@ export default function FansArtPage() {
 
     try {
       const supabase = getSupabase();
-      const compressedFile = await compressFanArtImage(file);
+      const uploadData = new FormData();
+      uploadData.append("file", file);
 
-      const safeName =
-        fanName
-          .trim()
-          .replace(/[^a-zA-Z0-9]/g, "-")
-          .toLowerCase() || "fan";
+      const uploadResponse = await fetch("/api/fan-art/upload", {
+        method: "POST",
+        body: uploadData,
+      });
 
-      const fileName = `${Date.now()}-${safeName}.jpg`;
+      const uploadResult = await uploadResponse.json();
 
-      const { error: uploadError } = await supabase.storage
-        .from("fan-art")
-        .upload(fileName, compressedFile, {
-          cacheControl: "31536000",
-          contentType: "image/jpeg",
-          upsert: false,
-        });
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw uploadError;
+      if (!uploadResponse.ok) {
+        throw new Error(
+          uploadResult.error || "Failed to upload fan art."
+        );
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("fan-art")
-        .getPublicUrl(fileName);
-
-      const imageUrl = publicUrlData.publicUrl;
+      const imageUrl = uploadResult.publicUrl;
 
       const { error: insertError } = await supabase
         .from("fan_art")
@@ -354,7 +260,6 @@ export default function FansArtPage() {
         });
 
       if (insertError) {
-        await supabase.storage.from("fan-art").remove([fileName]);
         console.error("Database error:", insertError);
         throw insertError;
       }
@@ -804,7 +709,7 @@ export default function FansArtPage() {
                     </span>
 
                     <span className="mt-2 text-xs text-white/30">
-                     JPG, PNG, WEBP • Maximum 10 MB • Automatically compressed to ≤20 KB
+                     JPG, PNG, WEBP • Maximum 10 MB • High-quality storage
                     </span>
 
                     <input
