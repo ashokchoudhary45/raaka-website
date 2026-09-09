@@ -17,7 +17,7 @@ const RAAKA_PLAYLIST: MusicTrack[] = [
     title: "RAAKA Theme",
     src: "/sounds/king.mp3",
   },
-   { title: "welcome onboard dp", src: "/sounds/song1.mp3" },
+   { title: "welcome onboard dp", src: "/sounds/song2.mp3" },
   // Future songs can be added here:
   // { title: "Song Name", src: "/music/song-name.mp3" },
 ];
