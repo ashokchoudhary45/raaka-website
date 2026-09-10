@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer";
 import { createClient } from "@supabase/supabase-js";
 import "dotenv/config";
+import fs from "fs/promises";
 
 const BOOKMYSHOW_URL =
   "https://in.bookmyshow.com/movies/mumbai/raaka-telugu/ET00494565";
@@ -10,13 +11,28 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
+// ============================================================
+// INTEREST COUNT PARSER
+// ============================================================
+
 function parseInterestCount(text) {
   if (!text) {
     return null;
   }
 
+  /*
+    Supports:
+
+    18.4K+ are interested
+    18.4K are interested
+    18,400 are interested
+    18400 are interested
+    1.2M+ are interested
+    2B+ are interested
+  */
+
   const match = text.match(
-    /([\d,.]+)\s*(K|M)?\+?\s*are interested/i
+    /([\d,]+(?:\.\d+)?)\s*(K|M|B)?\+?\s*are\s+interested/i
   );
 
   if (!match) {
@@ -24,76 +40,158 @@ function parseInterestCount(text) {
   }
 
   const numberPart = match[1].replace(/,/g, "");
-  const value = parseFloat(numberPart);
+  const value = Number.parseFloat(numberPart);
 
-  if (isNaN(value)) {
+  if (!Number.isFinite(value)) {
     return null;
   }
 
-  const unit = match[2];
+  const unit = (match[2] || "").toUpperCase();
 
-  if (unit && unit.toUpperCase() === "K") {
+  if (unit === "K") {
     return Math.round(value * 1000);
   }
 
-  if (unit && unit.toUpperCase() === "M") {
+  if (unit === "M") {
     return Math.round(value * 1000000);
+  }
+
+  if (unit === "B") {
+    return Math.round(value * 1000000000);
   }
 
   return Math.round(value);
 }
 
+// ============================================================
+// READ BOOKMYSHOW INTEREST
+// ============================================================
+
 async function getBookMyShowInterest(page) {
   console.log("Waiting for BookMyShow content...");
+
+  const interestPattern =
+    /([\d,]+(?:\.\d+)?)\s*(K|M|B)?\+?\s*are\s+interested/i;
+
+  // ----------------------------------------------------------
+  // Wait for dynamically rendered BookMyShow content
+  // ----------------------------------------------------------
 
   try {
     await page.waitForFunction(
       function () {
-        return document.documentElement.innerHTML.includes(
-          "are interested"
+        const bodyText = document.body?.innerText || "";
+        const html = document.documentElement?.innerHTML || "";
+
+        return (
+          /are\s+interested/i.test(bodyText) ||
+          /are\s+interested/i.test(html)
         );
       },
       {
-        timeout: 30000
+        timeout: 45000
       }
     );
 
     console.log("Interest information found on page.");
   } catch (error) {
     console.log(
-      "Interest text was not detected within 30 seconds."
+      "Interest text was not detected within 45 seconds."
+    );
+
+    console.log(
+      "Trying fallback extraction..."
     );
   }
 
+  // ----------------------------------------------------------
+  // Give BookMyShow extra time to finish rendering
+  // ----------------------------------------------------------
+
   await new Promise(function (resolve) {
-    setTimeout(resolve, 3000);
+    setTimeout(resolve, 5000);
   });
+
+  // ----------------------------------------------------------
+  // Read visible page text
+  // ----------------------------------------------------------
+
+  const bodyText = await page.evaluate(function () {
+    return document.body?.innerText || "";
+  });
+
+  // ----------------------------------------------------------
+  // Read complete HTML
+  // ----------------------------------------------------------
 
   const pageHtml = await page.content();
 
-  const match = pageHtml.match(
-    /([\d,.]+)\s*(K|M)?\+?\s*are interested/i
-  );
+  // ----------------------------------------------------------
+  // Try visible text first
+  // ----------------------------------------------------------
 
-  if (!match) {
-    return {
-      rawText: null,
-      count: null
-    };
+  const sources = [
+    bodyText,
+    pageHtml
+  ];
+
+  for (const source of sources) {
+    const match = source.match(interestPattern);
+
+    if (!match) {
+      continue;
+    }
+
+    const rawText = match[0]
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const count = parseInterestCount(rawText);
+
+    if (count !== null) {
+      return {
+        rawText,
+        count
+      };
+    }
   }
 
-  const rawText = match[0];
-  const count = parseInterestCount(rawText);
+  // ----------------------------------------------------------
+  // Save debug text if count wasn't found
+  // ----------------------------------------------------------
+
+  try {
+    await fs.writeFile(
+      "raaka_bms_debug.txt",
+      bodyText,
+      "utf8"
+    );
+
+    console.log(
+      "Debug text saved: raaka_bms_debug.txt"
+    );
+  } catch (error) {
+    console.log(
+      "Could not save debug text:",
+      error.message
+    );
+  }
 
   return {
-    rawText: rawText,
-    count: count
+    rawText: null,
+    count: null
   };
 }
 
+// ============================================================
+// ENSURE TODAY'S DAILY RECORD
+// ============================================================
+
 async function ensureTodayDailyRecord() {
   console.log("");
-  console.log("Ensuring today's daily record exists...");
+  console.log(
+    "Ensuring today's daily record exists..."
+  );
 
   const { error } = await supabase.rpc(
     "ensure_bookmyshow_interest_day"
@@ -106,8 +204,14 @@ async function ensureTodayDailyRecord() {
     );
   }
 
-  console.log("Daily record check completed.");
+  console.log(
+    "Daily record check completed."
+  );
 }
+
+// ============================================================
+// GET LATEST DAILY RECORDS
+// ============================================================
 
 async function getDailyRecords() {
   const { data, error } = await supabase
@@ -128,6 +232,10 @@ async function getDailyRecords() {
   return data || [];
 }
 
+// ============================================================
+// SAVE INTEREST COUNT
+// ============================================================
+
 async function saveInterestCount(
   latestRow,
   previousRow,
@@ -143,38 +251,68 @@ async function saveInterestCount(
     increase =
       interestCount - previousInterest;
 
+    // Never show negative increase
     if (increase < 0) {
       increase = 0;
     }
   }
 
-  const { error } = await supabase
-    .from("bookmyshow_interest_daily")
-    .update({
-      interest: interestCount,
-      increase: increase
-    })
-    .eq("id", latestRow.id);
-
-  if (error) {
-    throw new Error(
-      "Supabase update error: " +
-        error.message
-    );
+ const { data, error } = await supabase.rpc(
+  "update_bookmyshow_interest_day",
+  {
+    p_id: latestRow.id,
+    p_interest: interestCount,
+    p_increase: increase
   }
+);
 
-  return increase;
+if (error) {
+  throw new Error(
+    "Supabase update RPC error: " +
+      error.message
+  );
 }
+
+if (!data || data.success !== true) {
+  throw new Error(
+    "Supabase update was not confirmed."
+  );
+}
+
+console.log(
+  "Supabase confirmed update:",
+  data
+);
+
+return increase;
+}
+
+// ============================================================
+// MAIN TRACKER
+// ============================================================
 
 async function trackInterest() {
   let browser = null;
 
   try {
     console.log("");
-    console.log("========================================");
-    console.log("RAAKA BOOKMYSHOW INTEREST TRACKER");
-    console.log("========================================");
+    console.log(
+      "========================================"
+    );
+
+    console.log(
+      "RAAKA BOOKMYSHOW INTEREST TRACKER"
+    );
+
+    console.log(
+      "========================================"
+    );
+
     console.log("");
+
+    // --------------------------------------------------------
+    // Check environment variables
+    // --------------------------------------------------------
 
     if (!process.env.SUPABASE_URL) {
       throw new Error(
@@ -188,15 +326,16 @@ async function trackInterest() {
       );
     }
 
-    /*
-     * IMPORTANT:
-     * Always create/check today's row BEFORE
-     * fetching the daily records.
-     *
-     * Earlier code only called the RPC when
-     * the table was completely empty.
-     */
+    // --------------------------------------------------------
+    // IMPORTANT:
+    // Create today's row BEFORE reading records.
+    // --------------------------------------------------------
+
     await ensureTodayDailyRecord();
+
+    // --------------------------------------------------------
+    // Open BookMyShow
+    // --------------------------------------------------------
 
     console.log("");
     console.log(
@@ -204,10 +343,12 @@ async function trackInterest() {
     );
 
     console.log(BOOKMYSHOW_URL);
+
     console.log("");
 
     browser = await puppeteer.launch({
       headless: true,
+
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -216,6 +357,10 @@ async function trackInterest() {
     });
 
     const page = await browser.newPage();
+
+    // --------------------------------------------------------
+    // Browser settings
+    // --------------------------------------------------------
 
     await page.setViewport({
       width: 1366,
@@ -228,22 +373,38 @@ async function trackInterest() {
         "Chrome/131.0.0.0 Safari/537.36"
     );
 
-    await page.goto(BOOKMYSHOW_URL, {
-      waitUntil: "domcontentloaded",
-      timeout: 60000
-    });
+    // --------------------------------------------------------
+    // Open BMS
+    // --------------------------------------------------------
+
+    await page.goto(
+      BOOKMYSHOW_URL,
+      {
+        waitUntil: "domcontentloaded",
+        timeout: 60000
+      }
+    );
 
     console.log(
       "BookMyShow page loaded."
     );
 
+    // --------------------------------------------------------
+    // Extract interest
+    // --------------------------------------------------------
+
     const result =
       await getBookMyShowInterest(page);
 
     console.log("");
+
     console.log(
       "========== BOOKMYSHOW RESULT =========="
     );
+
+    // --------------------------------------------------------
+    // If interest wasn't found
+    // --------------------------------------------------------
 
     if (!result.rawText) {
       console.log(
@@ -251,54 +412,105 @@ async function trackInterest() {
       );
 
       console.log("");
+
       console.log(
-        "No value will be saved to Supabase."
+        "IMPORTANT: Nothing will be saved."
+      );
+
+      console.log(
+        "This prevents Day 4 from becoming 0."
       );
 
       return;
     }
+
+    // --------------------------------------------------------
+    // Show raw BMS text
+    // --------------------------------------------------------
 
     console.log(
       "Interest text:",
       result.rawText
     );
 
-    if (result.count === null) {
+    // --------------------------------------------------------
+    // Validate number
+    // --------------------------------------------------------
+
+    if (
+      result.count === null ||
+      !Number.isFinite(result.count)
+    ) {
       console.log("");
+
       console.log(
         "Could not convert interest count."
       );
 
+      console.log(
+        "Nothing will be saved."
+      );
+
       return;
     }
+
+    console.log("");
 
     console.log(
       "Extracted interest count:",
       result.count
     );
 
+    // --------------------------------------------------------
+    // NEVER save 0 from a failed extraction
+    // --------------------------------------------------------
+
+    if (result.count <= 0) {
+      console.log("");
+
+      console.log(
+        "Fetched interest count is 0."
+      );
+
+      console.log(
+        "Nothing will be written to Supabase."
+      );
+
+      return;
+    }
+
     console.log(
       "========================================"
     );
 
     console.log("");
+
+    // --------------------------------------------------------
+    // Get daily records
+    // --------------------------------------------------------
+
     console.log(
       "Getting daily records from Supabase..."
     );
 
-    /*
-     * At this point today's row MUST exist.
-     */
     const records =
       await getDailyRecords();
 
-    if (!records || records.length === 0) {
+    if (
+      !records ||
+      records.length === 0
+    ) {
       throw new Error(
         "No daily records found after ensuring today's record."
       );
     }
 
-    const latestRow = records[0];
+    // --------------------------------------------------------
+    // Latest + previous day
+    // --------------------------------------------------------
+
+    const latestRow =
+      records[0];
 
     const previousRow =
       records.length > 1
@@ -306,6 +518,7 @@ async function trackInterest() {
         : null;
 
     console.log("");
+
     console.log(
       "Latest Day:",
       latestRow.day_number
@@ -328,6 +541,10 @@ async function trackInterest() {
       result.count
     );
 
+    // --------------------------------------------------------
+    // Save
+    // --------------------------------------------------------
+
     const increase =
       await saveInterestCount(
         latestRow,
@@ -335,16 +552,25 @@ async function trackInterest() {
         result.count
       );
 
+    // --------------------------------------------------------
+    // SUCCESS
+    // --------------------------------------------------------
+
     console.log("");
-    console.log(
-      "========================================"
-    );
-
-    console.log("SUCCESS");
 
     console.log(
       "========================================"
     );
+
+    console.log(
+      "SUCCESS"
+    );
+
+    console.log(
+      "========================================"
+    );
+
+    console.log("");
 
     console.log(
       "Day:",
@@ -371,6 +597,8 @@ async function trackInterest() {
       result.rawText
     );
 
+    console.log("");
+
     console.log(
       "========================================"
     );
@@ -379,18 +607,26 @@ async function trackInterest() {
 
   } catch (error) {
     console.log("");
-    console.log(
-      "========================================"
-    );
-
-    console.log("TRACKER ERROR");
 
     console.log(
       "========================================"
     );
 
-    if (error && error.message) {
-      console.error(error.message);
+    console.log(
+      "TRACKER ERROR"
+    );
+
+    console.log(
+      "========================================"
+    );
+
+    if (
+      error &&
+      error.message
+    ) {
+      console.error(
+        error.message
+      );
     } else {
       console.error(error);
     }
@@ -404,9 +640,16 @@ async function trackInterest() {
   } finally {
     if (browser) {
       await browser.close();
-      console.log("Chrome closed.");
+
+      console.log(
+        "Chrome closed."
+      );
     }
   }
 }
+
+// ============================================================
+// START
+// ============================================================
 
 trackInterest();
