@@ -4,6 +4,8 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import NewBadge from "@/components/NewBadge";
+import { getSupabase } from "@/lib/supabase";
+
 
 type Theme = "obsidian" | "ember" | "cosmic" | "graphite" | "onyx";
 
@@ -27,6 +29,100 @@ export default function Home() {
   const [intro, setIntro] = useState(true);
   const [introAudioDone, setIntroAudioDone] = useState(false);
   const [ticketsOpen, setTicketsOpen] = useState(false);
+  const [hyped, setHyped] = useState(false);
+const [hypedCount, setHypedCount] = useState(0);
+const [hypedLoading, setHypedLoading] = useState(true);
+const [hypedAnimating, setHypedAnimating] = useState(false);
+  // ==============================
+  // RAAKA HYPED SYSTEM
+  // ==============================
+
+  const getRaakaVisitorId = () => {
+    const key = "raaka-hype-visitor-id";
+
+    let id = localStorage.getItem(key);
+
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(key, id);
+    }
+
+    return id;
+  };
+
+  // Load current hype status only once when the page opens
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadHypeStatus = async () => {
+      try {
+        const visitorId = getRaakaVisitorId();
+        const supabase = getSupabase();
+
+        const { data, error } = await supabase.rpc(
+          "get_raaka_hype_status",
+          {
+            p_visitor_id: visitorId,
+          }
+        );
+
+        if (error) {
+          throw error;
+        }
+
+        if (!cancelled && data) {
+          setHyped(Boolean(data.hyped));
+          setHypedCount(Number(data.total) || 0);
+        }
+      } catch (error) {
+        console.error("RAAKA Hype load error:", error);
+      } finally {
+        if (!cancelled) {
+          setHypedLoading(false);
+        }
+      }
+    };
+
+    loadHypeStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Add one hype
+  const handleHype = async () => {
+    if (hyped || hypedLoading || hypedAnimating) return;
+
+    setHypedAnimating(true);
+
+    try {
+      const visitorId = getRaakaVisitorId();
+      const supabase = getSupabase();
+
+      const { data, error } = await supabase.rpc(
+        "add_raaka_hype",
+        {
+          p_visitor_id: visitorId,
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setHyped(true);
+        setHypedCount(Number(data.total) || hypedCount + 1);
+      }
+    } catch (error) {
+      console.error("RAAKA Hype error:", error);
+    } finally {
+      setTimeout(() => {
+        setHypedAnimating(false);
+      }, 700);
+    }
+  };
 
   // ==============================
   // RAAKA WEBSITE MUSIC
@@ -1404,6 +1500,9 @@ export default function Home() {
     </div>
 
   </div>
+  
+
+
 
 </section>
 {/* MOVIE */}
@@ -1506,6 +1605,82 @@ Sci-Fi
           </div>
 
         </div>
+        
+
+{/* =========================
+    RAAKA HYPED
+    ========================= */}
+
+<div className="mt-8 w-full max-w-[900px]">
+  <div className="relative overflow-hidden rounded-2xl border border-orange-400/20 bg-black/60 p-5 backdrop-blur-xl md:p-6">
+
+    {/* Glow */}
+    <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-orange-500/[0.08] via-transparent to-red-500/[0.05]" />
+
+    <div className="relative z-10 flex flex-col items-center justify-between gap-5 sm:flex-row">
+
+      {/* LEFT */}
+      <div className="text-center sm:text-left">
+        <p className="text-[8px] font-medium uppercase tracking-[0.35em] text-orange-300/60">
+          The World Is Watching
+        </p>
+
+        <h3 className="mt-1 text-lg font-semibold text-white md:text-xl">
+          Are You Hyped for RAAKA?
+        </h3>
+
+        <p className="mt-1 text-xs text-white/40">
+          {hypedLoading
+            ? "Loading the fan pulse..."
+            : `${hypedCount.toLocaleString()} fans are hyped`}
+        </p>
+      </div>
+
+      {/* HYPED BUTTON */}
+      <button
+        type="button"
+        onClick={handleHype}
+        disabled={hypedLoading || hyped}
+        className={`
+          group relative flex min-w-[180px] items-center justify-center gap-2
+          overflow-hidden rounded-full border px-6 py-3
+          text-sm font-bold tracking-wide
+          transition-all duration-300
+          ${
+            hyped
+              ? "border-orange-400/50 bg-orange-500/15 text-orange-200"
+              : "border-white/15 bg-white/[0.05] text-white hover:border-orange-400/50 hover:bg-orange-500/10"
+          }
+          ${hypedAnimating ? "scale-95" : "scale-100"}
+          disabled:cursor-default
+        `}
+      >
+
+        {/* Fire */}
+        <span
+          className={`
+            text-lg transition-transform duration-500
+            ${hypedAnimating ? "scale-150 rotate-12" : ""}
+          `}
+        >
+          🔥
+        </span>
+
+        {/* Text */}
+        <span>
+          {hyped ? "YOU'RE HYPED" : "HYPED"}
+        </span>
+
+        {/* Shine */}
+        {!hyped && (
+          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+        )}
+
+      </button>
+
+    </div>
+  </div>
+</div>
        <div className="mt-40 mb-24 w-full">
   <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/30 px-5 py-7 backdrop-blur-md md:px-10 md:py-9">
 
