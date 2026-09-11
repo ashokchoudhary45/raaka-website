@@ -132,7 +132,7 @@ export default function FansArtPage() {
   }
 
   function getVisitorId() {
-    const key = "raaka-fan-art-visitor-id";
+    const key = "raaka-fan-art-new-visitor-id";
     let visitorId = localStorage.getItem(key);
 
     if (!visitorId) {

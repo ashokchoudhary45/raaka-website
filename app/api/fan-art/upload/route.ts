@@ -97,12 +97,16 @@ export async function POST(request: Request) {
       fileName,
       publicUrl,
     });
-  } catch (error) {
-    console.error("R2 upload error:", error);
+  } catch (error: any) {
+    console.error("R2 upload error FULL:", error);
 
     return NextResponse.json(
       {
-        error: "Failed to upload image to R2.",
+        error:
+          error?.message ||
+          error?.Code ||
+          error?.name ||
+          "Unknown R2 error",
       },
       { status: 500 }
     );
