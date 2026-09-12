@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import NewBadge from "@/components/NewBadge";
-import { getSupabase } from "@/lib/supabase";
 
 type Theme = "obsidian" | "ember" | "cosmic" | "graphite" | "onyx";
 
@@ -291,95 +290,6 @@ export default function Home() {
   const [intro, setIntro] = useState(true);
   const [introAudioDone, setIntroAudioDone] = useState(false);
   const [ticketsOpen, setTicketsOpen] = useState(false);
-  const [hyped, setHyped] = useState(false);
-  const [hypedCount, setHypedCount] = useState(0);
-  const [hypedLoading, setHypedLoading] = useState(true);
-  const [hypedAnimating, setHypedAnimating] = useState(false);
-
-  // ==============================
-  // RAAKA HYPED SYSTEM
-  // ==============================
-
-  const getRaakaVisitorId = () => {
-    const key = "raaka-hype-visitor-id";
-
-    let id = localStorage.getItem(key);
-
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem(key, id);
-    }
-
-    return id;
-  };
-
-  // Load current hype status only once when the page opens
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadHypeStatus = async () => {
-      try {
-        const visitorId = getRaakaVisitorId();
-        const supabase = getSupabase();
-
-        const { data, error } = await supabase.rpc("get_raaka_hype_status", {
-          p_visitor_id: visitorId,
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        if (!cancelled && data) {
-          setHyped(Boolean(data.hyped));
-          setHypedCount(Number(data.total) || 0);
-        }
-      } catch (error) {
-        console.error("RAAKA Hype load error:", error);
-      } finally {
-        if (!cancelled) {
-          setHypedLoading(false);
-        }
-      }
-    };
-
-    loadHypeStatus();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Add one hype
-  const handleHype = async () => {
-    if (hyped || hypedLoading || hypedAnimating) return;
-
-    setHypedAnimating(true);
-
-    try {
-      const visitorId = getRaakaVisitorId();
-      const supabase = getSupabase();
-
-      const { data, error } = await supabase.rpc("add_raaka_hype", {
-        p_visitor_id: visitorId,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data) {
-        setHyped(true);
-        setHypedCount(Number(data.total) || hypedCount + 1);
-      }
-    } catch (error) {
-      console.error("RAAKA Hype error:", error);
-    } finally {
-      setTimeout(() => {
-        setHypedAnimating(false);
-      }, 700);
-    }
-  };
 
   // ==============================
   // RAAKA WEBSITE MUSIC
@@ -761,7 +671,7 @@ export default function Home() {
           title="Change visual aura"
         >
           <span className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-r from-white/[0.08] via-transparent to-orange-400/[0.08] opacity-70" />
-          <span className="relative flex h-5.5 w-5.5 items-center justify-center rounded-full border border-white/20 bg-white/[0.04] shadow-inner sm:h-6 sm:w-6">
+          <span className="relative flex h-[22px] w-[22px] items-center justify-center rounded-full border border-white/20 bg-white/[0.04] shadow-inner sm:h-6 sm:w-6">
             <span className="absolute inset-1 rounded-full border border-white/10 transition-transform duration-700 group-hover:rotate-180" />
             <span
               className={`relative h-2 w-2 rounded-full transition-all duration-500 ${
@@ -1052,43 +962,6 @@ export default function Home() {
                     </a>
                   );
                 })}
-              </div>
-
-              {/* Fan Pulse */}
-              <div className="mt-4 w-full max-w-[900px]">
-                <div className="relative overflow-hidden rounded-xl border border-white/[0.10] bg-black/45 px-4 py-3 backdrop-blur-xl md:px-5">
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-orange-500/[0.045] via-transparent to-orange-500/[0.02]" />
-                  <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-orange-400/25 bg-orange-500/[0.07]">
-                        <span className="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.9)]" />
-                        <span className="absolute inset-1 rounded-full border border-orange-400/10" />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-[7px] font-semibold uppercase tracking-[0.30em] text-white/35 md:text-[8px]">Fan Pulse</p>
-                          <span className="h-px w-5 bg-orange-400/30" />
-                        </div>
-                        <p className="mt-0.5 truncate text-[11px] font-medium text-white/75 md:text-xs">
-                          {hypedLoading ? "Reading the fan pulse..." : `${hypedCount.toLocaleString()} fans are hyped`}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleHype}
-                      disabled={hypedLoading || hyped}
-                      className={`group relative flex h-9 shrink-0 items-center justify-center gap-2 overflow-hidden rounded-full border px-4 text-[9px] font-bold uppercase tracking-[0.16em] transition-all duration-300 ${
-                        hyped ? "border-orange-400/40 bg-orange-500/[0.12] text-orange-200" : "border-white/[0.14] bg-white/[0.035] text-white/80 hover:border-orange-400/45 hover:bg-orange-500/[0.08] hover:text-white"
-                      } ${hypedAnimating ? "scale-95" : "scale-100"}`}
-                    >
-                      <span className={`text-sm transition-transform duration-500 ${hypedAnimating ? "rotate-12 scale-150" : ""}`}>🔥</span>
-                      <span>{hyped ? "You're Hyped" : "Hyped"}</span>
-                      {!hyped && <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />}
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

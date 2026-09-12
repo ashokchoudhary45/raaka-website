@@ -3,10 +3,15 @@
   "name": "raaka-website",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-09-08",
- "compatibility_flags": [
-  "nodejs_compat",
-  "nodejs_compat_populate_process_env"
-],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env"
+  ],
+  "vars": {
+    "R2_ACCOUNT_ID": "3019627e99830b26d227cb1482272ce6",
+    "R2_BUCKET_NAME": "raaka-fan-art-new",
+    "R2_PUBLIC_URL": "https://images.worldofraaka.online"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
