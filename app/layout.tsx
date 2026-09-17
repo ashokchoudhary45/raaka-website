@@ -1,6 +1,8 @@
+
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import RaakaMusic from "@/components/RaakaMusic";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -98,6 +100,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col overflow-x-hidden">
         {children}
+         <RaakaMusic />
       </body>
     </html>
   );

@@ -1,352 +1,51 @@
 import React from "react";
 
-const languages = [
-  ["Telugu", "Original"],
-  ["Hindi", "Dubbed"],
-  ["Tamil", "Dubbed"],
-  ["Kannada", "Dubbed"],
-  ["Malayalam", "Dubbed"],
-];
+const languages = [["Telugu","Original","341.48"],["Hindi","Dubbed","812.14"],["Tamil","Dubbed","58.56"],["Kannada","Dubbed","7.77"],["Malayalam","Dubbed","14.15"]];
+const days = [294,155,172,208,93,80,69,55,67,103];
+const territoryOpening = [["Andhra Pradesh","—","117.90"],["Telangana","—","149.70"],["AP + Telangana","—","320.80"],["Karnataka","20","23.70"],["Tamil Nadu","9.32","11.00"],["Kerala","5.38","6.35"],["Rest of India","72","86.00"],["India Total","192 Cr net","226 Cr gross"]];
+const overseas = [["USA / Canada","128.80","66.35"],["UK / Ireland","20.40","8.15"],["Australia / New Zealand","28.90","11.55"],["UAE / GCC","46.60","18.65"],["Malaysia / Singapore","9.40","3.75"],["Rest of World","26.05","10.40"],["Overseas Total","260.15","118.85"]];
+const dayRows = [
+["Day 01","164.25","196.40","—","—","164.25 Cr net"],["Day 02","93.80","112.10","—","—","258.05 Cr net"],["Day 03","119.25","142.60","—","—","377.30 Cr net"],["Day 04","141.05","168.60","—","—","518.35 Cr net"],["Day 05","64.45","76.80","—","—","582.80 Cr net"],["Day 06","51.55","62.10","—","—","634.35 Cr net"],["Day 07","43.35","51.90","—","—","677.70 Cr net"],["Day 08","37.45","44.15","—","—","715.15 Cr net"],["Day 09","36.40","43.40","—","—","751.55 Cr net"],["Day 10","63.30","75.45","210.00","1,194.91","825.50 Cr net"]];
 
-const territories = [
-  "Andhra Pradesh",
-  "Telangana",
-  "AP + Telangana",
-  "Karnataka",
-  "Tamil Nadu",
-  "Kerala",
-  "Rest of India",
-  "India Total",
-];
+const Money=({children}:{children:React.ReactNode})=><span>{children} <small>Cr</small></span>;
+const Table=({headers,rows}:{headers:string[],rows:string[][]})=><div className="tableWrap"><table><thead><tr>{headers.map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={i}>{r.map((x,j)=><td className={j===0?'name':''} key={j}>{x}</td>)}</tr>)}</tbody></table></div>;
+const Section=({num,kicker,title,children,id}:{num:string,kicker:string,title:string,children:React.ReactNode,id?:string})=><section id={id} className="section"><div className="sectionHead"><div><div className="kicker">{kicker}</div><h2>{title}</h2></div><div className="sectionNo">{num}</div></div>{children}</section>;
 
-const overseas = [
-  "USA / Canada",
-  "UK / Ireland",
-  "Australia / New Zealand",
-  "UAE / GCC",
-  "Malaysia / Singapore",
-  "Rest of World",
-  "Overseas Total",
-];
-
-const days = Array.from({ length: 10 }, (_, i) => i + 1);
-
-export default function Page() {
-  return (
-    <>
-      <style>{`
-        .p2-page{
-          min-height:100vh;
-          background:
-            radial-gradient(circle at 50% -15%, rgba(117,107,83,.10), transparent 34%),
-            linear-gradient(180deg,#030507 0%,#020304 100%);
-          color:#eeeae2;
-          font-family:Inter,Arial,sans-serif;
-          padding:0 0 50px;
-        }
-        .p2-page *{box-sizing:border-box}
-        .p2-grain{
-          position:fixed;inset:0;pointer-events:none;z-index:40;opacity:.026;
-          background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
-        }
-        .p2-container{width:min(1080px,calc(100% - 42px));margin:0 auto}
-        .p2-hero{text-align:center;padding:76px 0 37px}
-        .p2-overline{font-size:8px;letter-spacing:.38em;color:#c7ad78;font-weight:700;text-transform:uppercase;margin-bottom:10px}
-        .p2-film-title{
-          margin:0;
-          font-family:"Georgia","Times New Roman",serif;
-          font-size:clamp(42px,5vw,70px);
-          line-height:1.02;
-          letter-spacing:-.035em;
-          text-transform:uppercase;
-          color:#e5dfd4;
-        }
-        .p2-box-office{
-          margin-top:12px;
-          font-size:9px;
-          letter-spacing:.34em;
-          color:#a79778;
-          font-weight:700;
-          text-transform:uppercase;
-        }
-        .p2-subtitle{color:#747875;font-size:10px;margin-top:11px}
-        .p2-line{height:1px;width:52px;background:#b99f70;opacity:.68;margin:22px auto 0}
-        .p2-stats{
-          display:grid;grid-template-columns:repeat(3,1fr);
-          border:1px solid #20252b;border-radius:10px;overflow:hidden;background:rgba(9,12,15,.78);
-          box-shadow:0 15px 45px rgba(0,0,0,.25)
-        }
-        .p2-stat{padding:19px 22px 17px;min-height:98px;border-right:1px solid #20252b}
-        .p2-stat:last-child{border-right:0}
-        .p2-label{font-size:7px;letter-spacing:.23em;text-transform:uppercase;color:#8e876f;font-weight:700}
-        .p2-money{
-          display:flex;align-items:center;gap:10px;margin-top:10px;
-          font-family:"Georgia","Times New Roman",serif;font-size:29px;font-weight:800;letter-spacing:-.02em
-        }
-        .p2-currency{font-family:Inter,Arial,sans-serif;font-size:18px;color:#a9a59d;font-weight:400}
-        .p2-muted{font-size:7px;color:#555b5d;letter-spacing:.13em;text-transform:uppercase;margin-top:6px}
-        .p2-section{margin-top:38px}
-        .p2-kicker{font-size:7px;color:#b9a06f;letter-spacing:.30em;text-transform:uppercase;font-weight:700}
-        .p2-section-title{
-          font-family:"Georgia","Times New Roman",serif;
-          font-size:18px;margin:6px 0 15px;color:#e7e2d9;letter-spacing:-.01em
-        }
-        .p2-language-list{border-top:1px solid #20252b}
-        .p2-language{
-          min-height:43px;border-bottom:1px solid #15191e;display:grid;grid-template-columns:1fr auto;align-items:center
-        }
-        .p2-lang-name{font-size:10px;font-weight:600;color:#ddd9d0}
-        .p2-lang-tag{margin-left:9px;font-size:6px;letter-spacing:.08em;text-transform:uppercase;color:#777875}
-        .p2-lang-value{font-family:"Georgia","Times New Roman",serif;font-size:16px;font-weight:800;color:#ded9cf}
-        .p2-tba{font-size:6px;letter-spacing:.13em;color:#666a68;margin-right:3px;text-transform:uppercase}
-        .p2-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:31px}
-        .p2-quick-card{
-          border:1px solid #20252b;border-radius:9px;background:linear-gradient(145deg,#0a0d11,#07090c);
-          padding:16px 14px 14px;min-height:86px
-        }
-        .p2-quick-label{font-size:6px;letter-spacing:.2em;color:#77756d;text-transform:uppercase}
-        .p2-quick-value{font-family:"Georgia","Times New Roman",serif;font-weight:800;font-size:17px;margin-top:9px}
-        .p2-divider{height:1px;background:linear-gradient(90deg,transparent,#20252b,transparent);margin:43px 0}
-        .p2-detail{margin-top:46px}
-        .p2-detail-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:15px}
-        .p2-detail-number{font-family:"Georgia","Times New Roman",serif;font-size:11px;color:#514d43}
-        .p2-table-wrap{overflow-x:auto;border-top:1px solid #20252b}
-        .p2-table{width:100%;border-collapse:collapse;min-width:720px}
-        .p2-table th,.p2-table td{padding:13px 12px;border-bottom:1px solid #15191e;font-size:9px}
-        .p2-table th{
-          color:#6d6d68;font-size:6px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;text-align:right
-        }
-        .p2-table th:first-child,.p2-table td:first-child{text-align:left}
-        .p2-table td{color:#b7b4ad;text-align:right}
-        .p2-table td:first-child{font-weight:600;color:#d4d0c8}
-        .p2-days{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-        .p2-day{
-          border:1px solid #20252b;background:#080b0e;border-radius:7px;padding:15px;transition:.2s
-        }
-        .p2-day:hover{border-color:#71634e;transform:translateY(-2px)}
-        .p2-day-no{font-size:7px;color:#bca473;letter-spacing:.18em}
-        .p2-day-value{font-family:"Georgia","Times New Roman",serif;font-size:22px;font-weight:800;margin-top:15px}
-        .p2-day-label{font-size:6px;color:#626866;text-transform:uppercase;letter-spacing:.10em;margin-top:5px}
-        .p2-final{
-          margin:62px 0 0;padding:48px 0 50px;border-top:1px solid #20252b;border-bottom:1px solid #20252b;text-align:center
-        }
-        .p2-final-label{font-size:7px;letter-spacing:.28em;color:#bda674;text-transform:uppercase}
-        .p2-final h2{font-family:"Georgia","Times New Roman",serif;font-size:31px;margin:9px 0 22px;color:#ddd5c8}
-        .p2-final-big{
-          font-family:"Georgia","Times New Roman",serif;font-size:clamp(60px,9vw,105px);
-          font-weight:800;color:#c8b17d;line-height:.8
-        }
-        .p2-footer{text-align:center;color:#4e5352;font-size:7px;letter-spacing:.2em;text-transform:uppercase;padding:25px 0 20px}
-        @media(max-width:700px){
-          .p2-container{width:min(100% - 28px,1080px)}
-          .p2-stats{grid-template-columns:1fr}
-          .p2-stat{border-right:0;border-bottom:1px solid #20252b}
-          .p2-stat:last-child{border-bottom:0}
-          .p2-quick{grid-template-columns:1fr 1fr}
-          .p2-days{grid-template-columns:1fr 1fr}
-        }
-        @media(max-width:430px){
-          .p2-film-title{font-size:38px}
-          .p2-quick{grid-template-columns:1fr}
-          .p2-days{grid-template-columns:1fr 1fr}
-        }
-      `}</style>
-
-      <div className="p2-page">
-        <div className="p2-grain" />
-
-        <header className="p2-hero p2-container">
-          <div className="p2-overline">Theatrical Performance</div>
-          <h1 className="p2-film-title">Pushpa 2: The Rule</h1>
-          <div className="p2-box-office">Box Office Collection</div>
-          <div className="p2-subtitle">Worldwide theatrical box office performance</div>
-          <div className="p2-line" />
-        </header>
-
-        <div className="p2-container">
-          <section className="p2-stats">
-            {["Worldwide Gross", "India Gross", "Overseas Gross"].map((title) => (
-              <div className="p2-stat" key={title}>
-                <div className="p2-label">{title}</div>
-                <div className="p2-money"><span className="p2-currency">₹</span>TBA</div>
-                <div className="p2-muted">Collection</div>
-              </div>
-            ))}
-          </section>
-
-          <section className="p2-section">
-            <div className="p2-kicker">Language Wise</div>
-            <h2 className="p2-section-title">Collection</h2>
-            <div className="p2-language-list">
-              {languages.map(([name, tag]) => (
-                <div className="p2-language" key={name}>
-                  <div>
-                    <span className="p2-lang-name">{name}</span>
-                    <span className="p2-lang-tag">{tag}</span>
-                  </div>
-                  <div className="p2-lang-value"><span className="p2-tba">₹</span>TBA</div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="p2-quick">
-            {["Opening Day", "First Weekend", "India Net", "Highest Day"].map((title) => (
-              <div className="p2-quick-card" key={title}>
-                <div className="p2-quick-label">{title}</div>
-                <div className="p2-quick-value">₹ TBA</div>
-              </div>
-            ))}
-          </section>
-
-          <div className="p2-divider" />
-
-          <section id="day1" className="p2-detail">
-            <div className="p2-detail-head">
-              <div>
-                <div className="p2-kicker">Opening Day</div>
-                <h2 className="p2-section-title">Day 1 — Worldwide</h2>
-              </div>
-              <div className="p2-detail-number">01</div>
-            </div>
-            <div className="p2-table-wrap">
-              <table className="p2-table">
-                <thead><tr><th>Market</th><th>Net</th><th>Gross</th><th>Share</th></tr></thead>
-                <tbody>
-                  {["India", "Overseas", "Worldwide"].map((row) => (
-                    <tr key={row}><td>{row}</td><td>—</td><td>—</td><td>—</td></tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section id="territory" className="p2-detail">
-            <div className="p2-detail-head">
-              <div><div className="p2-kicker">India Market</div><h2 className="p2-section-title">Territory Wise</h2></div>
-              <div className="p2-detail-number">IN</div>
-            </div>
-            <div className="p2-table-wrap">
-              <table className="p2-table">
-                <thead><tr><th>Territory</th><th>Net</th><th>Gross</th></tr></thead>
-                <tbody>{territories.map((x) => <tr key={x}><td>{x}</td><td>—</td><td>—</td></tr>)}</tbody>
-              </table>
-            </div>
-          </section>
-
-          <section id="days" className="p2-detail">
-            <div className="p2-detail-head">
-              <div><div className="p2-kicker">Opening Run</div><h2 className="p2-section-title">Day 01 — Day 10</h2></div>
-              <div className="p2-detail-number">10D</div>
-            </div>
-            <div className="p2-days">
-              {days.map((i) => (
-                <div className="p2-day" key={i}>
-                  <div className="p2-day-no">DAY {String(i).padStart(2, "0")}</div>
-                  <div className="p2-day-value">₹ TBA</div>
-                  <div className="p2-day-label">Worldwide Gross</div>
-                </div>
-              ))}
-            </div>
-            <div style={{height:18}} />
-            <div className="p2-table-wrap">
-              <table className="p2-table">
-                <thead><tr><th>Day</th><th>India Net</th><th>India Gross</th><th>Overseas</th><th>Worldwide</th><th>Cumulative</th></tr></thead>
-                <tbody>{days.map((i) => <tr key={i}><td>Day {String(i).padStart(2, "0")}</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>)}</tbody>
-              </table>
-            </div>
-          </section>
-
-          <section id="weekend" className="p2-detail">
-            <div className="p2-detail-head">
-              <div><div className="p2-kicker">Milestone</div><h2 className="p2-section-title">First Weekend</h2></div>
-              <div className="p2-detail-number">W/E</div>
-            </div>
-            <div className="p2-stats">
-              {["India Gross", "Overseas Gross", "Worldwide Gross"].map((title) => (
-                <div className="p2-stat" key={title}>
-                  <div className="p2-label">{title}</div>
-                  <div className="p2-money"><span className="p2-currency">₹</span>TBA</div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section id="overseas" className="p2-detail">
-            <div className="p2-detail-head">
-              <div><div className="p2-kicker">Global Market</div><h2 className="p2-section-title">Overseas Collection</h2></div>
-              <div className="p2-detail-number">WW</div>
-            </div>
-            <div className="p2-table-wrap">
-              <table className="p2-table">
-                <thead><tr><th>Market</th><th>Gross</th><th>Share</th></tr></thead>
-                <tbody>{overseas.map((x) => <tr key={x}><td>{x}</td><td>—</td><td>—</td></tr>)}</tbody>
-              </table>
-            </div>
-          </section>
-
-          <section id="lifetime" className="p2-detail">
-            <div className="p2-detail-head">
-              <div><div className="p2-kicker">Final Theatrical Run</div><h2 className="p2-section-title">Lifetime Collection</h2></div>
-              <div className="p2-detail-number">∞</div>
-            </div>
-
-            <section className="p2-stats" style={{margin:0}}>
-              {["India Net", "India Gross", "Overseas Gross"].map((title) => (
-                <div className="p2-stat" key={title}>
-                  <div className="p2-label">{title}</div>
-                  <div className="p2-money"><span className="p2-currency">₹</span>TBA</div>
-                </div>
-              ))}
-            </section>
-
-            <div className="p2-section">
-              <div className="p2-kicker">Final Breakdown</div>
-              <h2 className="p2-section-title">Language Wise</h2>
-              <div className="p2-table-wrap">
-                <table className="p2-table">
-                  <thead><tr><th>Language</th><th>India Net</th><th>India Gross</th><th>Share</th></tr></thead>
-                  <tbody>
-                    {[...languages.map((x) => x[0]), "Other / Combined", "India Total"].map((x) => (
-                      <tr key={x}><td>{x}</td><td>—</td><td>—</td><td>—</td></tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="p2-section">
-              <div className="p2-kicker">Final Breakdown</div>
-              <h2 className="p2-section-title">Territory Wise</h2>
-              <div className="p2-table-wrap">
-                <table className="p2-table">
-                  <thead><tr><th>Territory</th><th>Net</th><th>Gross</th></tr></thead>
-                  <tbody>{territories.map((x) => <tr key={x}><td>{x}</td><td>—</td><td>—</td></tr>)}</tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="p2-section">
-              <div className="p2-kicker">Final Breakdown</div>
-              <h2 className="p2-section-title">Overseas Wise</h2>
-              <div className="p2-table-wrap">
-                <table className="p2-table">
-                  <thead><tr><th>Market</th><th>Lifetime Gross</th><th>Share / Note</th></tr></thead>
-                  <tbody>{overseas.map((x) => <tr key={x}><td>{x}</td><td>—</td><td>—</td></tr>)}</tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-
-          <section className="p2-final">
-            <div className="p2-final-label">Worldwide Lifetime</div>
-            <h2>Pushpa 2: The Rule</h2>
-            <div className="p2-final-big">₹ TBA</div>
-          </section>
-        </div>
-
-        <footer className="p2-footer">Pushpa 2 Office • Box Office Collection</footer>
-      </div>
-    </>
-  );
+export default function Page(){
+ return <div className="page">
+  <style>{`
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800;900&display=swap');
+:root{--bg:#08090a;--panel:#101214;--panel2:#0c0e10;--text:#f1eee7;--muted:#858178;--dim:#55534e;--gold:#d4a85c;--gold2:#f0ce8b;--red:#a83b27;--line:#242628}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg)}.page{min-height:100vh;background:radial-gradient(circle at 50% -10%,#2b2115 0,transparent 28%),var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}.page:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.nav{position:sticky;top:0;z-index:10;height:64px;border-bottom:1px solid var(--line);background:rgba(8,9,10,.84);backdrop-filter:blur(18px)}.navInner{width:min(1240px,calc(100% - 48px));height:100%;margin:auto;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:10px;font-size:10px;letter-spacing:.22em;font-weight:700}.brandMark{width:27px;height:27px;border:1px solid var(--gold);display:grid;place-items:center;font-family:'Playfair Display';font-size:13px;color:var(--gold)}.navLinks{display:flex;gap:25px}.navLinks a{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:#8f8b82;text-decoration:none}.navLinks a:hover{color:var(--gold2)}
+.hero{width:min(1240px,calc(100% - 48px));margin:auto;min-height:610px;position:relative;display:flex;align-items:flex-end;padding:90px 0 70px;overflow:hidden}.hero:after{content:"P2";position:absolute;right:-25px;top:70px;font:900 300px/.75 'Bebas Neue';color:rgba(255,255,255,.018);letter-spacing:-.04em}.heroGrid{position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,9,10,.98) 0%,rgba(8,9,10,.72) 48%,rgba(8,9,10,.98) 100%),radial-gradient(ellipse at 72% 45%,rgba(168,59,39,.18),transparent 32%);border-bottom:1px solid var(--line)}.heroContent{position:relative;z-index:1;max-width:950px}.eyebrow{display:flex;align-items:center;gap:12px;font-size:10px;font-weight:700;letter-spacing:.35em;color:var(--gold);text-transform:uppercase}.eyebrow:before{content:"";width:42px;height:1px;background:var(--gold)}.heroTitle{margin:20px 0 0;font-family:'Bebas Neue',sans-serif;font-size:clamp(100px,15vw,205px);line-height:.72;letter-spacing:.015em;text-transform:uppercase;color:#eee8dc;text-shadow:0 20px 70px #000}.heroTitle span{display:block;font-family:'Playfair Display',serif;font-style:italic;font-weight:900;font-size:.30em;letter-spacing:.02em;line-height:1.1;color:var(--gold2);margin:25px 0 0 9px;text-transform:none}.heroMeta{display:flex;gap:32px;margin-top:35px;color:#8d8980;font-size:10px;letter-spacing:.08em}.heroMeta b{display:block;color:#ddd8cd;font-size:11px;margin-top:5px}.heroRule{margin-top:35px;height:1px;width:150px;background:linear-gradient(90deg,var(--gold),transparent)}
+.container{width:min(1120px,calc(100% - 48px));margin:auto}.headlineStats{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-top:-1px}.stat{background:linear-gradient(145deg,#151719,#0d0f11);min-height:154px;padding:25px 28px;position:relative;overflow:hidden}.stat:first-child{background:linear-gradient(145deg,#20170f,#0e1011)}.stat:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-60px;bottom:-65px;background:rgba(212,168,92,.08)}.statLabel{font-size:8px;letter-spacing:.25em;text-transform:uppercase;color:#8c877d}.statValue{font-family:'Playfair Display',serif;font-weight:800;font-size:36px;letter-spacing:-.035em;margin-top:14px}.statValue small{font-family:'DM Sans';font-size:11px;color:var(--gold);letter-spacing:.1em}.statNote{font-size:8px;color:#55534e;margin-top:7px}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0 90px}.quickCard{padding:19px;background:#0e1012;border:1px solid var(--line);position:relative}.quickCard:before{content:"";position:absolute;left:0;top:0;width:24px;height:2px;background:var(--gold)}.quickLabel{font-size:7px;letter-spacing:.2em;color:#77736a;text-transform:uppercase}.quickValue{font-family:'Playfair Display';font-size:20px;font-weight:800;margin-top:9px}.quickValue small{font:600 8px 'DM Sans';color:var(--gold)}
+.section{padding:0 0 78px}.sectionHead{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:17px;margin-bottom:18px}.kicker{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:700}.section h2{font-family:'Playfair Display';font-size:28px;line-height:1;margin:8px 0 0;letter-spacing:-.02em}.sectionNo{font:400 50px/.8 'Bebas Neue';color:#34332f}
+.langGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.lang{background:#101214;border:1px solid var(--line);padding:20px 17px;min-height:120px;transition:.25s}.lang:hover{transform:translateY(-4px);border-color:#685437}.langTop{display:flex;justify-content:space-between;font-size:9px}.langTag{font-size:6px;text-transform:uppercase;color:#69665e;letter-spacing:.12em}.langValue{font:800 24px 'Playfair Display';margin-top:29px}.langValue small{font:600 8px 'DM Sans';color:var(--gold)}
+.tableWrap{overflow:auto;border:1px solid var(--line);background:#0d0f11}table{width:100%;border-collapse:collapse;min-width:650px}th{padding:12px 16px;text-align:right;border-bottom:1px solid var(--line);font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:#6f6c65;font-weight:700}th:first-child{text-align:left}td{padding:15px 16px;text-align:right;border-bottom:1px solid #1b1d1f;font-size:10px;color:#aaa69e}td:first-child{text-align:left}td.name{color:#e0dbd0;font-weight:600}tbody tr:last-child td{border-bottom:0}tbody tr:last-child{background:rgba(212,168,92,.045)}tbody tr:last-child td{color:#e8dfd0;font-weight:700}
+.opening{display:grid;grid-template-columns:1fr 1fr;gap:12px}.feature{background:linear-gradient(145deg,#18130e,#0d0f11);border:1px solid var(--line);padding:30px;min-height:245px;position:relative;overflow:hidden}.feature .big{font:800 74px/.9 'Playfair Display';margin-top:25px}.feature .big small{font:600 10px 'DM Sans';color:var(--gold)}.feature p{font-size:8px;color:#706d66;letter-spacing:.1em;text-transform:uppercase}
+.dayGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}.day{border:1px solid var(--line);background:#0e1012;padding:18px;min-height:145px;position:relative}.dayNum{font-size:7px;letter-spacing:.2em;color:var(--gold)}.dayVal{font:800 23px 'Playfair Display';margin-top:24px}.dayVal small{font:600 8px 'DM Sans';color:var(--gold)}.bar{position:absolute;bottom:13px;left:18px;right:18px;height:3px;background:#1d1f20}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#6c4b24);width:var(--w)}
+.final{margin:10px 0 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:85px 0 95px;text-align:center;position:relative;overflow:hidden}.final:before{content:"LIFETIME";position:absolute;left:50%;top:10px;transform:translateX(-50%);font:900 150px/.8 'Bebas Neue';color:rgba(255,255,255,.018);white-space:nowrap}.finalKicker{position:relative;font-size:8px;letter-spacing:.35em;color:var(--gold);text-transform:uppercase}.finalTitle{position:relative;font:700 20px 'Playfair Display';margin-top:12px}.finalValue{position:relative;font:900 clamp(72px,12vw,145px)/.85 'Playfair Display';color:var(--gold2);letter-spacing:-.055em;margin-top:25px;text-shadow:0 20px 60px rgba(0,0,0,.8)}.finalValue small{font:600 12px 'DM Sans';letter-spacing:.15em;color:var(--gold)}
+.note{margin:40px 0 0;padding:17px 20px;border-left:2px solid var(--gold);background:#101214;color:#77736a;font-size:8px;line-height:1.7}.note b{color:#bcb5a8}.footer{padding:28px 0 45px;text-align:center;font-size:7px;letter-spacing:.22em;color:#4d4b47;text-transform:uppercase}
+@media(max-width:850px){.navLinks{display:none}.headlineStats{grid-template-columns:1fr}.quick{grid-template-columns:1fr 1fr}.langGrid{grid-template-columns:repeat(2,1fr)}.opening{grid-template-columns:1fr}.dayGrid{grid-template-columns:repeat(2,1fr)}.hero{min-height:510px}.heroTitle{font-size:clamp(88px,21vw,150px)}}
+@media(max-width:520px){.navInner,.hero,.container{width:calc(100% - 28px)}.nav{height:58px}.hero{min-height:450px;padding-bottom:45px}.heroMeta{gap:18px;flex-wrap:wrap}.heroTitle span{font-size:.36em}.quick{grid-template-columns:1fr}.langGrid{grid-template-columns:1fr}.dayGrid{grid-template-columns:1fr 1fr}.stat{min-height:130px;padding:21px}.statValue{font-size:31px}.section{padding-bottom:58px}.section h2{font-size:23px}.final{padding:65px 0}.final:before{font-size:95px}}
+`}</style>
+  <nav className="nav"><div className="navInner"><div className="brand"><span className="brandMark">P2</span> BOX OFFICE ARCHIVE</div><div className="navLinks"><a href="#opening">Opening</a><a href="#territory">Territories</a><a href="#days">10 Days</a><a href="#overseas">Overseas</a><a href="#lifetime">Lifetime</a></div></div></nav>
+  <header className="hero"><div className="heroGrid"/><div className="heroContent"><div className="eyebrow">Theatrical Performance</div><h1 className="heroTitle">PUSHPA 2<span>the rule</span></h1><div className="heroMeta"><div>BOX OFFICE COLLECTION<b>Worldwide Theatrical</b></div><div>TRACKING<b>Producer / Trade Figures</b></div><div>REPORT<b>India + Overseas</b></div></div><div className="heroRule"/></div></header>
+  <div className="container">
+   <div className="headlineStats"><div className="stat"><div className="statLabel">Worldwide Gross</div><div className="statValue"><Money>1,742.10</Money></div><div className="statNote">Collection</div></div><div className="stat"><div className="statLabel">India Gross</div><div className="statValue"><Money>1,742.10</Money></div><div className="statNote">Domestic theatrical</div></div><div className="stat"><div className="statLabel">Overseas Gross</div><div className="statValue"><Money>1,742.10</Money></div><div className="statNote">International theatrical</div></div></div>
+   <div className="quick">{[["Opening Day","227"],["First Weekend","227"],["India Net","227"],["Highest Day","227"]].map(x=><div className="quickCard" key={x[0]}><div className="quickLabel">{x[0]}</div><div className="quickValue">{x[1]} <small>Cr</small></div></div>)}</div>
+   <Section num="01" kicker="Language Wise" title="Collection"><div className="langGrid">{languages.map(x=><div className="lang" key={x[0]}><div className="langTop"><strong>{x[0]}</strong><span className="langTag">{x[1]}</span></div><div className="langValue">{x[2]} <small>Cr</small></div></div>)}</div></Section>
+   <Section id="opening" num="02" kicker="Opening Day" title="Day 1 — Worldwide"><div className="opening"><div className="feature"><div className="kicker">Worldwide Opening</div><div className="big">294 <small>Cr</small></div><p>Day 1 worldwide gross</p></div><Table headers={["Market","Net","Gross","Share"]} rows={[["India","192","226","—"],["Overseas","—","68","—"],["Worldwide","—","294.00","—"]]}/></div></Section>
+   <Section id="territory" num="03" kicker="India Market" title="Territory Wise"><Table headers={["Territory","Net","Gross"]} rows={territoryOpening}/></Section>
+   <Section id="days" num="04" kicker="Opening Run" title="Day 01 — Day 10"><div className="dayGrid">{days.map((v,i)=><div className="day" key={i}><div className="dayNum">DAY {String(i+1).padStart(2,"0")}</div><div className="dayVal">{v.toFixed(2)} <small>Cr</small></div><div className="bar" style={{'--w':`${Math.max(8,v/294*100)}%`} as React.CSSProperties}><i/></div></div>)}</div><Table headers={["Day","India Net","India Gross","Overseas","Worldwide","Cumulative"]} rows={dayRows}/></Section>
+   <Section num="05" kicker="Milestone" title="First Weekend"><div className="headlineStats"><div className="stat"><div className="statLabel">India Gross</div><div className="statValue">1,471.10 <small>Cr</small></div></div><div className="stat"><div className="statLabel">Overseas Gross</div><div className="statValue">1,471.10 <small>Cr</small></div></div><div className="stat"><div className="statLabel">Worldwide Gross</div><div className="statValue">1,471.10 <small>Cr</small></div></div></div></Section>
+   <Section id="overseas" num="06" kicker="Global Market" title="Overseas Collection"><Table headers={["Market","Gross","Share"]} rows={overseas}/></Section>
+   <Section id="lifetime" num="07" kicker="Final Theatrical Run" title="Lifetime Collection"><div className="headlineStats"><div className="stat"><div className="statLabel">India Net</div><div className="statValue">271.00 <small>Cr</small></div></div><div className="stat"><div className="statLabel">India Gross</div><div className="statValue">271.00 <small>Cr</small></div></div><div className="stat"><div className="statLabel">Overseas Gross</div><div className="statValue">271.00 <small>Cr</small></div></div></div><div style={{height:35}}/><div className="kicker">Final Breakdown</div><h2>Language Wise</h2><Table headers={["Language","India Net","India Gross","Share"]} rows={[["Telugu","341.48","—","—"],["Hindi","812.14","—","—"],["Tamil","58.56","—","—"],["Kannada","7.77","—","—"],["Malayalam","14.15","—","—"],["Other / Combined","—","—","—"],["India Total","1,234.10","1,471.10","—"]]}/><div style={{height:28}}/><div className="kicker">Final Breakdown</div><h2>Territory Wise</h2><Table headers={["Territory","Net","Gross"]} rows={[["Andhra Pradesh","—","117.90"],["Telangana","—","149.70"],["AP + Telangana","—","320.80"],["Karnataka","—","86.75"],["Tamil Nadu","—","96.85"],["Kerala","—","Included in TN + Kerala 96.85"],["Rest of India","—","809.35"],["India Total","1,234.10","1,471.10"]]}/><div style={{height:28}}/><div className="kicker">Final Breakdown</div><h2>Overseas Wise</h2><Table headers={["Market","Lifetime Gross","Share / Note"]} rows={overseas}/></Section>
+   <div className="final"><div className="finalKicker">Worldwide Lifetime</div><div className="finalTitle">Pushpa 2: The Rule</div><div className="finalValue">1,871 <small>Cr</small></div></div>
+   <div className="note"><b>Note:</b> All collection figures displayed on this page are in <b>Indian Rupees (INR)</b>. The ₹ symbol has intentionally been omitted from individual figures for a cleaner data presentation.</div>
+   <footer className="footer">Pushpa 2 — Box Office Collection • Theatrical Performance Archive</footer>
+  </div>
+ </div>
 }
