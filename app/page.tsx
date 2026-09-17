@@ -1095,7 +1095,7 @@ export default function Home() {
           </div>
         </section>
 
-    {/* ============================== EXPLORE MORE ============================== */}
+  {/* ============================== EXPLORE MORE ============================== */}
 <section
   id="explore"
   data-design-section="explore"
@@ -1105,9 +1105,9 @@ export default function Home() {
 
   <div className="grid gap-4 sm:grid-cols-3">
 
-    {/* NEWS */}
+    {/* RAAKA NEWS — ARTICLE 1 */}
     <Link
-      href="/news"
+      href="/news/raaka1"
       className="group block rounded-2xl border border-white/10 bg-zinc-900 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-zinc-800"
     >
       <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
@@ -1130,13 +1130,40 @@ export default function Home() {
       </div>
     </Link>
 
+    {/* RAAKA MYTHOLOGY — ARTICLE 2 */}
+    <Link
+      href="/news/raaka2"
+      className="group block rounded-2xl border border-white/10 bg-zinc-900 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-zinc-800"
+    >
+      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+        <span>Mythology</span>
+        <span>•</span>
+        <span>RAAKA</span>
+      </div>
+
+      <h3 className="mt-3 text-lg font-bold leading-snug text-white">
+        RAAKA & Rākā — The Full Moon Connection
+      </h3>
+
+      <p className="mt-2 text-sm leading-6 text-zinc-500">
+        Explore the ancient Sanskrit meaning of Rākā, its connection with the
+        full moon, and the mystery behind RAAKA&apos;s mythology.
+      </p>
+
+      <div className="mt-5 text-sm font-semibold text-zinc-400 transition group-hover:text-white">
+        Read Full Story →
+      </div>
+    </Link>
+
     {/* EXISTING EXPLORE CARDS */}
     {EXPLORE_CARDS.map((card) => (
       <div
         key={card.title}
-        className="rounded-2xl border border-white/10 bg-zinc-900 p-6"
+        className="rounded-2xl border border-white/10 bg-zinc-900 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-zinc-800"
       >
-        <h3 className="text-lg font-bold">{card.title}</h3>
+        <h3 className="text-lg font-bold text-white">
+          {card.title}
+        </h3>
 
         <p className="mt-2 text-sm leading-6 text-zinc-500">
           {card.copy}
