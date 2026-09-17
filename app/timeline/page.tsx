@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import Link from "next/link";
 
 const milestones = [
@@ -46,14 +48,19 @@ const milestones = [
     videoId: "dYId6xEdG8U",
     videoLabel: "PLAY MUSIC",
   },
+  {
+    number: "05",
+    date: "21 SEPTEMBER 2026",
+    year: "2026",
+    title: "GLIMPSE",
+    subtitle: "THE NEXT REVEAL",
+    description:
+      "The next major reveal from the world of RAAKA arrives on 21 September 2026 at 11:00 AM IST.",
+    countdown: true,
+  },
 ];
 
 const upcoming = [
-  {
-    number: "05",
-    title: "GLIMPSE",
-    label: "COMING SOON",
-  },
   {
     number: "06",
     title: "TEASER",
@@ -75,6 +82,66 @@ const upcoming = [
     label: "COMING SOON",
   },
 ];
+
+function GlimpseCountdown() {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    const target = new Date("2026-09-21T11:00:00+05:30").getTime();
+
+    const updateCountdown = () => {
+      const diff = Math.max(0, target - Date.now());
+
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="mt-9 overflow-hidden rounded-2xl border border-white/10 bg-black/40">
+      <div className="border-b border-white/10 px-5 py-4">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.35em] text-white/35">
+          GLIMPSE PREMIERE
+        </p>
+        <p className="mt-2 text-xs uppercase tracking-[0.18em] text-white/25">
+          21 SEPTEMBER 2026 • 11:00 AM IST
+        </p>
+      </div>
+
+      <div className="grid grid-cols-4 divide-x divide-white/10">
+        {[
+          ["DAYS", timeLeft.days],
+          ["HOURS", timeLeft.hours],
+          ["MINUTES", timeLeft.minutes],
+          ["SECONDS", timeLeft.seconds],
+        ].map(([label, value]) => (
+          <div key={label} className="px-3 py-6 text-center md:px-5 md:py-7">
+            <div className="text-3xl font-black leading-none tracking-[-0.05em] md:text-5xl">
+              {String(value).padStart(2, "0")}
+            </div>
+            <div className="mt-3 text-[8px] font-semibold uppercase tracking-[0.28em] text-white/30 md:text-[9px]">
+              {label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function TimelinePage() {
   return (
@@ -263,6 +330,8 @@ export default function TimelinePage() {
                           <span>↗</span>
                         </a>
                       )}
+
+                      {item.countdown && <GlimpseCountdown />}
                     </div>
                   </div>
                 </div>
@@ -287,20 +356,19 @@ export default function TimelinePage() {
             </h2>
 
             <p className="mt-5 max-w-xl text-sm leading-7 text-white/35">
-              The next milestones will appear here as RAAKA moves closer to
-              the big screen.
+              The chapters after the Glimpse — teaser, songs, trailer and the final release.
             </p>
           </div>
 
           {/* upcoming timeline */}
-          <div className="grid gap-px overflow-hidden rounded-[30px] border border-white/10 bg-white/10 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-px overflow-hidden rounded-[30px] border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
             {upcoming.map((item) => (
               <div
                 key={item.number}
-                className="group relative min-h-[280px] overflow-hidden bg-[#080808] p-7 transition duration-500 hover:bg-[#0d0d0d]"
+                className="group relative min-h-[360px] overflow-hidden bg-[#080808] p-8 transition duration-500 hover:bg-[#0d0d0d] md:min-h-[390px] md:p-9"
               >
                 {/* huge number */}
-                <div className="absolute -right-3 -top-8 text-[130px] font-black leading-none tracking-[-0.08em] text-white/[0.035] transition duration-500 group-hover:text-white/[0.07]">
+                <div className="absolute -right-3 -top-8 text-[150px] font-black leading-none tracking-[-0.08em] text-white/[0.035] transition duration-500 group-hover:text-white/[0.07] md:text-[170px]">
                   {item.number}
                 </div>
 
@@ -310,9 +378,11 @@ export default function TimelinePage() {
                       UPCOMING
                     </p>
 
-                    <h3 className="mt-5 text-2xl font-black uppercase tracking-[-0.03em]">
+                    <h3 className="mt-6 text-3xl font-black uppercase tracking-[-0.03em] md:text-4xl">
                       {item.title}
                     </h3>
+
+                    {item.number === "05" && <GlimpseCountdown />}
                   </div>
 
                   <div>
