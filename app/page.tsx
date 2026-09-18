@@ -76,7 +76,7 @@ const CREW = [
   { name: "Atlee Kumar", role: "Director", image: "/images/crew1.jpg" },
   { name: "Sai Abhyankkar", role: "Musician", image: "/images/crew2.jpg", alt: "Sai Abhyankar" },
   { name: "Kalanithi Maran", role: "Producer", image: "/images/crew3.jpg" },
-  { name: "Sun Pictures", role: "Producer", image: "/images/crew4.jpg", alt: "Sun Picture" },
+  { name: "Sun Pictures", role: "Banner", image: "/images/crew4.jpg", alt: "Sun Picture" },
 ];
 
 const CREATIVE_TEAM = [
