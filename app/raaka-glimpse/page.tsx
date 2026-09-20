@@ -1203,7 +1203,7 @@ export default function RaakaGlimpsePage() {
 
     const target =
       new Date(
-        "2026-09-21T00:11:00+05:30"
+        "2026-09-21T11:00:00+05:30"
       ).getTime();
 
 
