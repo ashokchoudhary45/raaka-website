@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 /* =========================================================
    RAAKA GLIMPSE
-   Countdown: 21 September 2026 — 11:00 IST
+   Countdown: 21 September 2026 — 11:00 am IST
 
    Later, replace ONLY this URL:
    ========================================================= */
