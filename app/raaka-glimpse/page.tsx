@@ -1196,14 +1196,14 @@ export default function RaakaGlimpsePage() {
 
   /* =========================================================
      COUNTDOWN
-     21 SEPTEMBER 2026 — 00:00 IST
+     21 SEPTEMBER 2026 — 11:00 IST
      ========================================================= */
 
   useEffect(() => {
 
     const target =
       new Date(
-        "2026-09-21T00:00:00+05:30"
+        "2026-09-21T00:11:00+05:30"
       ).getTime();
 
 
