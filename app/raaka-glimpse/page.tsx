@@ -1282,58 +1282,44 @@ export default function RaakaGlimpsePage() {
      TRANSMISSION TIMELINE
      ========================================================= */
 
-  useEffect(() => {
+ useEffect(() => {
+  if (!started) return;
 
-    if (!started) return;
+  const startTime = Date.now();
 
+  const updateStage = () => {
+    const elapsed = Date.now() - startTime;
 
-    const timers = [
+    if (elapsed < 4200) {
+      setStage(0);
+    } else if (elapsed < 8500) {
+      setStage(1);
+    } else if (elapsed < 13500) {
+      setStage(2);
+    } else if (elapsed < 19500) {
+      setStage(3);
+    } else if (elapsed < 27000) {
+      setStage(4);
+    } else if (elapsed < 34000) {
+      setStage(5);
+    } else if (elapsed < 40500) {
+      setStage(6);
+    } else {
+      setStage(7);
+    }
+  };
 
-      window.setTimeout(
-        () => setStage(1),
-        4200
-      ),
+  updateStage();
 
-      window.setTimeout(
-        () => setStage(2),
-        8500
-      ),
+  const interval = window.setInterval(
+    updateStage,
+    100
+  );
 
-      window.setTimeout(
-        () => setStage(3),
-        13500
-      ),
-
-      window.setTimeout(
-        () => setStage(4),
-        19500
-      ),
-
-      window.setTimeout(
-        () => setStage(5),
-        27000
-      ),
-
-      window.setTimeout(
-        () => setStage(6),
-        34000
-      ),
-
-      window.setTimeout(
-        () => setStage(7),
-        40500
-      ),
-
-    ];
-
-
-    return () =>
-      timers.forEach(
-        (timer) =>
-          window.clearTimeout(timer)
-      );
-
-  }, [started]);
+  return () => {
+    window.clearInterval(interval);
+  };
+}, [started]);
 
 
   /* =========================================================
