@@ -972,6 +972,23 @@ export default function Home() {
             </div>
           </div>
         </section>
+  {/* ============================== MOTION CAPTURE BTS ============================== */}
+        <section id="motion-capture" className="px-5 py-20 sm:px-6 md:px-10 md:py-24">
+          <div className="mx-auto max-w-6xl">
+            <SectionHeading
+              eyebrow="Behind The Scenes"
+              title="Motion Capture"
+            />
+
+            <div className="mx-auto max-w-4xl">
+              <VideoCard
+                title="RAAKA — Motion Capture Behind The Scenes"
+                youtubeId="CmVA9ifXBx4"
+              />
+            </div>
+          </div>
+        </section>
+
 
         {/* ============================== SONGS ============================== */}
         <section id="songs" className="px-5 py-20 sm:px-6 md:px-10 md:py-24">
