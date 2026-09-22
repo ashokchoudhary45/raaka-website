@@ -4,374 +4,480 @@ import Link from "next/link";
 export default function RaakaGuinnessPage() {
   return (
     <main className="min-h-screen bg-[#050505] text-white">
-      {/* HERO */}
-      <section className="relative min-h-[78vh] overflow-hidden">
-        <Image
-          src="/images/raaka-guinness-hero.jpg"
-          alt="RAAKA Guinness World Records"
-          fill
-          priority
-          className="object-cover opacity-55"
-        />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/55 to-black/20" />
+      {/* =========================================================
+          HERO
+      ========================================================= */}
+      <section className="relative overflow-hidden">
+        <div className="relative h-[68vh] min-h-[560px] w-full">
 
-        <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-6xl items-end px-6 pb-16 md:px-10 md:pb-20">
-          <div className="max-w-4xl">
-            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
-              RAAKA • WORLD OF RAAKA
-            </p>
+          <Image
+            src="/images/raaka-guinness-hero.jpg"
+            alt="RAAKA Guinness World Records"
+            fill
+            priority
+            className="object-cover"
+          />
 
-            <h1 className="text-4xl font-black leading-[0.95] tracking-tight sm:text-6xl md:text-7xl">
-              RAAKA Makes
-              <br />
-              <span className="text-white/55">History.</span>
-            </h1>
+          <div className="absolute inset-0 bg-black/35" />
 
-            <p className="mt-7 max-w-2xl text-base leading-7 text-white/70 md:text-lg">
-              A global technological milestone as RAAKA achieves a Guinness
-              World Records recognition for the most people motion-captured
-              in real-time.
-            </p>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/20 to-transparent" />
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <span className="rounded-full border border-white/15 bg-white/5 px-5 py-2 text-xs uppercase tracking-[0.2em] backdrop-blur-md">
-                Guinness World Records
-              </span>
+          <div className="absolute inset-x-0 bottom-0 mx-auto max-w-6xl px-6 pb-14 md:px-10 md:pb-20">
+            <div className="max-w-4xl">
 
-              <span className="rounded-full border border-white/15 bg-white/5 px-5 py-2 text-xs uppercase tracking-[0.2em] backdrop-blur-md">
-                37 Performers
-              </span>
+              <p className="mb-5 text-[11px] font-medium uppercase tracking-[0.35em] text-white/60">
+                RAAKA • EXCLUSIVE
+              </p>
+
+              <h1 className="text-4xl font-semibold leading-[0.98] tracking-[-0.04em] sm:text-5xl md:text-7xl">
+                RAAKA Makes History
+              </h1>
+
+              <p className="mt-6 max-w-2xl text-base leading-7 text-white/70 md:text-lg">
+                Allu Arjun and Atlee's RAAKA enters the Guinness World Records
+                for the most people motion-captured in real-time.
+              </p>
+
             </div>
           </div>
         </div>
       </section>
 
-      {/* ARTICLE */}
-      <article className="mx-auto max-w-4xl px-6 py-16 md:px-10 md:py-24">
 
-        {/* INTRO */}
-        <div className="mb-14">
-          <p className="mb-6 text-sm font-medium uppercase tracking-[0.25em] text-white/40">
-            A Historic Milestone
-          </p>
+      {/* =========================================================
+          ARTICLE
+      ========================================================= */}
+      <article className="mx-auto max-w-4xl px-6 py-14 md:px-10 md:py-20">
 
-          <h2 className="text-3xl font-bold leading-tight md:text-5xl">
-            37 performers. One real-time capture.
-            <br />
-            One Guinness World Records milestone.
-          </h2>
-
-          <p className="mt-7 text-lg leading-8 text-white/65">
-            RAAKA has officially added a remarkable technological achievement
-            to its growing legacy. The ambitious project led by Icon Star
-            Allu Arjun and filmmaker Atlee has achieved a Guinness World
-            Records milestone for the{" "}
-            <strong className="text-white">
-              “Most People Motion-Captured in Real-Time”
-            </strong>
-            , with 37 performers captured simultaneously.
-          </p>
+        {/* META */}
+        <div className="mb-10 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs uppercase tracking-[0.18em] text-white/35">
+          <span>RAAKA NEWS</span>
+          <span>•</span>
+          <span>22 September 2026</span>
         </div>
 
-        {/* IMAGE 1 */}
-        <figure className="mb-16 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]">
+
+        {/* INTRO */}
+        <header className="mb-14">
+
+          <h2 className="text-3xl font-semibold leading-tight tracking-[-0.025em] md:text-5xl">
+            37 performers. One capture volume.
+            <br className="hidden md:block" />
+            A Guinness World Record.
+          </h2>
+
+          <p className="mt-7 text-lg leading-8 text-white/65 md:text-xl md:leading-9">
+            RAAKA has achieved a Guinness World Records milestone before
+            reaching the big screen. The Atlee directorial has officially set
+            the record for the <strong className="text-white">
+            “Most People Motion-Captured in Real-Time”</strong>, with
+            37 performers captured simultaneously for the film.
+          </p>
+
+        </header>
+
+
+        {/* =========================================================
+            IMAGE 1
+        ========================================================= */}
+        <figure className="mb-14 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
+
           <Image
             src="/images/raaka-guinness-1.jpg"
-            alt="RAAKA Guinness World Records achievement"
-            width={1600}
-            height={1000}
-            className="h-auto w-full object-cover"
-          />
-
-          <figcaption className="px-5 py-4 text-xs tracking-wide text-white/40">
-            RAAKA Guinness World Records achievement
-            <span className="ml-2 text-white/60">
-              • Image Credit: Sun Pictures
-            </span>
-          </figcaption>
-        </figure>
-
-        {/* SECTION */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold md:text-4xl">
-            The Mystery Behind 37
-          </h2>
-
-          <p className="text-base leading-8 text-white/65 md:text-lg">
-            For RAAKA fans, the number 37 had already become one of the
-            project's biggest mysteries. The number appeared during the
-            promotional campaign without an immediate explanation, leading
-            to widespread speculation about what it could represent.
-          </p>
-
-          <p className="text-base leading-8 text-white/65 md:text-lg">
-            The answer has now been revealed. The number was connected to the
-            film's extraordinary motion-capture achievement: 37 performers
-            were captured simultaneously in real-time.
-          </p>
-        </section>
-
-        {/* BIG NUMBER */}
-        <section className="my-20 rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.08] to-transparent p-8 text-center md:p-14">
-          <p className="text-xs uppercase tracking-[0.4em] text-white/40">
-            The Number
-          </p>
-
-          <div className="mt-4 text-8xl font-black tracking-tighter md:text-[12rem]">
-            37
-          </div>
-
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-white/50 md:text-base">
-            Performers captured simultaneously in real-time motion capture
-            for the Guinness World Records achievement.
-          </p>
-        </section>
-
-        {/* SECTION */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold md:text-4xl">
-            A Technological Achievement
-          </h2>
-
-          <p className="text-base leading-8 text-white/65 md:text-lg">
-            Motion capture has become an important part of modern filmmaking,
-            particularly for productions that depend heavily on digital
-            characters, creatures, fantasy environments and large-scale visual
-            effects.
-          </p>
-
-          <p className="text-base leading-8 text-white/65 md:text-lg">
-            In a motion-capture environment, performers' physical movements
-            can be digitally recorded and translated into the movements of
-            virtual characters. Capturing multiple performers simultaneously
-            requires careful coordination between performers, tracking
-            systems, technical teams and the digital production pipeline.
-          </p>
-
-          <p className="text-base leading-8 text-white/65 md:text-lg">
-            RAAKA's achievement therefore represents more than a promotional
-            number. It highlights the scale of the technical process being
-            used behind the project.
-          </p>
-        </section>
-
-        {/* IMAGE 2 */}
-        <figure className="my-16 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]">
-          <Image
-            src="/images/raaka-guinness-2.jpg"
             alt="Allu Arjun and Atlee with Guinness World Records certificate"
             width={1600}
             height={1000}
             className="h-auto w-full object-cover"
           />
 
-          <figcaption className="px-5 py-4 text-xs tracking-wide text-white/40">
-            Allu Arjun and Atlee with the Guinness World Records recognition
-            <span className="ml-2 text-white/60">
-              • Image Credit: Sun Pictures
+          <figcaption className="px-4 py-3 text-[11px] text-white/35">
+            Allu Arjun and Atlee with the Guinness World Records certificate.
+            <span className="ml-1 text-white/50">
+              Image Credit: Sun Pictures
             </span>
           </figcaption>
+
         </figure>
 
-        {/* SECTION */}
+
+        {/* =========================================================
+            SECTION 1
+        ========================================================= */}
         <section className="space-y-6">
-          <h2 className="text-3xl font-bold md:text-4xl">
-            Allu Arjun & Atlee Receive the Certificate
+
+          <h2 className="text-2xl font-semibold md:text-3xl">
+            The record behind RAAKA's 37
           </h2>
 
           <p className="text-base leading-8 text-white/65 md:text-lg">
-            The Guinness World Records certificate was received by
-            <strong className="text-white"> Allu Arjun </strong>
-            and
-            <strong className="text-white"> Atlee</strong>, marking an
-            important moment in the journey of RAAKA.
+            The number 37 had been appearing around RAAKA's promotional
+            campaign without an explanation. The mystery has now been cleared:
+            it refers to the 37 performers who were captured simultaneously
+            during a single real-time motion-capture session.
           </p>
 
           <p className="text-base leading-8 text-white/65 md:text-lg">
-            The collaboration brings together one of Indian cinema's biggest
-            stars and one of its most ambitious contemporary filmmakers.
-            Their partnership has already generated enormous curiosity around
-            the scale and visual identity of the project.
+            Guinness World Records officially lists the achievement as
+            “Most people motion-captured in real-time”. The record was achieved
+            by Sun TV Network Limited and Atlee for RAAKA in Mumbai on
+            15 September 2026.
           </p>
+
         </section>
 
-        {/* QUOTE STYLE */}
-        <blockquote className="my-20 border-l border-white/30 pl-6 md:pl-10">
-          <p className="text-2xl font-semibold leading-9 text-white md:text-4xl md:leading-[1.2]">
-            “37 performers captured simultaneously in real-time.”
-          </p>
 
-          <footer className="mt-5 text-xs uppercase tracking-[0.25em] text-white/40">
-            RAAKA • Guinness World Records Achievement
-          </footer>
-        </blockquote>
+        {/* =========================================================
+            BIG NUMBER
+        ========================================================= */}
+        <section className="my-16 border-y border-white/10 py-12 text-center">
 
-        {/* SECTION */}
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold md:text-4xl">
-            Why This Matters for RAAKA
-          </h2>
-
-          <p className="text-base leading-8 text-white/65 md:text-lg">
-            RAAKA has consistently generated interest through its mysterious
-            promotional campaign and its emphasis on a large-scale cinematic
-            world. The Guinness recognition now adds a documented technological
-            milestone to that journey.
-          </p>
-
-          <p className="text-base leading-8 text-white/65 md:text-lg">
-            The achievement also gives new context to the previously cryptic
-            appearance of the number 37. What initially looked like another
-            mysterious clue has now become directly connected to a major
-            production achievement.
-          </p>
-
-          <p className="text-base leading-8 text-white/65 md:text-lg">
-            For audiences waiting to discover the world of RAAKA, the record
-            offers another glimpse into the scale of the production without
-            revealing the film's larger story.
-          </p>
-        </section>
-
-        {/* FINAL */}
-        <section className="mt-20 border-t border-white/10 pt-14">
-          <p className="text-sm uppercase tracking-[0.3em] text-white/40">
-            The Beginning
-          </p>
-
-          <h2 className="mt-5 text-4xl font-black leading-tight md:text-6xl">
-            The record is made.
-            <br />
-            The mystery continues.
-          </h2>
-
-          <p className="mt-7 max-w-2xl text-base leading-8 text-white/60 md:text-lg">
-            With 37 performers captured simultaneously and a Guinness World
-            Records achievement now attached to its name, RAAKA has created
-            another historic chapter before audiences have even experienced
-            its complete cinematic world.
-          </p>
-
-          <div className="mt-10 flex flex-wrap gap-3">
-            {[
-              "#RAAKA",
-              "#AlluArjun",
-              "#Atlee",
-              "#GuinnessWorldRecords",
-              "#MotionCapture",
-              "#SunPictures",
-            ].map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs text-white/55"
-              >
-                {tag}
-              </span>
-            ))}
+          <div className="text-[100px] font-semibold leading-none tracking-[-0.08em] md:text-[150px]">
+            37
           </div>
+
+          <p className="mt-4 text-xs uppercase tracking-[0.3em] text-white/35">
+            Performers captured simultaneously
+          </p>
+
         </section>
 
-        {/* CREDIT */}
-        <div className="mt-16 border-t border-white/10 pt-8 text-xs leading-6 text-white/35">
-          <p>
-            Article by World of RAAKA
+
+        {/* =========================================================
+            SECTION 2
+        ========================================================= */}
+        <section className="space-y-6">
+
+          <h2 className="text-2xl font-semibold md:text-3xl">
+            What makes the capture significant?
+          </h2>
+
+          <p className="text-base leading-8 text-white/65 md:text-lg">
+            Motion capture records the physical movements of performers and
+            translates them into digital performances. For RAAKA, the scale of
+            the setup went considerably beyond a conventional motion-capture
+            shoot.
           </p>
 
-          <p>
-            Images used in this article:
-            <span className="text-white/55"> Sun Pictures</span>
+          <p className="text-base leading-8 text-white/65 md:text-lg">
+            According to details released around the record, the production
+            used a large technical setup involving optical motion-capture
+            cameras, facial capture, synchronisation and real-time
+            visualisation. Reports on the record-setting session state that
+            92 optical motion-capture cameras were used.
           </p>
-        </div>
-      </article>
 
-      {/* EXPLORE MORE */}
-      <section className="border-t border-white/10 bg-[#080808]">
-        <div className="mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-20">
-          <div className="mb-10">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/35">
-              World of RAAKA
+          <p className="text-base leading-8 text-white/65 md:text-lg">
+            The performers were captured together inside the same capture
+            volume, making coordination between the performers and technical
+            teams a key part of the process.
+          </p>
+
+        </section>
+
+
+        {/* =========================================================
+            VIDEO
+        ========================================================= */}
+        <section className="my-16">
+
+          <div className="mb-6">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/35">
+              Behind The Scenes
             </p>
 
-            <h2 className="mt-3 text-3xl font-bold md:text-4xl">
-              Explore More
+            <h2 className="mt-2 text-2xl font-semibold md:text-3xl">
+              Inside RAAKA's Record-Breaking Motion Capture
             </h2>
           </div>
 
+
+          <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
+
+            <iframe
+              className="absolute inset-0 h-full w-full"
+              src="https://www.youtube.com/embed/CmVA9ifXBx4"
+              title="RAAKA - Guinness World Record Motion Capture Behind The Scenes"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+
+          </div>
+
+          <p className="mt-3 text-[11px] text-white/30">
+            Behind-the-scenes footage from the RAAKA motion-capture process.
+          </p>
+
+        </section>
+
+
+        {/* =========================================================
+            SECTION 3
+        ========================================================= */}
+        <section className="space-y-6">
+
+          <h2 className="text-2xl font-semibold md:text-3xl">
+            The technology behind the scene
+          </h2>
+
+          <p className="text-base leading-8 text-white/65 md:text-lg">
+            The newly released behind-the-scenes footage gives a closer look
+            at the process behind the record. Instead of showing only the
+            finished digital result, the footage focuses on the performers,
+            the capture stage and the technical environment used during the
+            shoot.
+          </p>
+
+          <p className="text-base leading-8 text-white/65 md:text-lg">
+            The production involved multiple technical departments working
+            together in real time. Capture, calibration, networking,
+            synchronisation, facial capture and real-time visualisation all
+            had to work together while the performers were being recorded.
+          </p>
+
+        </section>
+
+
+        {/* =========================================================
+            IMAGE 2
+        ========================================================= */}
+        <figure className="my-14 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
+
+          <Image
+            src="/images/raaka-guinness-2.jpg"
+            alt="RAAKA motion capture behind the scenes"
+            width={1600}
+            height={1000}
+            className="h-auto w-full object-cover"
+          />
+
+          <figcaption className="px-4 py-3 text-[11px] text-white/35">
+            RAAKA motion-capture production.
+            <span className="ml-1 text-white/50">
+              Image Credit: Sun Pictures
+            </span>
+          </figcaption>
+
+        </figure>
+
+
+        {/* =========================================================
+            SECTION 4
+        ========================================================= */}
+        <section className="space-y-6">
+
+          <h2 className="text-2xl font-semibold md:text-3xl">
+            A milestone for the RAAKA team
+          </h2>
+
+          <p className="text-base leading-8 text-white/65 md:text-lg">
+            The Guinness recognition was formally presented to Allu Arjun and
+            Atlee, with the achievement becoming one of the major production
+            milestones associated with RAAKA.
+          </p>
+
+          <p className="text-base leading-8 text-white/65 md:text-lg">
+            For a film that has kept much of its visual world under wraps,
+            the motion-capture record provides a rare look at the scale of the
+            technology being used behind the camera.
+          </p>
+
+          <p className="text-base leading-8 text-white/65 md:text-lg">
+            It also gives a clear explanation for the mysterious “37” that
+            appeared during the film's recent promotional campaign.
+          </p>
+
+        </section>
+
+
+        {/* =========================================================
+            HIGHLIGHT
+        ========================================================= */}
+        <div className="my-16 rounded-2xl border border-white/10 bg-white/[0.035] p-7 md:p-10">
+
+          <p className="text-xs uppercase tracking-[0.25em] text-white/35">
+            Guinness World Records
+          </p>
+
+          <p className="mt-5 text-2xl font-medium leading-9 md:text-3xl md:leading-10">
+            “Most People Motion-Captured in Real-Time”
+          </p>
+
+          <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm text-white/45">
+            <span>37 performers</span>
+            <span>•</span>
+            <span>Mumbai, India</span>
+            <span>•</span>
+            <span>15 September 2026</span>
+          </div>
+
+        </div>
+
+
+        {/* =========================================================
+            CLOSING
+        ========================================================= */}
+        <section className="border-t border-white/10 pt-12">
+
+          <h2 className="text-3xl font-semibold leading-tight md:text-4xl">
+            RAAKA's next chapter
+          </h2>
+
+          <p className="mt-6 text-base leading-8 text-white/65 md:text-lg">
+            The Guinness World Records achievement does not reveal the larger
+            story of RAAKA, but it does offer a glimpse into the scale of the
+            production. With the record now officially recognised, the focus
+            returns to the film itself — and to what Atlee and the team have
+            been building behind the scenes.
+          </p>
+
+          <p className="mt-6 text-base leading-8 text-white/65 md:text-lg">
+            For now, the mystery surrounding 37 has an answer. It was not a
+            character count or a hidden title clue. It was the number at the
+            centre of one of RAAKA's biggest technical achievements.
+          </p>
+
+        </section>
+
+
+        {/* =========================================================
+            ARTICLE CREDIT
+        ========================================================= */}
+        <div className="mt-14 border-t border-white/10 pt-7">
+
+          <p className="text-xs text-white/30">
+            Published by World of RAAKA
+          </p>
+
+          <p className="mt-2 text-xs text-white/30">
+            Images: Sun Pictures
+          </p>
+
+        </div>
+
+      </article>
+
+
+      {/* =========================================================
+          EXPLORE MORE
+      ========================================================= */}
+      <section className="border-t border-white/10 bg-[#080808]">
+
+        <div className="mx-auto max-w-6xl px-6 py-16 md:px-10">
+
+          <div className="mb-9">
+
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/30">
+              World of RAAKA
+            </p>
+
+            <h2 className="mt-2 text-3xl font-semibold">
+              Explore More
+            </h2>
+
+          </div>
+
+
           <div className="grid gap-5 md:grid-cols-3">
 
+            {/* CARD 1 */}
             <Link
               href="/news/raaka1"
-              className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition hover:-translate-y-1 hover:bg-white/[0.06]"
+              className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] transition duration-300 hover:-translate-y-1"
             >
+
               <div className="relative aspect-[16/10] overflow-hidden">
+
                 <Image
                   src="/images/raaka-37.jpg"
                   alt="RAAKA 37"
                   fill
                   className="object-cover transition duration-700 group-hover:scale-105"
                 />
+
               </div>
 
               <div className="p-5">
-                <p className="text-[10px] uppercase tracking-[0.25em] text-white/35">
+
+                <p className="text-[9px] uppercase tracking-[0.25em] text-white/30">
                   RAAKA NEWS
                 </p>
 
-                <h3 className="mt-2 text-lg font-bold">
+                <h3 className="mt-2 text-lg font-semibold">
                   Decoding the Mystery of RAAKA's 37
                 </h3>
+
               </div>
+
             </Link>
 
+
+            {/* CARD 2 */}
             <Link
               href="/news/raaka2"
-              className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition hover:-translate-y-1 hover:bg-white/[0.06]"
+              className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] transition duration-300 hover:-translate-y-1"
             >
+
               <div className="relative aspect-[16/10] overflow-hidden">
+
                 <Image
                   src="/images/raaka-37.jpg"
-                  alt="RAAKA News"
+                  alt="RAAKA mythology"
                   fill
                   className="object-cover transition duration-700 group-hover:scale-105"
                 />
+
               </div>
 
               <div className="p-5">
-                <p className="text-[10px] uppercase tracking-[0.25em] text-white/35">
+
+                <p className="text-[9px] uppercase tracking-[0.25em] text-white/30">
                   RAAKA ANALYSIS
                 </p>
 
-                <h3 className="mt-2 text-lg font-bold">
-                  The Mythology Behind the RAAKA Universe
+                <h3 className="mt-2 text-lg font-semibold">
+                  The Mythology Behind RAAKA
                 </h3>
+
               </div>
+
             </Link>
 
+
+            {/* CARD 3 */}
             <Link
               href="/"
-              className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition hover:-translate-y-1 hover:bg-white/[0.06]"
+              className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] transition duration-300 hover:-translate-y-1"
             >
-              <div className="relative flex aspect-[16/10] items-center justify-center overflow-hidden bg-gradient-to-br from-white/10 to-transparent">
-                <span className="text-5xl font-black tracking-tighter text-white/20">
+
+              <div className="relative flex aspect-[16/10] items-center justify-center overflow-hidden bg-gradient-to-br from-white/10 via-transparent to-transparent">
+
+                <span className="text-5xl font-black tracking-[-0.06em] text-white/15">
                   RAAKA
                 </span>
+
               </div>
 
               <div className="p-5">
-                <p className="text-[10px] uppercase tracking-[0.25em] text-white/35">
+
+                <p className="text-[9px] uppercase tracking-[0.25em] text-white/30">
                   WORLD OF RAAKA
                 </p>
 
-                <h3 className="mt-2 text-lg font-bold">
+                <h3 className="mt-2 text-lg font-semibold">
                   Enter the World
                 </h3>
+
               </div>
+
             </Link>
 
           </div>
+
         </div>
+
       </section>
+
     </main>
   );
 }
