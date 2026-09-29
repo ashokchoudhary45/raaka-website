@@ -268,10 +268,9 @@ export default function LiveAudiencePage() {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchD1Analytics();
-      fetchCloudflareAnalytics();
     }, 20_000);
     return () => clearInterval(interval);
-  }, [fetchD1Analytics, fetchCloudflareAnalytics]);
+  }, [fetchD1Analytics]);
 
   const dailyData = cloudflare?.daily || [];
   const hourlyData = cloudflare?.hourly || [];
