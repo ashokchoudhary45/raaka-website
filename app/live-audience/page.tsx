@@ -525,7 +525,7 @@ export default function LiveAudiencePage() {
               <ComposableMap projection="geoMercator" projectionConfig={{ scale: 145 }}>
                 <ZoomableGroup center={mapPosition} zoom={mapZoom} onMoveEnd={({ coordinates, zoom }) => {
                   setMapPosition(coordinates as [number, number]);
-                  setMapZoom(zoom);
+                  setMapZoom(zoom ?? 1);
                 }}>
                   <Geographies geography={GEO_URL}>
                     {({ geographies }) =>
@@ -555,7 +555,7 @@ export default function LiveAudiencePage() {
                                 outline: "none",
                               },
                               pressed: { fill: "rgba(220,38,38,1)", outline: "none" },
-                            }}
+                            } as any}
                           />
                         );
                       })
