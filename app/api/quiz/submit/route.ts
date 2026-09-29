@@ -11,6 +11,7 @@ type SubmitBody = {
   visitorId: string;
   fanName: string;
   twitterUsername?: string;
+  instagramUsername?: string;
   country?: string;
   answers: Answer[];
 };
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
       visitorId,
       fanName,
       twitterUsername = "",
+      instagramUsername = "",
       country = "",
       answers,
     } = body;
@@ -447,6 +449,7 @@ export async function POST(request: Request) {
         passportCode,
         fanName: fanName.trim(),
         twitterUsername: twitterUsername.trim(),
+        instagramUsername: instagramUsername.trim(),
         country: country.trim(),
         xp: newXP,
         level: newLevel,

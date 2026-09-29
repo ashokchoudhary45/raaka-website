@@ -1,5 +1,7 @@
 "use client";
 
+import RaakaPassportGenerator from "@/components/RaakaPassportGenerator";
+
 import { useEffect, useMemo, useState } from "react";
 
 type Question = {
@@ -59,6 +61,7 @@ export default function DailyQuizPage() {
 
   const [name, setName] = useState("");
   const [twitterUsername, setTwitterUsername] = useState("");
+  const [instagramUsername, setInstagramUsername] = useState("");
   const [country, setCountry] = useState("");
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -214,6 +217,11 @@ export default function DailyQuizPage() {
       return;
     }
 
+    if (!twitterUsername.trim() && !instagramUsername.trim()) {
+      setError("Please enter either your Twitter/X or Instagram username.");
+      return;
+    }
+
     if (questions.length !== 10) {
       setError(
         "Today's quiz is not ready yet. Please refresh the page."
@@ -346,6 +354,8 @@ export default function DailyQuizPage() {
             fanName: name.trim(),
             twitterUsername:
               twitterUsername.trim(),
+            instagramUsername:
+              instagramUsername.trim(),
             country: country.trim(),
             answers: finalAnswers,
           }),
@@ -572,6 +582,29 @@ export default function DailyQuizPage() {
 
               <div>
                 <label className="block text-xs text-white/40 mb-2">
+                  INSTAGRAM USERNAME
+                </label>
+
+                <input
+                  type="text"
+                  value={instagramUsername}
+                  onChange={(e) =>
+                    setInstagramUsername(
+                      e.target.value
+                    )
+                  }
+                  placeholder="@username"
+                  autoComplete="off"
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-white outline-none transition focus:border-amber-400"
+                />
+
+                <p className="mt-2 text-[11px] text-white/25">
+                  Twitter/X ya Instagram me se koi ek de sakte ho.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs text-white/40 mb-2">
                   COUNTRY *
                 </label>
 
@@ -598,6 +631,8 @@ export default function DailyQuizPage() {
                 disabled={
                   !name.trim() ||
                   !country.trim() ||
+                  (!twitterUsername.trim() &&
+                    !instagramUsername.trim()) ||
                   questions.length !== 10
                 }
                 className="w-full rounded-2xl bg-amber-400 px-6 py-4 font-black text-black transition hover:bg-amber-300 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
@@ -756,6 +791,23 @@ export default function DailyQuizPage() {
           <Leaderboard
             leaderboard={leaderboard}
           />
+
+          <div className="mt-12">
+            <RaakaPassportGenerator
+              data={{
+                name: name.trim(),
+                country: country.trim(),
+                twitterUsername: twitterUsername.trim(),
+                instagramUsername: instagramUsername.trim(),
+                passportCode: passport.passportCode,
+                score: result.score,
+                totalQuestions: result.totalQuestions,
+                xp: result.xpEarned,
+                level: passport.level,
+                quizDate,
+              }}
+            />
+          </div>
 
           <div className="text-center mt-10">
 
