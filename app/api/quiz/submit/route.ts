@@ -14,6 +14,7 @@ type SubmitBody = {
   instagramUsername?: string;
   country?: string;
   answers: Answer[];
+  timeTaken?: number;
 };
 
 function getIndiaDate() {
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
       instagramUsername = "",
       country = "",
       answers,
+      timeTaken = 0,
     } = body;
 
     // ------------------------------------------
@@ -80,6 +82,16 @@ export async function POST(request: Request) {
         {
           success: false,
           error: "Fan name is required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!Number.isFinite(Number(timeTaken)) || Number(timeTaken) < 0) {
+      return Response.json(
+        {
+          success: false,
+          error: "Invalid time taken.",
         },
         { status: 400 }
       );
@@ -388,7 +400,7 @@ export async function POST(request: Request) {
         correctAnswers,
         totalQuestions,
         xpEarned,
-        0
+        Math.max(0, Math.round(Number(timeTaken)))
       )
       .run();
 
@@ -442,6 +454,7 @@ export async function POST(request: Request) {
         totalQuestions,
         score,
         xpEarned,
+        timeTaken: Math.max(0, Math.round(Number(timeTaken))),
       },
 
       passport: {
