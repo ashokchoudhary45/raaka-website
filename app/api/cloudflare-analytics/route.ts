@@ -5,6 +5,13 @@ export const dynamic = "force-dynamic";
 const ZONE_ID = "09dc54ff7b3251c3d50f53ea09380776";
 const GRAPHQL_URL = "https://api.cloudflare.com/client/v4/graphql";
 const MAX_RANGE_MS = 31 * 24 * 60 * 60 * 1000;
+const ANALYTICS_CACHE_TTL_MS = 60 * 1000;
+
+let analyticsCache: {
+  key: string;
+  expiresAt: number;
+  payload: unknown;
+} | null = null;
 
 type AnalyticsGroup = {
   count?: number;
@@ -332,6 +339,26 @@ export async function GET(request: Request) {
 
     const url = new URL(request.url);
     const now = new Date();
+
+    // The dashboard polls frequently, but Cloudflare GraphQL has request-rate limits.
+    // Ignore the frontend cache-busting `_t` parameter and serve the same analytics
+    // result for 60 seconds instead of issuing 9 GraphQL requests on every poll.
+    const cacheParams = new URLSearchParams(url.searchParams);
+    cacheParams.delete("_t");
+    const cacheKey = cacheParams.toString();
+
+    if (
+      analyticsCache &&
+      analyticsCache.key === cacheKey &&
+      analyticsCache.expiresAt > Date.now()
+    ) {
+      return Response.json(analyticsCache.payload, {
+        headers: {
+          "Cache-Control": "private, max-age=60",
+          "X-Raaka-Analytics-Cache": "HIT",
+        },
+      });
+    }
 
     const requestedFrom = cleanValue(url.searchParams.get("from"));
     const requestedTo = cleanValue(url.searchParams.get("to"));
@@ -823,7 +850,7 @@ export async function GET(request: Request) {
       legacyTotals?.uniques?.all
     );
 
-    return Response.json({
+    const payload = {
       success: true,
 
       period: {
@@ -904,6 +931,19 @@ export async function GET(request: Request) {
       warnings,
 
       timestamp: Date.now(),
+    };
+
+    analyticsCache = {
+      key: cacheKey,
+      expiresAt: Date.now() + ANALYTICS_CACHE_TTL_MS,
+      payload,
+    };
+
+    return Response.json(payload, {
+      headers: {
+        "Cache-Control": "private, max-age=60",
+        "X-Raaka-Analytics-Cache": "MISS",
+      },
     });
   } catch (error) {
     console.error("Cloudflare Analytics route error:", error);
