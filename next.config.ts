@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
   // ⚡ Better production performance
@@ -16,5 +17,8 @@ const nextConfig: NextConfig = {
   // 🔗 SEO / clean URLs
   trailingSlash: false,
 };
+
+// ☁️ Enable Cloudflare bindings (D1/R2/etc.) during `next dev`
+initOpenNextCloudflareForDev();
 
 export default nextConfig;
