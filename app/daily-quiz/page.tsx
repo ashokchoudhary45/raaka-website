@@ -712,7 +712,7 @@ export default function DailyQuizPage() {
                 />
 
                 <p className="mt-2 text-[11px] text-white/25">
-                  Twitter/X ya Instagram me se koi ek de sakte ho.
+                  You may provide either your Twitter/X or Instagram username.
                 </p>
               </div>
 
