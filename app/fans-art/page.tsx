@@ -239,7 +239,7 @@ export default function FansArtPage() {
         body: uploadData,
       });
 
-      const uploadResult = await uploadResponse.json();
+      const uploadResult: any = await uploadResponse.json();
 
       if (!uploadResponse.ok) {
         throw new Error(

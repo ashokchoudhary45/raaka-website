@@ -130,7 +130,7 @@ export default function DailyQuizPage() {
         }
       );
 
-      const data = await response.json();
+      const data: any = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -176,7 +176,7 @@ export default function DailyQuizPage() {
         }
       );
 
-      const data = await response.json();
+      const data: any = await response.json();
 
       if (data.success) {
         setLeaderboard(
@@ -352,7 +352,7 @@ export default function DailyQuizPage() {
         }
       );
 
-      const data = await response.json();
+      const data: any = await response.json();
 
       if (!response.ok) {
         if (data.alreadyCompleted) {
