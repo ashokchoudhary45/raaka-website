@@ -278,11 +278,13 @@ export default function RaakaPassportGenerator({
        * Artwork remains untouched.
        */
 
-      ctx.fillStyle = "rgba(8, 7, 6, 0.94)";
+      ctx.fillStyle = "#080706";
 
-      ctx.fillRect(448, 305, 610, 405);
+      // Completely cover the template sample identity text.
+      ctx.fillRect(440, 295, 635, 535);
 
-      ctx.fillRect(1240, 595, 215, 190);
+      ctx.fillStyle = "#080706";
+      ctx.fillRect(1240, 595, 215, 205);
 
       ctx.fillRect(35, 835, 900, 125);
 
@@ -349,7 +351,7 @@ export default function RaakaPassportGenerator({
         drawLabelValue(
           ctx,
           "QUIZ SCORE",
-          `${data.score ?? 0} / ${data.totalQuestions ?? 10}`,
+          `${Math.round((data.score ?? 0) / 10)} / ${data.totalQuestions ?? 10}`,
           458,
           555,
           24
@@ -458,7 +460,7 @@ export default function RaakaPassportGenerator({
       ctx.fillStyle = "#f2dfbb";
 
       ctx.fillText(
-        `${data.score ?? 0}/${data.totalQuestions ?? 10}`,
+        `${Math.round((data.score ?? 0) / 10)}/${data.totalQuestions ?? 10}`,
         1015,
         730
       );
