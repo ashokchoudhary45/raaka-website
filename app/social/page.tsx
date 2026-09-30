@@ -92,6 +92,13 @@ export default function RaakaSocialPage() {
     posts: Post[];
   } | null>(null);
 
+  const [view, setView] = useState<"home" | "profile" | "settings">("home");
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editHandle, setEditHandle] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -341,6 +348,55 @@ export default function RaakaSocialPage() {
     }
   };
 
+  const openProfile = () => {
+    setView("profile");
+    setEditingProfile(false);
+  };
+
+  const openSettings = () => {
+    setView("settings");
+    setEditingProfile(false);
+  };
+
+  const startEditingProfile = () => {
+    setEditName(profile?.displayName || "");
+    setEditHandle(profile?.handle || "");
+    setEditBio(profile?.bio || "");
+    setEditingProfile(true);
+  };
+
+  const saveProfile = async () => {
+    if (savingProfile) return;
+    setSavingProfile(true);
+    setMessage("");
+
+    try {
+      const result = await api("POST", {
+        action: "profile",
+        displayName: editName,
+        handle: editHandle,
+        bio: editBio,
+      });
+
+      if (result.success && result.profile) {
+        setProfile(result.profile);
+        setEditingProfile(false);
+        setMessage("Profile updated");
+      } else {
+        setMessage(result.error || "Could not update profile");
+      }
+    } catch {
+      setMessage("Could not update profile");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const goHome = () => {
+    setView("home");
+    setEditingProfile(false);
+  };
+
   const doSearch = async () => {
     if (!search.trim()) {
       setSearchResults(null);
@@ -449,24 +505,27 @@ export default function RaakaSocialPage() {
           </div>
 
           <div className="mt-10 space-y-2 text-sm">
-            {[
-              ["⌂", "Home"],
-              ["⌕", "Explore"],
-              ["🔔", "Notifications"],
-              ["🔖", "Bookmarks"],
-              ["♙", "Profile"],
-            ].map(([icon, label]) => (
-              <button
-                key={label}
-                className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-white/70 transition hover:bg-white/5 hover:text-white"
-              >
-                <span>{icon}</span>
-                <span>{label}</span>
-              </button>
-            ))}
+            <button onClick={goHome} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "home" ? "bg-white/10 text-white" : "text-white/70"}`}>
+              <span>⌂</span><span>Home</span>
+            </button>
+            <button onClick={() => { setView("home"); setTimeout(() => document.getElementById("social-search")?.focus(), 0); }} className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-white/70 transition hover:bg-white/5 hover:text-white">
+              <span>⌕</span><span>Explore</span>
+            </button>
+            <button onClick={() => setView("home")} className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-white/70 transition hover:bg-white/5 hover:text-white">
+              <span>🔔</span><span>Notifications</span>
+            </button>
+            <button onClick={() => setView("home")} className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-white/70 transition hover:bg-white/5 hover:text-white">
+              <span>🔖</span><span>Bookmarks</span>
+            </button>
+            <button onClick={openProfile} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "profile" ? "bg-white/10 text-white" : "text-white/70"}`}>
+              <span>♙</span><span>Profile</span>
+            </button>
+            <button onClick={openSettings} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "settings" ? "bg-white/10 text-white" : "text-white/70"}`}>
+              <span>⚙</span><span>Settings</span>
+            </button>
           </div>
 
-          <div className="mt-8 rounded-3xl border border-red-500/20 bg-gradient-to-br from-red-500/10 to-transparent p-5">
+          <button onClick={openProfile} className="mt-8 w-full rounded-3xl border border-red-500/20 bg-gradient-to-br from-red-500/10 to-transparent p-5 text-left transition hover:border-red-500/40">
             <div className="text-xs uppercase tracking-[.25em] text-red-400">
               RAAKA FAN
             </div>
@@ -478,7 +537,7 @@ export default function RaakaSocialPage() {
             <div className="text-xs text-white/40">
               @{profile?.handle || "loading"}
             </div>
-          </div>
+          </button>
 
           <button
             onClick={logout}
@@ -490,6 +549,90 @@ export default function RaakaSocialPage() {
 
         <section className="w-full max-w-[680px] border-r border-white/10">
 
+          {view === "profile" ? (
+            <div className="min-h-screen">
+              <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050505]/90 px-5 py-5 backdrop-blur-xl">
+                <div className="flex items-center gap-3">
+                  <button onClick={goHome} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60 hover:text-white">←</button>
+                  <div>
+                    <div className="text-xl font-black">Profile</div>
+                    <div className="text-xs text-white/35">@{profile?.handle}</div>
+                  </div>
+                </div>
+              </header>
+
+              <div className="border-b border-white/10 p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 text-3xl font-black">
+                    {profileInitial}
+                  </div>
+                  {!editingProfile && (
+                    <button onClick={startEditingProfile} className="rounded-full border border-white/15 px-5 py-2 text-xs font-bold hover:bg-white/5">Edit profile</button>
+                  )}
+                </div>
+
+                {editingProfile ? (
+                  <div className="mt-6 space-y-3">
+                    <input value={editName} onChange={(e) => setEditName(e.target.value.slice(0, 40))} placeholder="Display name" className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
+                    <input value={editHandle} onChange={(e) => setEditHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20))} placeholder="Handle" className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
+                    <textarea value={editBio} onChange={(e) => setEditBio(e.target.value.slice(0, 160))} placeholder="Bio" rows={3} className="w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
+                    <div className="flex gap-2">
+                      <button onClick={saveProfile} disabled={savingProfile} className="rounded-full bg-white px-5 py-2 text-xs font-black text-black disabled:opacity-40">{savingProfile ? "Saving…" : "Save changes"}</button>
+                      <button onClick={() => setEditingProfile(false)} className="rounded-full border border-white/10 px-5 py-2 text-xs font-bold text-white/60">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-5 text-2xl font-black">{profile?.displayName}</div>
+                    <div className="mt-1 text-sm text-white/35">@{profile?.handle}</div>
+                    {profile?.bio && <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-white/70">{profile.bio}</p>}
+                  </>
+                )}
+
+                <div className="mt-6 flex gap-6 text-sm">
+                  <div><span className="font-black">{profile?.posts ?? 0}</span> <span className="text-white/35">Posts</span></div>
+                  <div><span className="font-black">{profile?.followers ?? 0}</span> <span className="text-white/35">Followers</span></div>
+                  <div><span className="font-black">{profile?.following ?? 0}</span> <span className="text-white/35">Following</span></div>
+                </div>
+                {message && <div className="mt-4 text-xs text-red-300">{message}</div>}
+              </div>
+
+              <div className="p-10 text-center text-sm text-white/30">
+                Your posts will appear here as the profile timeline is expanded.
+              </div>
+            </div>
+          ) : view === "settings" ? (
+            <div className="min-h-screen">
+              <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050505]/90 px-5 py-5 backdrop-blur-xl">
+                <div className="flex items-center gap-3">
+                  <button onClick={goHome} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60 hover:text-white">←</button>
+                  <div>
+                    <div className="text-xl font-black">Settings</div>
+                    <div className="text-xs text-white/35">RAAKA Social account</div>
+                  </div>
+                </div>
+              </header>
+              <div className="p-5">
+                <div className="rounded-3xl border border-white/10 bg-white/[.03] p-5">
+                  <div className="text-xs font-bold uppercase tracking-[.25em] text-red-400">Account</div>
+                  <div className="mt-4 text-sm font-bold">{profile?.displayName}</div>
+                  <div className="mt-1 text-xs text-white/35">@{profile?.handle}</div>
+                  <div className="mt-1 text-xs text-white/35">Verified RAAKA Social account</div>
+                </div>
+                <div className="mt-4 rounded-3xl border border-white/10 bg-white/[.03] p-5">
+                  <div className="text-xs font-bold uppercase tracking-[.25em] text-white/40">Profile</div>
+                  <button onClick={startEditingProfile} className="mt-4 flex w-full items-center justify-between rounded-2xl border border-white/10 px-4 py-4 text-left text-sm hover:bg-white/5">
+                    <span>Edit profile</span><span className="text-white/30">→</span>
+                  </button>
+                </div>
+                <div className="mt-4 rounded-3xl border border-red-500/15 bg-red-500/[.03] p-5">
+                  <div className="text-xs font-bold uppercase tracking-[.25em] text-red-400">Session</div>
+                  <button onClick={logout} className="mt-4 w-full rounded-2xl border border-red-500/20 px-4 py-4 text-left text-sm font-bold text-red-300 hover:bg-red-500/10">Log out of RAAKA Social</button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
           <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050505]/90 px-5 py-5 backdrop-blur-xl">
             <div className="flex items-center justify-between">
               <div>
@@ -502,8 +645,13 @@ export default function RaakaSocialPage() {
                 </div>
               </div>
 
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-500/10 font-bold text-red-400 lg:hidden">
-                R
+              <div className="flex items-center gap-2 lg:hidden">
+                <button onClick={openProfile} className="flex h-9 w-9 items-center justify-center rounded-full bg-red-500/10 font-bold text-red-400" aria-label="Profile">
+                  {profileInitial}
+                </button>
+                <button onClick={openSettings} className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/60" aria-label="Settings">
+                  ⚙
+                </button>
               </div>
             </div>
 
@@ -745,8 +893,12 @@ export default function RaakaSocialPage() {
                   </div>
                 </div>
               </article>
-            ))
+              ))
           )}
+
+            </>
+          )}
+        
 
         </section>
 
@@ -766,6 +918,7 @@ export default function RaakaSocialPage() {
                     doSearch();
                   }
                 }}
+                id="social-search"
                 placeholder="Search RAAKA Social"
                 className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none"
               />

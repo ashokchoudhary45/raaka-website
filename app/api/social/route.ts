@@ -211,9 +211,6 @@ export async function GET(request: Request) {
       url.searchParams.get("cursor") || "0"
     );
 
-    /*
-     * Make sure the logged-in user has a Social profile.
-     */
     await ensureProfile(db, userId);
 
     /*
@@ -715,6 +712,159 @@ export async function POST(
       return Response.json({
         success: true,
         id: result.meta.last_row_id,
+      });
+    }
+
+    /*
+     * DELETE OWN POST
+     *
+     * A user can only delete posts that
+     * belong to the authenticated session.
+     */
+    if (action === "delete") {
+      const postId =
+        Number(body.postId);
+
+      if (!postId) {
+        return Response.json(
+          {
+            success: false,
+            error: "Invalid post.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const post =
+        await db
+          .prepare(
+            `SELECT
+               id,
+               visitor_id,
+               reply_to_id,
+               repost_of_id
+             FROM social_posts
+             WHERE id = ?
+             LIMIT 1`
+          )
+          .bind(postId)
+          .first<any>();
+
+      if (!post) {
+        return Response.json(
+          {
+            success: false,
+            error: "Post not found.",
+          },
+          { status: 404 }
+        );
+      }
+
+      /*
+       * SECURITY:
+       * Never accept visitorId from the browser.
+       * Ownership is checked against the session.
+       */
+      if (post.visitor_id !== userId) {
+        return Response.json(
+          {
+            success: false,
+            error:
+              "You can only delete your own posts.",
+          },
+          { status: 403 }
+        );
+      }
+
+      /*
+       * If this is a reply, decrease the
+       * parent's replies counter.
+       */
+      if (post.reply_to_id) {
+        await db
+          .prepare(
+            `UPDATE social_posts
+             SET replies_count =
+               MAX(0, replies_count - 1)
+             WHERE id = ?`
+          )
+          .bind(post.reply_to_id)
+          .run();
+      }
+
+      /*
+       * If this is a repost, decrease the
+       * original post's repost counter.
+       */
+      if (post.repost_of_id) {
+        await db
+          .prepare(
+            `UPDATE social_posts
+             SET reposts_count =
+               MAX(0, reposts_count - 1)
+             WHERE id = ?`
+          )
+          .bind(post.repost_of_id)
+          .run();
+      }
+
+      /*
+       * Clean dependent rows explicitly.
+       */
+      await db
+        .prepare(
+          `DELETE FROM social_likes
+           WHERE post_id = ?`
+        )
+        .bind(postId)
+        .run();
+
+      await db
+        .prepare(
+          `DELETE FROM social_bookmarks
+           WHERE post_id = ?`
+        )
+        .bind(postId)
+        .run();
+
+      await db
+        .prepare(
+          `DELETE FROM social_notifications
+           WHERE post_id = ?`
+        )
+        .bind(postId)
+        .run();
+
+      /*
+       * Replies to this post are retained as
+       * independent posts, but their parent link
+       * is cleared by the FK ON DELETE SET NULL.
+       */
+      await db
+        .prepare(
+          `DELETE FROM social_posts
+           WHERE id = ?`
+        )
+        .bind(postId)
+        .run();
+
+      await db
+        .prepare(
+          `UPDATE social_profiles
+           SET
+             posts_count =
+               MAX(0, posts_count - 1),
+             updated_at =
+               CURRENT_TIMESTAMP
+           WHERE visitor_id = ?`
+        )
+        .bind(userId)
+        .run();
+
+      return Response.json({
+        success: true,
+        deleted: true,
+        postId,
       });
     }
 
