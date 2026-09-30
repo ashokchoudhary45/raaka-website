@@ -58,8 +58,8 @@ export default function GlobalLiveCounter() {
 
   if (live === null) return null;
 
-  const isFire = live >= 1;
-  const isInferno = live >= 2;
+  const isFire = live >= 2;
+  const isInferno = live >= 3;
 
   return (
     <>
@@ -68,153 +68,88 @@ export default function GlobalLiveCounter() {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.035); }
         }
-
-        @keyframes fireWave {
-          0%, 100% {
-            transform: translateX(-50%) scaleY(.75);
-            opacity: .55;
-          }
-          50% {
-            transform: translateX(-50%) scaleY(1.15);
-            opacity: 1;
-          }
+        @keyframes fireGlow {
+          0%, 100% { box-shadow: 0 0 10px rgba(255,55,0,.45), 0 0 28px rgba(255,55,0,.25); }
+          50% { box-shadow: 0 0 20px rgba(255,80,0,.9), 0 0 55px rgba(255,45,0,.5); }
         }
-
-        @keyframes flameLeft {
-          0%, 100% { transform: rotate(-18deg) scaleY(.75); }
-          50% { transform: rotate(-7deg) scaleY(1.2); }
+        @keyframes flameA {
+          0%,100% { transform: translateX(-50%) rotate(-10deg) scaleY(.7); }
+          35% { transform: translateX(-50%) rotate(7deg) scaleY(1.2); }
+          70% { transform: translateX(-50%) rotate(-4deg) scaleY(.9); }
         }
-
-        @keyframes flameRight {
-          0%, 100% { transform: rotate(18deg) scaleY(.75); }
-          50% { transform: rotate(7deg) scaleY(1.2); }
+        @keyframes flameB {
+          0%,100% { transform: translateX(-50%) rotate(8deg) scaleY(.75); }
+          40% { transform: translateX(-50%) rotate(-7deg) scaleY(1.3); }
+          75% { transform: translateX(-50%) rotate(5deg) scaleY(.9); }
         }
-
-        @keyframes sparkUp {
-          0% {
-            opacity: 0;
-            transform: translate(0, 8px) scale(.45) rotate(0deg);
-          }
-          20% { opacity: 1; }
-          100% {
-            opacity: 0;
-            transform: translate(var(--sx), -30px) scale(.85) rotate(40deg);
-          }
+        @keyframes ember {
+          0% { opacity:0; transform:translate(0,8px) scale(.3) rotate(0); }
+          15% { opacity:1; }
+          100% { opacity:0; transform:translate(var(--drift),-45px) scale(.9) rotate(70deg); }
         }
-
-        @keyframes infernoGlow {
-          0%, 100% {
-            box-shadow:
-              0 0 12px rgba(255, 65, 0, .35),
-              0 0 30px rgba(255, 80, 0, .18);
-          }
-          50% {
-            box-shadow:
-              0 0 22px rgba(255, 65, 0, .65),
-              0 0 55px rgba(255, 80, 0, .35);
-          }
+        .live-fire-wrap {
+          position: relative;
+          isolation: isolate;
+          animation: livePulse 1.15s ease-in-out infinite, fireGlow 1.15s ease-in-out infinite;
         }
-
-        .live-fire-pulse {
-          animation: livePulse 1.25s ease-in-out infinite;
+        .live-fire-wrap::before {
+          content:"";
+          position:absolute;
+          left:3%; right:3%; bottom:-9px; height:28px;
+          border-radius:50%;
+          background:radial-gradient(ellipse,rgba(255,80,0,.75),rgba(255,40,0,.32) 45%,transparent 75%);
+          filter:blur(7px);
+          z-index:-1;
         }
-
-        .live-inferno {
-          animation:
-            livePulse 1.05s ease-in-out infinite,
-            infernoGlow 1.05s ease-in-out infinite;
-        }
-
         .live-flame {
-          position: absolute;
-          bottom: -7px;
-          left: 50%;
-          width: 88%;
-          height: 17px;
-          transform: translateX(-50%);
-          border-radius: 50%;
-          background: radial-gradient(
-            ellipse at center bottom,
-            rgba(255, 210, 60, .9) 0%,
-            rgba(255, 85, 0, .75) 28%,
-            rgba(255, 30, 0, .35) 55%,
-            transparent 75%
-          );
-          filter: blur(4px);
-          animation: fireWave .72s ease-in-out infinite;
-          pointer-events: none;
+          position:absolute;
+          bottom:-6px;
+          width:18px; height:31px;
+          border-radius:65% 35% 58% 42%;
+          background:linear-gradient(to top,#ff2400 0%,#ff5b00 38%,#ffb21c 72%,#fff1a0 100%);
+          box-shadow:0 0 8px rgba(255,70,0,.95),0 0 18px rgba(255,70,0,.65);
+          transform-origin:50% 100%;
+          z-index:-1;
         }
-
-        .live-flame-top {
-          position: absolute;
-          bottom: 5px;
-          width: 10px;
-          height: 19px;
-          border-radius: 70% 30% 65% 35%;
-          background: linear-gradient(to top, #ff3b00, #ffbd32, #fff1a0);
-          filter: blur(.4px);
-          box-shadow: 0 0 10px rgba(255, 75, 0, .8);
-          transform-origin: bottom center;
-          pointer-events: none;
+        .live-flame.a { left:16%; animation:flameA .72s ease-in-out infinite; }
+        .live-flame.b { left:38%; height:38px; width:21px; animation:flameB .58s ease-in-out infinite .08s; }
+        .live-flame.c { left:60%; height:34px; width:20px; animation:flameA .65s ease-in-out infinite .16s; }
+        .live-flame.d { left:80%; height:28px; width:17px; animation:flameB .78s ease-in-out infinite .22s; }
+        .live-ember {
+          position:absolute; bottom:8px; width:4px; height:4px; border-radius:999px;
+          background:#ffc34d; box-shadow:0 0 9px #ff4a00;
+          animation:ember 1.35s ease-out infinite;
+          z-index:4; pointer-events:none;
         }
-
-        .live-flame-left {
-          left: 16%;
-          animation: flameLeft .7s ease-in-out infinite;
+        .live-fire-pill {
+          position:relative;
+          overflow:visible !important;
+          border-color:rgba(255,70,0,.9) !important;
+          background:rgba(7,3,1,.96) !important;
         }
-
-        .live-flame-center {
-          left: 46%;
-          height: 23px;
-          animation: fireWave .62s ease-in-out infinite;
-        }
-
-        .live-flame-right {
-          right: 16%;
-          animation: flameRight .8s ease-in-out infinite;
-        }
-
-        .live-spark {
-          position: absolute;
-          bottom: 9px;
-          width: 3px;
-          height: 3px;
-          border-radius: 999px;
-          background: #ffc04a;
-          box-shadow: 0 0 7px #ff4d00;
-          animation: sparkUp 1.35s ease-out infinite;
-          pointer-events: none;
-        }
-
         @media (prefers-reduced-motion: reduce) {
-          .live-fire-pulse,
-          .live-inferno,
-          .live-flame,
-          .live-flame-top,
-          .live-spark {
-            animation: none;
-          }
+          .live-fire-wrap,.live-flame,.live-ember { animation:none; }
         }
       `}</style>
 
       <div className="fixed bottom-5 left-5 z-[9999]">
-        <div className={isInferno ? "live-inferno" : isFire ? "live-fire-pulse" : ""}>
+        <div className={isFire ? "live-fire-wrap" : ""}>
           {isFire && (
             <>
-              <span className="live-flame" />
-              <span className="live-flame-top live-flame-left" />
-              <span className="live-flame-top live-flame-center" />
-              <span className="live-flame-top live-flame-right" />
-
-              <span className="live-spark" style={{ left: "22%", ["--sx" as string]: "-7px" }} />
-              <span className="live-spark" style={{ left: "37%", animationDelay: ".25s", ["--sx" as string]: "5px" }} />
-              <span className="live-spark" style={{ left: "58%", animationDelay: ".5s", ["--sx" as string]: "-4px" }} />
-              <span className="live-spark" style={{ left: "76%", animationDelay: ".15s", ["--sx" as string]: "7px" }} />
+              <span className="live-flame a" />
+              <span className="live-flame b" />
+              <span className="live-flame c" />
+              <span className="live-flame d" />
+              <span className="live-ember" style={{ left: "13%", ["--drift" as string]: "-8px" }} />
+              <span className="live-ember" style={{ left: "30%", animationDelay: ".2s", ["--drift" as string]: "6px" }} />
+              <span className="live-ember" style={{ left: "49%", animationDelay: ".45s", ["--drift" as string]: "-5px" }} />
+              <span className="live-ember" style={{ left: "68%", animationDelay: ".12s", ["--drift" as string]: "8px" }} />
+              <span className="live-ember" style={{ left: "84%", animationDelay: ".6s", ["--drift" as string]: "-6px" }} />
             </>
           )}
 
           <div
-            className={`relative flex items-center gap-2 rounded-full border px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-xl transition-all duration-500 ${
+            className={`relative flex items-center gap-2 rounded-full border px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-xl transition-all duration-500 ${isFire ? "live-fire-pill" : ""} ${
               isInferno
                 ? "border-red-500/90 bg-black/90 shadow-[0_0_25px_rgba(255,55,0,.65)]"
                 : isFire
