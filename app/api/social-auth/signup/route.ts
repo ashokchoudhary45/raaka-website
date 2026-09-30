@@ -18,6 +18,15 @@ function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as SignupBody;
@@ -41,6 +50,10 @@ export async function POST(request: Request) {
       typeof body.displayName === "string"
         ? body.displayName.trim()
         : "";
+
+    // ------------------------------------------
+    // VALIDATION
+    // ------------------------------------------
 
     if (!email || !EMAIL_REGEX.test(email)) {
       return json(
@@ -85,6 +98,10 @@ export async function POST(request: Request) {
 
     const db = getD1();
 
+    // ------------------------------------------
+    // CHECK EXISTING EMAIL
+    // ------------------------------------------
+
     const existingEmail = await db
       .prepare(
         `SELECT user_id
@@ -104,6 +121,10 @@ export async function POST(request: Request) {
         409
       );
     }
+
+    // ------------------------------------------
+    // CHECK EXISTING HANDLE
+    // ------------------------------------------
 
     const existingHandle = await db
       .prepare(
@@ -125,13 +146,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const userId = crypto.randomUUID();
-    const passwordHash = await hashPassword(password);
-    const verification = await createVerificationToken(userId);
+    // ------------------------------------------
+    // CREATE USER
+    // ------------------------------------------
 
-    const verificationUrl =
-      `https://worldofraaka.online/social/verify?token=` +
-      encodeURIComponent(verification.token);
+    const userId = crypto.randomUUID();
+
+    const passwordHash = await hashPassword(password);
 
     await db.batch([
       db
@@ -151,20 +172,47 @@ export async function POST(request: Request) {
         .bind(userId, handle, displayName),
     ]);
 
+    // ------------------------------------------
+    // CREATE VERIFICATION TOKEN
+    //
+    // IMPORTANT:
+    // User must exist before creating the token
+    // because social_email_verifications.user_id
+    // references social_auth_users.user_id.
+    // ------------------------------------------
+
+    const verification = await createVerificationToken(userId);
+
+    const verificationUrl =
+      `https://worldofraaka.online/social/verify?token=` +
+      encodeURIComponent(verification.token);
+
+    // ------------------------------------------
+    // EMAIL CONFIG
+    // ------------------------------------------
+
     const resendApiKey = process.env.RESEND_API_KEY;
+
     const fromEmail =
       process.env.RESEND_FROM_EMAIL ||
       "RAAKA Social <noreply@worldofraaka.online>";
 
     if (!resendApiKey) {
+      console.error("RAAKA Social signup: RESEND_API_KEY is missing.");
+
       return json(
         {
           success: false,
-          error: "Email service is not configured.",
+          error:
+            "Your account was created, but the email service is temporarily unavailable. Please use Resend verification later.",
         },
         500
       );
     }
+
+    // ------------------------------------------
+    // SEND VERIFICATION EMAIL
+    // ------------------------------------------
 
     const emailResponse = await fetch(
       "https://api.resend.com/emails",
@@ -179,32 +227,103 @@ export async function POST(request: Request) {
           to: [email],
           subject: "Verify your RAAKA Social account",
           html: `
-            <div style="font-family:Arial,sans-serif;background:#050505;color:#fff;padding:40px">
-              <div style="max-width:600px;margin:auto;border:1px solid #222;border-radius:20px;padding:32px;background:#0b0b0b">
-                <div style="font-size:12px;letter-spacing:4px;color:#888">
+            <div
+              style="
+                margin:0;
+                padding:40px 20px;
+                background:#050505;
+                color:#ffffff;
+                font-family:Arial,Helvetica,sans-serif;
+              "
+            >
+              <div
+                style="
+                  max-width:600px;
+                  margin:0 auto;
+                  border:1px solid #222;
+                  border-radius:20px;
+                  padding:32px;
+                  background:#0b0b0b;
+                "
+              >
+
+                <div
+                  style="
+                    font-size:12px;
+                    letter-spacing:4px;
+                    color:#888;
+                    font-weight:bold;
+                  "
+                >
                   WORLD OF RAAKA
                 </div>
 
-                <h1 style="font-size:32px;margin:20px 0 10px">
+                <h1
+                  style="
+                    font-size:32px;
+                    line-height:1.2;
+                    margin:20px 0 10px;
+                    color:#ffffff;
+                  "
+                >
                   Welcome to RAAKA Social
                 </h1>
 
-                <p style="color:#aaa;line-height:1.7">
+                <p
+                  style="
+                    color:#aaaaaa;
+                    line-height:1.7;
+                    font-size:15px;
+                  "
+                >
                   Hi ${escapeHtml(displayName)},<br><br>
+
                   Your RAAKA Social account has been created.
-                  Verify your email address to activate your account.
+                  Verify your email address to activate your account
+                  and join the RAAKA community.
                 </p>
 
                 <a
                   href="${verificationUrl}"
-                  style="display:inline-block;margin:20px 0;padding:14px 24px;background:#fff;color:#000;text-decoration:none;border-radius:10px;font-weight:bold"
+                  style="
+                    display:inline-block;
+                    margin:20px 0;
+                    padding:14px 24px;
+                    background:#ffffff;
+                    color:#000000;
+                    text-decoration:none;
+                    border-radius:10px;
+                    font-weight:bold;
+                    font-size:14px;
+                  "
                 >
                   Verify Email
                 </a>
 
-                <p style="font-size:12px;color:#666;line-height:1.6">
+                <p
+                  style="
+                    font-size:12px;
+                    color:#666666;
+                    line-height:1.6;
+                  "
+                >
                   This verification link expires in 24 hours.
                 </p>
+
+                <p
+                  style="
+                    margin-top:24px;
+                    padding-top:20px;
+                    border-top:1px solid #222;
+                    font-size:11px;
+                    color:#555;
+                    line-height:1.6;
+                  "
+                >
+                  If you did not create this account, you can safely
+                  ignore this email.
+                </p>
+
               </div>
             </div>
           `,
@@ -212,19 +331,31 @@ export async function POST(request: Request) {
       }
     );
 
+    // ------------------------------------------
+    // RESEND ERROR
+    // ------------------------------------------
+
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
-      console.error("Resend error:", errorText);
+
+      console.error(
+        "RAAKA Social Resend error:",
+        errorText
+      );
 
       return json(
         {
           success: false,
           error:
-            "Account created, but the verification email could not be sent.",
+            "Account created, but the verification email could not be sent. Please use Resend verification.",
         },
         502
       );
     }
+
+    // ------------------------------------------
+    // SUCCESS
+    // ------------------------------------------
 
     return json({
       success: true,
@@ -232,23 +363,18 @@ export async function POST(request: Request) {
         "Account created. Check your email to verify your account.",
     });
   } catch (error) {
-    console.error("Social signup error:", error);
+    console.error(
+      "RAAKA Social signup error:",
+      error
+    );
 
     return json(
       {
         success: false,
-        error: "Something went wrong while creating your account.",
+        error:
+          "Something went wrong while creating your account.",
       },
       500
     );
   }
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
