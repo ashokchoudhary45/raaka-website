@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import RaakaMusic from "@/components/RaakaMusic";
 import LiveAudienceTracker from "@/components/LiveAudienceTracker";
+import GlobalLiveCounter from "@/components/GlobalLiveCounter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -100,6 +101,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col overflow-x-hidden">
         <LiveAudienceTracker />
+        <GlobalLiveCounter />
         {children}
         <RaakaMusic />
       </body>
