@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -9,7 +9,7 @@ type VerifyResult = {
   error?: string;
 };
 
-export default function SocialVerifyPage() {
+function SocialVerifyContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -30,7 +30,7 @@ export default function SocialVerifyPage() {
     async function verify() {
       try {
         const response = await fetch(
-          `/api/social-auth/verify?token=${encodeURIComponent(token as string)}`,
+          `/api/social-auth/verify?token=$encodeURIComponent(token as string)}`,
           {
             method: "GET",
             credentials: "include",
@@ -149,5 +149,23 @@ export default function SocialVerifyPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function SocialVerifyPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-black px-5 py-10 text-white">
+          <div className="flex min-h-screen items-center justify-center">
+            <div className="text-sm text-white/40">
+              Loading verification…
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <SocialVerifyContent />
+    </Suspense>
   );
 }
