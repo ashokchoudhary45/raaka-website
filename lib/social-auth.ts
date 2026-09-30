@@ -28,7 +28,8 @@ async function sha256(value: string) {
 }
 
 export async function hashPassword(password: string) {
-  const iterations = 120000;
+  const iterations = 100000;
+
   const salt = new Uint8Array(16);
   crypto.getRandomValues(salt);
 
