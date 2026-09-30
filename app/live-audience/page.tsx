@@ -484,22 +484,6 @@ export default function LiveAudiencePage() {
         </section>
 
         <section className="mt-8 grid gap-6 xl:grid-cols-2">
-          <ChartCard title="Requests Over Time" subtitle="Hourly HTTP requests">
-            {cloudflareLoading ? <Loading /> : (
-              <div className="flex h-64 items-end gap-1 overflow-x-auto rounded-2xl border border-white/5 bg-black/20 p-4">
-                {hourlyData.map((item) => {
-                  const value = metricValue(item, metric);
-                  const height = Math.max((value / maxHourlyValue) * 100, 2);
-                  return (
-                    <div key={item.hour} className="group flex h-full min-w-[10px] flex-1 items-end" title={`${item.hour || ""} • ${formatNumber(item.requests)} requests • ${formatNumber(item.visits)} visits`}>
-                      <div className="w-full rounded-t bg-red-500/70 transition group-hover:bg-red-400" style={{ height: `${height}%` }} />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </ChartCard>
-
           <ChartCard title="Daily Traffic" subtitle="Day-by-day selected period">
             {cloudflareLoading ? <Loading /> : (
               <div className="flex h-64 items-end gap-2 overflow-x-auto rounded-2xl border border-white/5 bg-black/20 p-4">
@@ -631,29 +615,6 @@ export default function LiveAudiencePage() {
           />
         </section>
 
-        <section className="mt-8 grid gap-6 xl:grid-cols-2">
-          <DataTable
-            title="Top Pages"
-            headers={["Path", "Visits", "Requests", "Transfer"]}
-            rows={(cloudflare?.paths || []).slice(0, 25).map((item) => [
-              item.path,
-              formatNumber(item.visits),
-              formatNumber(item.requests),
-              formatBytes(item.bytes),
-            ])}
-          />
-          <DataTable
-            title="Hostnames"
-            headers={["Hostname", "Visits", "Requests", "Transfer"]}
-            rows={(cloudflare?.hostnames || []).map((item) => [
-              item.hostname,
-              formatNumber(item.visits),
-              formatNumber(item.requests),
-              formatBytes(item.bytes),
-            ])}
-          />
-        </section>
-
         <section className="mt-8 rounded-3xl border border-white/10 bg-white/[0.025]">
           <SectionTitle title="Daily Traffic Table" subtitle="Complete day-by-day breakdown." />
           <div className="overflow-x-auto">
@@ -703,34 +664,11 @@ export default function LiveAudiencePage() {
               formatBytes(item.bytes),
             ])}
           />
-          <DataTable
-            title="Cloudflare Edge / Colo"
-            headers={["Colo", "Visits", "Requests", "Transfer"]}
-            rows={(cloudflare?.colos || []).slice(0, 25).map((item) => [
-              item.colo,
-              formatNumber(item.visits),
-              formatNumber(item.requests),
-              formatBytes(item.bytes),
-            ])}
-          />
         </section>
 
         <section className="mt-8 grid gap-6 xl:grid-cols-2">
           <LivePages data={data} live={live} />
           <D1Pages data={data} />
-        </section>
-
-        <section className="mt-8">
-          <DataTable
-            title="User Agents"
-            headers={["User Agent", "Visits", "Requests", "Transfer"]}
-            rows={(cloudflare?.userAgents || []).slice(0, 30).map((item) => [
-              item.userAgent,
-              formatNumber(item.visits),
-              formatNumber(item.requests),
-              formatBytes(item.bytes),
-            ])}
-          />
         </section>
 
         <footer className="py-10 text-center text-[10px] uppercase tracking-[0.25em] text-white/20">
