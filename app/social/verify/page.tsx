@@ -30,7 +30,7 @@ function SocialVerifyContent() {
     async function verify() {
       try {
         const response = await fetch(
-          `/api/social-auth/verify?token=$encodeURIComponent(token as string)}`,
+          `/api/social-auth/verify?token=${encodeURIComponent(token as string)}`,
           {
             method: "GET",
             credentials: "include",
