@@ -119,12 +119,12 @@ export default function RaakaMusic() {
 
   return (
     <div className="fixed bottom-4 right-4 z-[9999] sm:bottom-5 sm:right-5 md:bottom-7 md:right-7">
-      <div className="relative flex items-center gap-2 rounded-full border border-white/15 bg-black/70 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+      <div className="relative flex items-center gap-1.5 rounded-full border border-white/15 bg-black/70 p-1 sm:gap-2 sm:p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
 
         <button
           type="button"
           onClick={() => setMusicOpen((value) => !value)}
-          className={`flex h-10 max-w-[150px] items-center gap-2 rounded-full px-3 text-left transition-all duration-300 sm:max-w-[170px] ${
+          className={`flex h-9 max-w-[120px] items-center gap-1.5 rounded-full px-2.5 text-left transition-all duration-300 sm:h-10 sm:max-w-[170px] sm:gap-2 sm:px-3 ${
             musicPlaying
               ? "bg-white/[0.08] text-white"
               : "bg-white/[0.04] text-white/55"
@@ -134,14 +134,14 @@ export default function RaakaMusic() {
           title="Music playlist"
         >
           <span
-            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/15 text-[12px] ${
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white/15 text-[10px] sm:h-6 sm:w-6 sm:text-[12px] ${
               musicPlaying ? "text-orange-300" : "text-white/45"
             }`}
           >
             ♪
           </span>
 
-          <span className="min-w-0 truncate text-[9px] font-medium uppercase tracking-[0.18em]">
+          <span className="min-w-0 truncate text-[8px] font-medium uppercase tracking-[0.14em] sm:text-[9px] sm:tracking-[0.18em]">
             {currentTrack.title}
           </span>
         </button>
@@ -160,7 +160,7 @@ export default function RaakaMusic() {
               );
             }
           }}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70 transition hover:border-white/25 hover:bg-white/[0.09] hover:text-white"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[11px] text-white/70 transition hover:border-white/25 hover:bg-white/[0.09] hover:text-white sm:h-10 sm:w-10 sm:text-base"
           aria-label={musicVolume === 0 ? "Unmute music" : "Mute music"}
           title={musicVolume === 0 ? "Unmute" : "Mute"}
         >
