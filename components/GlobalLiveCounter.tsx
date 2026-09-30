@@ -58,8 +58,8 @@ export default function GlobalLiveCounter() {
 
   if (live === null) return null;
 
-  const isFire = live >= 50;
-  const isInferno = live >= 100;
+  const isFire = live >= 1;
+  const isInferno = live >= 2;
 
   return (
     <>
