@@ -1,356 +1,390 @@
-"use client";
+import { NextResponse } from "next/server";
+import { getD1 } from "@/lib/d1";
+import {
+  createVerificationToken,
+  hashPassword,
+} from "@/lib/social-auth";
 
-import { FormEvent, useState } from "react";
-
-type SignupResponse = {
-  success?: boolean;
-  message?: string;
-  error?: string;
+type SignupBody = {
+  email?: unknown;
+  password?: unknown;
+  handle?: unknown;
+  displayName?: unknown;
 };
 
-export default function SocialSignupPage() {
-  const [displayName, setDisplayName] = useState("");
-  const [handle, setHandle] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [success, setSuccess] = useState(false);
+function json(data: unknown, status = 200) {
+  return NextResponse.json(data, { status });
+}
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
-    if (loading) return;
+export async function POST(request: Request) {
+  try {
+    const body = (await request.json()) as SignupBody;
 
-    setMessage("");
-    setSuccess(false);
+    const email =
+      typeof body.email === "string"
+        ? body.email.trim().toLowerCase()
+        : "";
 
-    const cleanDisplayName = displayName.trim();
-    const cleanHandle = handle
-      .trim()
-      .replace(/^@/, "")
-      .toLowerCase();
+    const password =
+      typeof body.password === "string"
+        ? body.password
+        : "";
 
-    const cleanEmail = email.trim().toLowerCase();
+    const handle =
+      typeof body.handle === "string"
+        ? body.handle.trim().replace(/^@/, "").toLowerCase()
+        : "";
 
-    if (cleanDisplayName.length < 2) {
-      setMessage("Display name must be at least 2 characters.");
-      return;
-    }
+    const displayName =
+      typeof body.displayName === "string"
+        ? body.displayName.trim()
+        : "";
 
-    if (!/^[a-z0-9_]{3,20}$/.test(cleanHandle)) {
-      setMessage(
-        "Username must be 3–20 characters and use only letters, numbers or underscore."
+    // ------------------------------------------
+    // VALIDATION
+    // ------------------------------------------
+
+    if (!email || !EMAIL_REGEX.test(email)) {
+      return json(
+        {
+          success: false,
+          error: "Enter a valid email address.",
+        },
+        400
       );
-      return;
-    }
-
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      setMessage("Enter a valid email address.");
-      return;
     }
 
     if (password.length < 8) {
-      setMessage("Password must be at least 8 characters.");
-      return;
+      return json(
+        {
+          success: false,
+          error: "Password must be at least 8 characters.",
+        },
+        400
+      );
     }
 
-    setLoading(true);
+    if (!/^[a-z0-9_]{3,20}$/.test(handle)) {
+      return json(
+        {
+          success: false,
+          error:
+            "Username must be 3–20 characters and use only letters, numbers or underscore.",
+        },
+        400
+      );
+    }
 
-    try {
-      /*
-       * IMPORTANT:
-       * Keep this URL relative.
-       *
-       * Local:
-       * http://localhost:3000/api/social-auth/signup
-       *
-       * Production:
-       * https://worldofraaka.online/api/social-auth/signup
-       *
-       * Do NOT hardcode worldofraaka.online here.
-       */
-      const response = await fetch("/api/social-auth/signup", {
+    if (displayName.length < 2 || displayName.length > 50) {
+      return json(
+        {
+          success: false,
+          error: "Display name must be 2–50 characters.",
+        },
+        400
+      );
+    }
+
+    const db = getD1();
+
+    // ------------------------------------------
+    // CHECK EXISTING EMAIL
+    // ------------------------------------------
+
+    const existingEmail = await db
+      .prepare(
+        `SELECT user_id
+         FROM social_auth_users
+         WHERE email = ?
+         LIMIT 1`
+      )
+      .bind(email)
+      .first<{ user_id: string }>();
+
+    if (existingEmail) {
+      return json(
+        {
+          success: false,
+          error: "An account with this email already exists.",
+        },
+        409
+      );
+    }
+
+    // ------------------------------------------
+    // CHECK EXISTING HANDLE
+    // ------------------------------------------
+
+    const existingHandle = await db
+      .prepare(
+        `SELECT visitor_id
+         FROM social_profiles
+         WHERE handle = ?
+         LIMIT 1`
+      )
+      .bind(handle)
+      .first<{ visitor_id: string }>();
+
+    if (existingHandle) {
+      return json(
+        {
+          success: false,
+          error: "That username is already taken.",
+        },
+        409
+      );
+    }
+
+    // ------------------------------------------
+    // CREATE USER
+    // ------------------------------------------
+
+    const userId = crypto.randomUUID();
+
+    const passwordHash = await hashPassword(password);
+
+    await db.batch([
+      db
+        .prepare(
+          `INSERT INTO social_auth_users
+           (user_id, email, password_hash)
+           VALUES (?, ?, ?)`
+        )
+        .bind(userId, email, passwordHash),
+
+      db
+        .prepare(
+          `INSERT INTO social_profiles
+           (visitor_id, handle, display_name)
+           VALUES (?, ?, ?)`
+        )
+        .bind(userId, handle, displayName),
+    ]);
+
+    // ------------------------------------------
+    // CREATE VERIFICATION TOKEN
+    // ------------------------------------------
+
+    const verification = await createVerificationToken(userId);
+
+    /*
+     * IMPORTANT:
+     * This is intentionally based on the incoming request.
+     *
+     * Local:
+     * http://localhost:3000/social/verify?token=...
+     *
+     * Production:
+     * https://worldofraaka.online/social/verify?token=...
+     */
+    const verificationUrl = new URL(
+      `/social/verify?token=${encodeURIComponent(
+        verification.token
+      )}`,
+      request.url
+    ).toString();
+
+    // ------------------------------------------
+    // EMAIL CONFIG
+    // ------------------------------------------
+
+    const resendApiKey = process.env.RESEND_API_KEY;
+
+    const fromEmail =
+      process.env.RESEND_FROM_EMAIL ||
+      "RAAKA Social <noreply@worldofraaka.online>";
+
+    if (!resendApiKey) {
+      console.error(
+        "RAAKA Social signup: RESEND_API_KEY is missing."
+      );
+
+      return json(
+        {
+          success: false,
+          error:
+            "Your account was created, but the email service is temporarily unavailable. Please use Resend verification later.",
+        },
+        500
+      );
+    }
+
+    // ------------------------------------------
+    // SEND VERIFICATION EMAIL
+    // ------------------------------------------
+
+    const emailResponse = await fetch(
+      "https://api.resend.com/emails",
+      {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${resendApiKey}`,
           "Content-Type": "application/json",
         },
-        credentials: "same-origin",
         body: JSON.stringify({
-          displayName: cleanDisplayName,
-          handle: cleanHandle,
-          email: cleanEmail,
-          password,
-        }),
-      });
-
-      let result: SignupResponse;
-
-      try {
-        result = (await response.json()) as SignupResponse;
-      } catch {
-        result = {
-          success: false,
-          error: "The server returned an invalid response.",
-        };
-      }
-
-      if (!response.ok || !result.success) {
-        setMessage(
-          result.error || "Something went wrong while creating your account."
-        );
-        return;
-      }
-
-      setSuccess(true);
-      setMessage(
-        result.message ||
-          "Account created. Check your email to verify your account."
-      );
-
-      setPassword("");
-    } catch (error) {
-      console.error("RAAKA Social signup request failed:", error);
-
-      setMessage(
-        "Could not connect to RAAKA Social. Please check your connection and try again."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (success) {
-    return (
-      <main className="min-h-screen bg-[#050505] px-5 text-white">
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[.03] p-8 text-center shadow-2xl">
-            <div className="text-xs font-bold uppercase tracking-[0.4em] text-red-400">
-              WORLD OF RAAKA
-            </div>
-
-            <h1 className="mt-5 text-3xl font-black">
-              Check your email
-            </h1>
-
-            <div className="mx-auto mt-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 text-3xl">
-              ✓
-            </div>
-
-            <p className="mt-6 text-sm leading-7 text-white/55">
-              Your RAAKA Social account has been created.
-              <br />
-              We sent a verification link to:
-            </p>
-
-            <div className="mt-4 break-all rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-sm font-bold text-white">
-              {email}
-            </div>
-
-            <p className="mt-5 text-xs leading-6 text-white/35">
-              Open the verification email and click{" "}
-              <span className="text-white/60">Verify Email</span>.
-              <br />
-              The link is valid for 24 hours.
-            </p>
-
-            <div className="mt-7 space-y-3">
-              <a
-                href="/social/login"
-                className="block rounded-xl bg-white px-4 py-3 text-sm font-black text-black transition hover:bg-white/90"
+          from: fromEmail,
+          to: [email],
+          subject: "Verify your RAAKA Social account",
+          html: `
+            <div
+              style="
+                margin:0;
+                padding:40px 20px;
+                background:#050505;
+                color:#ffffff;
+                font-family:Arial,Helvetica,sans-serif;
+              "
+            >
+              <div
+                style="
+                  max-width:600px;
+                  margin:0 auto;
+                  border:1px solid #222;
+                  border-radius:20px;
+                  padding:32px;
+                  background:#0b0b0b;
+                "
               >
-                Go to Login
-              </a>
 
-              <a
-                href="/social/resend"
-                className="block rounded-xl border border-white/10 px-4 py-3 text-xs font-bold text-white/60 transition hover:bg-white/5 hover:text-white"
-              >
-                Resend verification email
-              </a>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  return (
-    <main className="min-h-screen bg-[#050505] px-5 text-white">
-      <div className="flex min-h-screen items-center justify-center py-10">
-        <div className="w-full max-w-md">
-          <div className="text-center">
-            <div className="text-xs font-bold uppercase tracking-[0.4em] text-red-400">
-              WORLD OF RAAKA
-            </div>
-
-            <h1 className="mt-5 text-4xl font-black tracking-tight">
-              Join RAAKA Social
-            </h1>
-
-            <p className="mt-3 text-sm text-white/40">
-              Create your fan identity.
-            </p>
-          </div>
-
-          <form
-            onSubmit={submit}
-            className="mt-8 rounded-3xl border border-white/10 bg-white/[.03] p-5 shadow-2xl sm:p-7"
-          >
-            <div className="space-y-5">
-              {/* DISPLAY NAME */}
-              <div>
-                <label
-                  htmlFor="displayName"
-                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-white/45"
+                <div
+                  style="
+                    font-size:12px;
+                    letter-spacing:4px;
+                    color:#888;
+                    font-weight:bold;
+                  "
                 >
-                  Display name
-                </label>
-
-                <input
-                  id="displayName"
-                  type="text"
-                  value={displayName}
-                  onChange={(event) =>
-                    setDisplayName(event.target.value.slice(0, 50))
-                  }
-                  placeholder="Your name"
-                  autoComplete="name"
-                  maxLength={50}
-                  disabled={loading}
-                  className="w-full rounded-xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-white/25 disabled:opacity-50"
-                />
-              </div>
-
-              {/* USERNAME */}
-              <div>
-                <label
-                  htmlFor="handle"
-                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-white/45"
-                >
-                  Username
-                </label>
-
-                <div className="flex items-center rounded-xl border border-white/10 bg-transparent focus-within:border-white/25">
-                  <span className="pl-4 text-sm text-white/35">@</span>
-
-                  <input
-                    id="handle"
-                    type="text"
-                    value={handle}
-                    onChange={(event) =>
-                      setHandle(
-                        event.target.value
-                          .toLowerCase()
-                          .replace(/^@/, "")
-                          .replace(/[^a-z0-9_]/g, "")
-                          .slice(0, 20)
-                      )
-                    }
-                    placeholder="yourusername"
-                    autoComplete="username"
-                    maxLength={20}
-                    disabled={loading}
-                    className="min-w-0 flex-1 bg-transparent px-2 py-3 text-sm text-white outline-none placeholder:text-white/20 disabled:opacity-50"
-                  />
+                  WORLD OF RAAKA
                 </div>
 
-                <p className="mt-2 text-[10px] text-white/25">
-                  3–20 characters · letters, numbers and underscore
+                <h1
+                  style="
+                    font-size:32px;
+                    line-height:1.2;
+                    margin:20px 0 10px;
+                    color:#ffffff;
+                  "
+                >
+                  Welcome to RAAKA Social
+                </h1>
+
+                <p
+                  style="
+                    color:#aaaaaa;
+                    line-height:1.7;
+                    font-size:15px;
+                  "
+                >
+                  Hi ${escapeHtml(displayName)},<br><br>
+
+                  Your RAAKA Social account has been created.
+                  Verify your email address to activate your account
+                  and join the RAAKA community.
                 </p>
-              </div>
 
-              {/* EMAIL */}
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-white/45"
+                <a
+                  href="${verificationUrl}"
+                  style="
+                    display:inline-block;
+                    margin:20px 0;
+                    padding:14px 24px;
+                    background:#ffffff;
+                    color:#000000;
+                    text-decoration:none;
+                    border-radius:10px;
+                    font-weight:bold;
+                    font-size:14px;
+                  "
                 >
-                  Email
-                </label>
+                  Verify Email
+                </a>
 
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  disabled={loading}
-                  className="w-full rounded-xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-white/25 disabled:opacity-50"
-                />
-              </div>
-
-              {/* PASSWORD */}
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-white/45"
+                <p
+                  style="
+                    font-size:12px;
+                    color:#666666;
+                    line-height:1.6;
+                  "
                 >
-                  Password
-                </label>
+                  This verification link expires in 24 hours.
+                </p>
 
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Minimum 8 characters"
-                  autoComplete="new-password"
-                  disabled={loading}
-                  className="w-full rounded-xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-white/25 disabled:opacity-50"
-                />
+                <p
+                  style="
+                    margin-top:24px;
+                    padding-top:20px;
+                    border-top:1px solid #222;
+                    font-size:11px;
+                    color:#555;
+                    line-height:1.6;
+                  "
+                >
+                  If you did not create this account, you can safely
+                  ignore this email.
+                </p>
+
               </div>
             </div>
+          `,
+        }),
+      }
+    );
 
-            {/* ERROR / MESSAGE */}
-            {message && (
-              <div
-                className={`mt-5 rounded-xl border px-3 py-3 text-xs leading-5 ${
-                  success
-                    ? "border-green-500/20 bg-green-500/10 text-green-300"
-                    : "border-red-500/20 bg-red-500/10 text-red-300"
-                }`}
-              >
-                {message}
-              </div>
-            )}
+    // ------------------------------------------
+    // RESEND ERROR
+    // ------------------------------------------
 
-            {/* SUBMIT */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-6 w-full rounded-xl bg-white px-4 py-3.5 text-sm font-black text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {loading ? "Creating account…" : "Create account"}
-            </button>
+    if (!emailResponse.ok) {
+      const errorText = await emailResponse.text();
 
-            <div className="mt-5 text-center text-xs text-white/30">
-              Already have an account?
-            </div>
+      console.error(
+        "RAAKA Social Resend error:",
+        errorText
+      );
 
-            <a
-              href="/social/login"
-              className="mt-2 block text-center text-sm font-bold text-white/70 transition hover:text-white"
-            >
-              Log in
-            </a>
+      return json(
+        {
+          success: false,
+          error:
+            "Account created, but the verification email could not be sent. Please use Resend verification.",
+        },
+        502
+      );
+    }
 
-            <a
-              href="/social/resend"
-              className="mt-5 block text-center text-[11px] text-white/30 transition hover:text-white/60"
-            >
-              Resend verification email
-            </a>
-          </form>
+    // ------------------------------------------
+    // SUCCESS
+    // ------------------------------------------
 
-          <p className="mt-5 text-center text-[10px] leading-5 text-white/20">
-            By creating an account, you agree to use RAAKA Social
-            respectfully and responsibly.
-          </p>
-        </div>
-      </div>
-    </main>
-  );
+    return json({
+      success: true,
+      message:
+        "Account created. Check your email to verify your account.",
+    });
+  } catch (error) {
+    console.error(
+      "RAAKA Social signup error:",
+      error
+    );
+
+    return json(
+      {
+        success: false,
+        error:
+          "Something went wrong while creating your account.",
+      },
+      500
+    );
+  }
 }
