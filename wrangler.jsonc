@@ -10,7 +10,8 @@
 	"vars": {
 		"R2_ACCOUNT_ID": "3019627e99830b26d227cb1482272ce6",
 		"R2_BUCKET_NAME": "raaka-fan-art-new",
-		"R2_PUBLIC_URL": "https://images.worldofraaka.online"
+		"R2_PUBLIC_URL": "https://images.worldofraaka.online",
+"RESEND_FROM_EMAIL": "RAAKA Social <noreply@worldofraaka.online>"
 	},
 	"assets": {
 		"directory": ".open-next/assets",
