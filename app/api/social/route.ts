@@ -227,6 +227,150 @@ async function createNotification(
 
 export async function GET(request: Request) {
   try {
+    const url = new URL(request.url);
+    const action =
+      url.searchParams.get("action") || "feed";
+
+    const db = getD1();
+
+    // SEARCH IS PUBLIC.
+    // Feed, profile, notifications and all personalized GET actions remain
+    // protected by the authenticated session below.
+    if (action === "search") {
+      const q = (url.searchParams.get("q") || "")
+        .trim()
+        .slice(0, 40);
+
+      if (!q) {
+        return Response.json({
+          success: true,
+          users: [],
+          posts: [],
+        });
+      }
+
+      const safeQuery = q.replace(/[%_]/g, "").trim();
+
+      if (!safeQuery) {
+        return Response.json({
+          success: true,
+          users: [],
+          posts: [],
+        });
+      }
+
+      const like = `%${safeQuery}%`;
+      const exact = safeQuery.toLowerCase();
+
+      const users = await db
+        .prepare(
+          `SELECT
+             *,
+             CASE
+               WHEN LOWER(handle) = ? THEN 1000
+               WHEN LOWER(display_name) = ? THEN 900
+               WHEN LOWER(handle) LIKE ? THEN 700
+               WHEN LOWER(display_name) LIKE ? THEN 600
+               ELSE 0
+             END AS search_score
+           FROM social_profiles
+           WHERE handle LIKE ? COLLATE NOCASE
+              OR display_name LIKE ? COLLATE NOCASE
+           ORDER BY
+             search_score DESC,
+             verified DESC,
+             followers_count DESC,
+             posts_count DESC,
+             visitor_id ASC
+           LIMIT 20`
+        )
+        .bind(
+          exact,
+          exact,
+          like,
+          like,
+          like,
+          like
+        )
+        .all<any>();
+
+      const posts = await db
+        .prepare(
+          `SELECT
+             s.*,
+             p.handle,
+             p.display_name,
+             p.verified,
+             p.verification_type,
+             p.verification_label,
+             0 AS liked,
+             0 AS bookmarked,
+             0 AS following,
+             (
+               CASE
+                 WHEN LOWER(s.body) = ? THEN 1000
+                 WHEN LOWER(s.body) LIKE ? THEN 500
+                 ELSE 0
+               END
+               +
+               (COALESCE(s.likes_count, 0) * 2)
+               +
+               (COALESCE(s.replies_count, 0) * 4)
+               +
+               (COALESCE(s.reposts_count, 0) * 5)
+               +
+               CASE
+                 WHEN (
+                   48 -
+                   (
+                     (
+                       julianday('now') -
+                       julianday(
+                         REPLACE(s.created_at, ' ', 'T')
+                       )
+                     ) * 24
+                   )
+                 ) > 0
+                 THEN MIN(
+                   48,
+                   MAX(
+                     0,
+                     (
+                       48 -
+                       (
+                         (
+                           julianday('now') -
+                           julianday(
+                             REPLACE(s.created_at, ' ', 'T')
+                           )
+                         ) * 24
+                       )
+                     )
+                   )
+                 )
+                 ELSE 0
+               END
+             ) AS search_score
+           FROM social_posts s
+           JOIN social_profiles p
+             ON p.visitor_id = s.visitor_id
+           WHERE s.body LIKE ? COLLATE NOCASE
+           ORDER BY
+             search_score DESC,
+             s.id DESC
+           LIMIT 20`
+        )
+        .bind(exact, like, like)
+        .all<any>();
+
+      return Response.json({
+        success: true,
+        users: users.results.map(profileShape),
+        posts: posts.results.map(postShape),
+      });
+    }
+
+    // Everything below this point requires a verified logged-in user.
     const auth = await getAuthenticatedUser(request);
 
     if (!auth.user) {
@@ -234,12 +378,6 @@ export async function GET(request: Request) {
     }
 
     const userId = auth.user.userId;
-    const db = getD1();
-    const url = new URL(request.url);
-
-    const action =
-      url.searchParams.get("action") || "feed";
-
     const cursor = Number(
       url.searchParams.get("cursor") || "0"
     );
@@ -349,183 +487,6 @@ export async function GET(request: Request) {
             },
           })
         ),
-      });
-    }
-
-    /*
-     * SEARCH
-     *
-     * People + posts, with exact-match and engagement ranking.
-     */
-    if (action === "search") {
-      const q = (
-        url.searchParams.get("q") || ""
-      )
-        .trim()
-        .slice(0, 40);
-
-      if (!q) {
-        return Response.json({
-          success: true,
-          users: [],
-          posts: [],
-        });
-      }
-
-      const safeQuery = q.replace(/[%_]/g, "").trim();
-
-      if (!safeQuery) {
-        return Response.json({
-          success: true,
-          users: [],
-          posts: [],
-        });
-      }
-
-      const like = `%${safeQuery}%`;
-      const exact = safeQuery.toLowerCase();
-
-      const users = await db
-        .prepare(
-          `SELECT
-             *,
-             CASE
-               WHEN LOWER(handle) = ? THEN 1000
-               WHEN LOWER(display_name) = ? THEN 900
-               ELSE 0
-             END AS search_score
-           FROM social_profiles
-           WHERE handle LIKE ? COLLATE NOCASE
-              OR display_name LIKE ? COLLATE NOCASE
-           ORDER BY
-             search_score DESC,
-             verified DESC,
-             followers_count DESC,
-             visitor_id ASC
-           LIMIT 20`
-        )
-        .bind(
-          exact,
-          exact,
-          like,
-          like
-        )
-        .all<any>();
-
-      const posts = await db
-        .prepare(
-          `SELECT
-             s.*,
-             p.handle,
-             p.display_name,
-             p.verified,
-             p.verification_type,
-             p.verification_label,
-
-             EXISTS(
-               SELECT 1
-               FROM social_likes l
-               WHERE l.post_id = s.id
-                 AND l.visitor_id = ?
-             ) AS liked,
-
-             EXISTS(
-               SELECT 1
-               FROM social_bookmarks b
-               WHERE b.post_id = s.id
-                 AND b.visitor_id = ?
-             ) AS bookmarked,
-
-             EXISTS(
-               SELECT 1
-               FROM social_follows f
-               WHERE f.following_id = s.visitor_id
-                 AND f.follower_id = ?
-             ) AS following,
-
-             (
-               CASE
-                 WHEN LOWER(s.body) = ? THEN 1000
-                 WHEN LOWER(s.body) LIKE ? THEN 500
-                 ELSE 0
-               END
-               +
-               (COALESCE(s.likes_count, 0) * 2)
-               +
-               (COALESCE(s.replies_count, 0) * 4)
-               +
-               (COALESCE(s.reposts_count, 0) * 5)
-               +
-               CASE
-                 WHEN
-                   (
-                     48 -
-                     (
-                       (
-                         julianday('now') -
-                         julianday(
-                           REPLACE(
-                             s.created_at,
-                             ' ',
-                             'T'
-                           )
-                         )
-                       ) * 24
-                     )
-                   ) > 0
-                 THEN
-                   MIN(
-                     48,
-                     MAX(
-                       0,
-                       (
-                         48 -
-                         (
-                           (
-                             julianday('now') -
-                             julianday(
-                               REPLACE(
-                                 s.created_at,
-                                 ' ',
-                                 'T'
-                               )
-                             )
-                           ) * 24
-                         )
-                       )
-                     )
-                   )
-                 ELSE 0
-               END
-             ) AS search_score
-
-           FROM social_posts s
-
-           JOIN social_profiles p
-             ON p.visitor_id = s.visitor_id
-
-           WHERE s.body LIKE ?
-
-           ORDER BY
-             search_score DESC,
-             s.id DESC
-
-           LIMIT 20`
-        )
-        .bind(
-          userId,
-          userId,
-          userId,
-          exact,
-          like,
-          like
-        )
-        .all<any>();
-
-      return Response.json({
-        success: true,
-        users: users.results.map(profileShape),
-        posts: posts.results.map(postShape),
       });
     }
 
