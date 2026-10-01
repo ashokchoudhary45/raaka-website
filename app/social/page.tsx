@@ -1140,6 +1140,145 @@ export default function RaakaSocialPage() {
             </div>
           </div>
 
+          {searchResults && (
+            <div className="border-b border-white/10 px-4 pb-4 xl:hidden">
+              <div className="mt-4 overflow-hidden rounded-3xl border border-white/10 bg-white/[.03]">
+                <div className="border-b border-white/10 px-4 pt-4">
+                  <div className="text-xs font-bold uppercase tracking-[.2em] text-white/40">
+                    Search results
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-4">
+                    {[
+                      ["people", "People"],
+                      ["posts", "Posts"],
+                      ["top", "Top"],
+                      ["latest", "Latest"],
+                    ].map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setSearchTab(key as typeof searchTab)}
+                        className={`border-b-2 px-1 py-3 text-[11px] font-bold transition ${
+                          searchTab === key
+                            ? "border-red-500 text-white"
+                            : "border-transparent text-white/35"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-2">
+                  {searchTab === "people" ? (
+                    searchResults.users.length ? (
+                      <div className="space-y-1">
+                        {searchResults.users.map((user) => (
+                          <div
+                            key={user.visitorId}
+                            className="flex items-center gap-3 rounded-2xl p-3"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => void openProfile(user.handle)}
+                              className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                            >
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 font-black">
+                                {user.displayName.slice(0, 1).toUpperCase()}
+                              </div>
+
+                              <div className="min-w-0">
+                                <div className="flex min-w-0 items-center gap-1.5 font-bold">
+                                  <span className="truncate">{user.displayName}</span>
+                                  <VerificationBadge
+                                    type={user.verificationType}
+                                    label={user.verificationLabel}
+                                  />
+                                </div>
+
+                                <div className="truncate text-xs text-white/35">
+                                  @{user.handle} · {user.followers} followers
+                                </div>
+                              </div>
+                            </button>
+
+                            {user.visitorId !== visitorId && (
+                              <button
+                                type="button"
+                                onClick={() => void follow(user.visitorId)}
+                                className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black ${
+                                  user.isFollowing
+                                    ? "border border-white/15 text-white/70"
+                                    : "bg-white text-black"
+                                }`}
+                              >
+                                {user.isFollowing ? "Following" : "Follow"}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-sm text-white/30">
+                        No people found.
+                      </div>
+                    )
+                  ) : searchResults.posts.length ? (
+                    <div className="space-y-1">
+                      {[...searchResults.posts]
+                        .sort((a, b) => {
+                          if (searchTab === "top") {
+                            return (
+                              b.likes + b.replies * 2 + b.reposts * 3 -
+                              (a.likes + a.replies * 2 + a.reposts * 3)
+                            );
+                          }
+
+                          return (
+                            new Date(b.createdAt.replace(" ", "T") + "Z").getTime() -
+                            new Date(a.createdAt.replace(" ", "T") + "Z").getTime()
+                          );
+                        })
+                        .map((post) => (
+                          <button
+                            key={post.id}
+                            type="button"
+                            onClick={() => void openProfile(post.author.handle)}
+                            className="block w-full rounded-2xl p-3 text-left"
+                          >
+                            <div className="flex items-center gap-1.5 text-sm font-bold">
+                              <span>{post.author.displayName}</span>
+                              <VerificationBadge
+                                type={post.author.verificationType}
+                                label={post.author.verificationLabel}
+                              />
+                              <span className="font-normal text-white/30">
+                                @{post.author.handle}
+                              </span>
+                            </div>
+
+                            <div className="mt-1 line-clamp-3 text-sm leading-5 text-white/70">
+                              {post.body}
+                            </div>
+
+                            <div className="mt-2 text-[11px] text-white/25">
+                              {post.likes} likes · {post.replies} replies · {post.reposts} reposts · {timeAgo(post.createdAt)}
+                            </div>
+                          </button>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-sm text-white/30">
+                      No posts found.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="border-b border-white/10 p-5">
             <div className="flex gap-3">
 
