@@ -26,6 +26,28 @@ function cleanBody(value: string) {
   return value.trim().slice(0, MAX_POST);
 }
 
+function verificationType(row: any) {
+  if (
+    row?.verification_type === "blue" ||
+    row?.verification_type === "gold" ||
+    row?.verification_type === "grey"
+  ) {
+    return row.verification_type;
+  }
+
+  return "none";
+}
+
+function verificationData(row: any) {
+  const type = verificationType(row);
+
+  return {
+    verified: type !== "none" || Boolean(row?.verified),
+    verificationType: type,
+    verificationLabel: row?.verification_label || null,
+  };
+}
+
 async function ensureProfile(
   db: D1Database,
   visitorId: string,
@@ -91,6 +113,8 @@ async function ensureProfile(
 }
 
 function profileShape(row: any) {
+  const verification = verificationData(row);
+
   return {
     visitorId: row.visitor_id,
     handle: row.handle,
@@ -99,10 +123,16 @@ function profileShape(row: any) {
     followers: Number(row.followers_count || 0),
     following: Number(row.following_count || 0),
     posts: Number(row.posts_count || 0),
+
+    verified: verification.verified,
+    verificationType: verification.verificationType,
+    verificationLabel: verification.verificationLabel,
   };
 }
 
 function postShape(row: any) {
+  const verification = verificationData(row);
+
   return {
     id: Number(row.id),
     body: row.body,
@@ -118,6 +148,10 @@ function postShape(row: any) {
       visitorId: row.visitor_id,
       handle: row.handle,
       displayName: row.display_name,
+
+      verified: verification.verified,
+      verificationType: verification.verificationType,
+      verificationLabel: verification.verificationLabel,
     },
 
     replyToId: row.reply_to_id
@@ -201,7 +235,6 @@ export async function GET(request: Request) {
 
     const userId = auth.user.userId;
     const db = getD1();
-
     const url = new URL(request.url);
 
     const action =
@@ -286,7 +319,10 @@ export async function GET(request: Request) {
              n.post_id,
              n.created_at,
              p.handle,
-             p.display_name
+             p.display_name,
+             p.verified,
+             p.verification_type,
+             p.verification_label
            FROM social_notifications n
            JOIN social_profiles p
              ON p.visitor_id = n.actor_id
@@ -305,9 +341,11 @@ export async function GET(request: Request) {
             type: r.type,
             postId: r.post_id,
             createdAt: r.created_at,
+
             actor: {
               handle: r.handle,
               displayName: r.display_name,
+              ...verificationData(r),
             },
           })
         ),
@@ -357,6 +395,9 @@ export async function GET(request: Request) {
              s.*,
              p.handle,
              p.display_name,
+             p.verified,
+             p.verification_type,
+             p.verification_label,
 
              EXISTS(
                SELECT 1
@@ -450,6 +491,9 @@ export async function GET(request: Request) {
            s.*,
            p.handle,
            p.display_name,
+           p.verified,
+           p.verification_type,
+           p.verification_label,
 
            EXISTS(
              SELECT 1
@@ -539,7 +583,7 @@ export async function POST(
 
     /*
      * Never trust visitorId from browser.
-     * Always use the authenticated session user.
+     * Always use authenticated session user.
      */
     const me =
       await ensureProfile(
@@ -717,9 +761,6 @@ export async function POST(
 
     /*
      * DELETE OWN POST
-     *
-     * A user can only delete posts that
-     * belong to the authenticated session.
      */
     if (action === "delete") {
       const postId =
@@ -760,11 +801,6 @@ export async function POST(
         );
       }
 
-      /*
-       * SECURITY:
-       * Never accept visitorId from the browser.
-       * Ownership is checked against the session.
-       */
       if (post.visitor_id !== userId) {
         return Response.json(
           {
@@ -776,10 +812,6 @@ export async function POST(
         );
       }
 
-      /*
-       * If this is a reply, decrease the
-       * parent's replies counter.
-       */
       if (post.reply_to_id) {
         await db
           .prepare(
@@ -792,10 +824,6 @@ export async function POST(
           .run();
       }
 
-      /*
-       * If this is a repost, decrease the
-       * original post's repost counter.
-       */
       if (post.repost_of_id) {
         await db
           .prepare(
@@ -808,9 +836,6 @@ export async function POST(
           .run();
       }
 
-      /*
-       * Clean dependent rows explicitly.
-       */
       await db
         .prepare(
           `DELETE FROM social_likes
@@ -835,11 +860,6 @@ export async function POST(
         .bind(postId)
         .run();
 
-      /*
-       * Replies to this post are retained as
-       * independent posts, but their parent link
-       * is cleared by the FK ON DELETE SET NULL.
-       */
       await db
         .prepare(
           `DELETE FROM social_posts

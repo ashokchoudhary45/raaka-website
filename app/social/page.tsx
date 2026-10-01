@@ -37,6 +37,9 @@ type Post = {
     visitorId: string;
     handle: string;
     displayName: string;
+    verified?: boolean;
+    verificationType?: "blue" | "gold" | "grey" | "none";
+    verificationLabel?: string | null;
   };
   replyToId: number | null;
   repostOfId: number | null;
@@ -51,6 +54,9 @@ type Profile = {
   following: number;
   posts: number;
   isFollowing?: boolean;
+  verified?: boolean;
+  verificationType?: "blue" | "gold" | "grey" | "none";
+  verificationLabel?: string | null;
 };
 
 type ApiResponse = {
@@ -110,6 +116,57 @@ function ActionIcon({ type }: { type: "reply" | "repost" | "like" | "bookmark" |
   if (type === "bookmark") return <svg {...common}><path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h7A2.5 2.5 0 0 1 18 4.5V21l-6-3.5L6 21V4.5Z" /></svg>;
   if (type === "share") return <svg {...common}><path d="M12 16V3" /><path d="m7 8 5-5 5 5" /><path d="M5 13v5a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-5" /></svg>;
   return <svg {...common}><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" /></svg>;
+}
+
+function VerificationBadge({
+  type,
+  label,
+}: {
+  type?: "blue" | "gold" | "grey" | "none";
+  label?: string | null;
+}) {
+  if (!type || type === "none") return null;
+
+  const config =
+    type === "gold"
+      ? {
+          bg: "bg-yellow-400",
+          text: "text-black",
+          title: label || "Official Organization",
+        }
+      : type === "grey"
+        ? {
+            bg: "bg-gray-300",
+            text: "text-black",
+            title: label || "Official Account",
+          }
+        : {
+            bg: "bg-[#1d9bf0]",
+            text: "text-white",
+            title: label || "Verified",
+          };
+
+  return (
+    <span
+      title={config.title}
+      aria-label={config.title}
+      className={`inline-flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-full ${config.bg} ${config.text}`}
+    >
+      <svg
+        width="11"
+        height="11"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m5 12 4 4L19 6" />
+      </svg>
+    </span>
+  );
 }
 
 export default function RaakaSocialPage() {
@@ -651,7 +708,13 @@ export default function RaakaSocialPage() {
                       {profileInitial}
                     </div>
                     <div className="min-w-0">
-                      <div className="truncate text-lg font-black">{profile?.displayName || "RAAKA Fan"}</div>
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <div className="truncate text-lg font-black">{profile?.displayName || "RAAKA Fan"}</div>
+                        <VerificationBadge
+                          type={profile?.verificationType}
+                          label={profile?.verificationLabel}
+                        />
+                      </div>
                       <div className="truncate text-sm text-white/40">@{profile?.handle || "loading"}</div>
                     </div>
                   </div>
@@ -741,8 +804,12 @@ export default function RaakaSocialPage() {
               RAAKA FAN
             </div>
 
-            <div className="mt-3 text-lg font-bold">
-              {profile?.displayName || "RAAKA Fan"}
+            <div className="mt-3 flex items-center gap-1.5 text-lg font-bold">
+              <span>{profile?.displayName || "RAAKA Fan"}</span>
+              <VerificationBadge
+                type={profile?.verificationType}
+                label={profile?.verificationLabel}
+              />
             </div>
 
             <div className="text-xs text-white/40">
@@ -794,7 +861,13 @@ export default function RaakaSocialPage() {
                   </div>
                 ) : (
                   <>
-                    <div className="mt-5 text-2xl font-black">{profile?.displayName}</div>
+                    <div className="mt-5 flex items-center gap-2 text-2xl font-black">
+                      <span>{profile?.displayName}</span>
+                      <VerificationBadge
+                        type={profile?.verificationType}
+                        label={profile?.verificationLabel}
+                      />
+                    </div>
                     <div className="mt-1 text-sm text-white/35">@{profile?.handle}</div>
                     {profile?.bio && <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-white/70">{profile.bio}</p>}
                   </>
@@ -1071,8 +1144,12 @@ export default function RaakaSocialPage() {
 
                     <div className="flex items-center gap-2 text-sm">
 
-                      <span className="font-bold">
-                        {post.author.displayName}
+                      <span className="flex min-w-0 items-center gap-1.5 font-bold">
+                        <span className="truncate">{post.author.displayName}</span>
+                        <VerificationBadge
+                          type={post.author.verificationType}
+                          label={post.author.verificationLabel}
+                        />
                       </span>
 
                       <span className="text-white/35">
@@ -1309,8 +1386,12 @@ export default function RaakaSocialPage() {
                 {searchResults.users.map((user) => (
                   <div key={user.visitorId}>
 
-                    <div className="font-bold">
-                      {user.displayName}
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <span>{user.displayName}</span>
+                      <VerificationBadge
+                        type={user.verificationType}
+                        label={user.verificationLabel}
+                      />
                     </div>
 
                     <div className="text-xs text-white/35">
