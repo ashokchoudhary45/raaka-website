@@ -2,8 +2,6 @@
 
 // Force Cloudflare/OpenNext to serve this route dynamically instead of treating
 // the client-only Social page as a static route.
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 import { useEffect, useMemo, useState } from "react";
 
