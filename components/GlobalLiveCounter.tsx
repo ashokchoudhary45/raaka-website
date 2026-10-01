@@ -27,6 +27,7 @@ export default function GlobalLiveCounter() {
         const params = new URLSearchParams({
           visitorId,
           page: window.location.pathname || "/",
+          mode: "count",
         });
 
         const response = await fetch(`/api/live?${params.toString()}`, {
@@ -51,7 +52,7 @@ export default function GlobalLiveCounter() {
 
     fetchLive();
 
-    const interval = setInterval(fetchLive, 20_000);
+    const interval = setInterval(fetchLive, 30_000);
 
     return () => {
       stopped = true;

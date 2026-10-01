@@ -192,15 +192,23 @@ export default function LiveAudiencePage() {
   const fetchD1Analytics = useCallback(async () => {
     try {
       const visitorId = getVisitorId();
+
       const params = new URLSearchParams({
         visitorId,
         page: "/live-audience",
+        view: "1",
       });
+
       const response = await fetch(`/api/live?${params.toString()}`, {
         cache: "no-store",
       });
+
       const result: D1AnalyticsResponse = await response.json();
-      if (!result.success) throw new Error(result.error || "Unable to load analytics.");
+
+      if (!result.success) {
+        throw new Error(result.error || "Unable to load analytics.");
+      }
+
       setData(result);
       setError("");
     } catch (err) {
@@ -208,6 +216,37 @@ export default function LiveAudiencePage() {
       setError("Unable to load live analytics.");
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const fetchLiveCount = useCallback(async () => {
+    try {
+      const visitorId = getVisitorId();
+
+      const params = new URLSearchParams({
+        visitorId,
+        page: "/live-audience",
+        mode: "count",
+      });
+
+      const response = await fetch(`/api/live?${params.toString()}`, {
+        cache: "no-store",
+      });
+
+      const result: D1AnalyticsResponse = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Unable to load live audience.");
+      }
+
+      setData((previous) => ({
+        ...(previous || result),
+        live: result.live,
+      }));
+      setError("");
+    } catch (err) {
+      console.error(err);
+      // Keep the last successful live count.
     }
   }, []);
 
@@ -259,7 +298,8 @@ export default function LiveAudiencePage() {
 
   useEffect(() => {
     fetchD1Analytics();
-  }, [fetchD1Analytics]);
+    fetchLiveCount();
+  }, [fetchD1Analytics, fetchLiveCount]);
 
   useEffect(() => {
     fetchCloudflareAnalytics();
@@ -267,10 +307,11 @@ export default function LiveAudiencePage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchD1Analytics();
-    }, 20_000);
+      fetchLiveCount();
+    }, 30_000);
+
     return () => clearInterval(interval);
-  }, [fetchD1Analytics]);
+  }, [fetchLiveCount]);
 
   const dailyData = cloudflare?.daily || [];
   const hourlyData = cloudflare?.hourly || [];
@@ -323,6 +364,7 @@ export default function LiveAudiencePage() {
 
   const refreshAll = () => {
     fetchD1Analytics();
+    fetchLiveCount();
     fetchCloudflareAnalytics();
   };
 
@@ -377,7 +419,7 @@ export default function LiveAudiencePage() {
             <div className="flex flex-col items-end gap-2">
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/40">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                Live • Auto refresh 20s
+                Live • Auto refresh 30s
               </div>
               <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-white/25">
                 <span>{lastUpdated ? `Updated ${lastUpdated}` : "Waiting for live data"}</span>
