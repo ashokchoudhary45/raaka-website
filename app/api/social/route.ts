@@ -446,6 +446,104 @@ export async function GET(request: Request) {
     }
 
     /*
+     * FOLLOWERS / FOLLOWING / USER POSTS
+     * These actions are scoped to a profile selected by handle.
+     */
+    if (action === "followers" || action === "following" || action === "user-posts") {
+      const handle = cleanHandle(url.searchParams.get("handle") || "");
+
+      if (!handle) {
+        return Response.json(
+          { success: false, error: "Profile handle is required." },
+          { status: 400 }
+        );
+      }
+
+      const target = await db
+        .prepare(
+          `SELECT *
+           FROM social_profiles
+           WHERE handle = ? COLLATE NOCASE
+           LIMIT 1`
+        )
+        .bind(handle)
+        .first<any>();
+
+      if (!target) {
+        return Response.json(
+          { success: false, error: "Profile not found." },
+          { status: 404 }
+        );
+      }
+
+      if (action === "user-posts") {
+        const rows = await db
+          .prepare(
+            `SELECT
+               s.*,
+               p.handle,
+               p.display_name,
+               p.verified,
+               p.verification_type,
+               p.verification_label,
+               CASE WHEN l.visitor_id IS NOT NULL THEN 1 ELSE 0 END AS liked,
+               CASE WHEN b.visitor_id IS NOT NULL THEN 1 ELSE 0 END AS bookmarked,
+               CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END AS following
+             FROM social_posts s
+             JOIN social_profiles p ON p.visitor_id = s.visitor_id
+             LEFT JOIN social_likes l
+               ON l.post_id = s.id AND l.visitor_id = ?
+             LEFT JOIN social_bookmarks b
+               ON b.post_id = s.id AND b.visitor_id = ?
+             LEFT JOIN social_follows f
+               ON f.following_id = s.visitor_id AND f.follower_id = ?
+             WHERE s.visitor_id = ?
+             ORDER BY s.id DESC
+             LIMIT 100`
+          )
+          .bind(userId, userId, userId, target.visitor_id)
+          .all<any>();
+
+        return Response.json({
+          success: true,
+          posts: rows.results.map(postShape),
+        });
+      }
+
+      const relationJoin =
+        action === "followers"
+          ? `sf.following_id = ? AND sf.follower_id = p.visitor_id`
+          : `sf.follower_id = ? AND sf.following_id = p.visitor_id`;
+
+      const rows = await db
+        .prepare(
+          `SELECT
+             p.*,
+             CASE
+               WHEN me_follow.following_id IS NOT NULL THEN 1
+               ELSE 0
+             END AS is_following
+           FROM social_profiles p
+           JOIN social_follows sf
+             ON ${relationJoin}
+           LEFT JOIN social_follows me_follow
+             ON me_follow.follower_id = ?
+            AND me_follow.following_id = p.visitor_id
+           ORDER BY p.followers_count DESC, p.posts_count DESC, p.visitor_id ASC
+           LIMIT 200`
+        )
+        .bind(target.visitor_id, userId)
+        .all<any>();
+
+      const users = rows.results.map((row: any) => ({
+        ...profileShape(row),
+        isFollowing: Boolean(row.is_following),
+      }));
+
+      return Response.json({ success: true, users });
+    }
+
+    /*
      * NOTIFICATIONS
      */
     if (action === "notifications") {
