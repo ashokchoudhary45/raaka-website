@@ -2,11 +2,27 @@ import { getD1 } from "@/lib/d1";
 
 export const dynamic = "force-dynamic";
 
+type CountResult = {
+  count: number;
+};
+
+type LivePageRow = {
+  page: string;
+  live: number;
+};
+
+type PageStatsRow = {
+  page: string;
+  views: number;
+  unique_visitors: number;
+};
+
 export async function GET(request: Request) {
   try {
     const db = getD1();
 
     const url = new URL(request.url);
+
     const visitorId = url.searchParams.get("visitorId");
     const page = url.searchParams.get("page") || "/";
     const recordView = url.searchParams.get("view") === "1";
@@ -22,13 +38,12 @@ export async function GET(request: Request) {
     }
 
     const now = Date.now();
-
     const minuteAgo = now - 60_000;
-    const dayAgo = now - 86_400_000;
-    const sevenDaysAgo = now - 7 * 86_400_000;
-    const thirtyDaysAgo = now - 30 * 86_400_000;
 
-    // Update current live visitor
+    // --------------------------------------------------
+    // 1. UPDATE LIVE VISITOR
+    // --------------------------------------------------
+
     await db
       .prepare(
         `
@@ -47,7 +62,14 @@ export async function GET(request: Request) {
       .bind(visitorId, now, page)
       .run();
 
-    // Record an actual page view only once per page load.
+    // --------------------------------------------------
+    // 2. RECORD PAGE VIEW ONLY WHEN view=1
+    //
+    // IMPORTANT:
+    // Normal 20-second heartbeat requests do NOT create
+    // page views.
+    // --------------------------------------------------
+
     if (recordView) {
       await db
         .prepare(
@@ -64,19 +86,10 @@ export async function GET(request: Request) {
         .run();
     }
 
-    // Remove visitors inactive for more than 60 seconds.
-    await db
-      .prepare(
-        `
-        DELETE FROM live_visitors
-        WHERE last_seen < ?
-        `
-      )
-      .bind(minuteAgo)
-      .run();
-
     // --------------------------------------------------
-    // LIVE VISITORS
+    // 3. LIVE VISITOR COUNT
+    //
+    // This is lightweight and runs on every heartbeat.
     // --------------------------------------------------
 
     const liveResult = await db
@@ -88,7 +101,11 @@ export async function GET(request: Request) {
         `
       )
       .bind(minuteAgo)
-      .first<{ count: number }>();
+      .first<CountResult>();
+
+    // --------------------------------------------------
+    // 4. LIVE VISITORS BY PAGE
+    // --------------------------------------------------
 
     const livePagesResult = await db
       .prepare(
@@ -103,13 +120,66 @@ export async function GET(request: Request) {
         `
       )
       .bind(minuteAgo)
-      .all<{
-        page: string;
-        live: number;
-      }>();
+      .all<LivePageRow>();
+
+    const livePages = livePagesResult.results || [];
 
     // --------------------------------------------------
-    // TOTAL ANALYTICS
+    // 5. NORMAL HEARTBEAT RESPONSE
+    //
+    // Most visitors hit this every 20 seconds.
+    //
+    // DO NOT run expensive page_views analytics here.
+    // --------------------------------------------------
+
+    if (!recordView) {
+      return Response.json({
+        success: true,
+
+        live: {
+          visitors: Number(liveResult?.count || 0),
+          pages: livePages,
+        },
+
+        total: {
+          views: 0,
+          uniqueVisitors: 0,
+        },
+
+        today: {
+          views: 0,
+          uniqueVisitors: 0,
+        },
+
+        last7Days: {
+          views: 0,
+          uniqueVisitors: 0,
+        },
+
+        last30Days: {
+          views: 0,
+          uniqueVisitors: 0,
+        },
+
+        pages: [],
+
+        timestamp: now,
+      });
+    }
+
+    // --------------------------------------------------
+    // 6. ANALYTICS
+    //
+    // These expensive queries now run ONLY when
+    // ?view=1 is explicitly requested.
+    // --------------------------------------------------
+
+    const dayAgo = now - 86_400_000;
+    const sevenDaysAgo = now - 7 * 86_400_000;
+    const thirtyDaysAgo = now - 30 * 86_400_000;
+
+    // --------------------------------------------------
+    // TOTAL
     // --------------------------------------------------
 
     const totalViewsResult = await db
@@ -119,7 +189,7 @@ export async function GET(request: Request) {
         FROM page_views
         `
       )
-      .first<{ count: number }>();
+      .first<CountResult>();
 
     const uniqueVisitorsResult = await db
       .prepare(
@@ -128,10 +198,10 @@ export async function GET(request: Request) {
         FROM page_views
         `
       )
-      .first<{ count: number }>();
+      .first<CountResult>();
 
     // --------------------------------------------------
-    // TODAY
+    // TODAY / LAST 24 HOURS
     // --------------------------------------------------
 
     const todayViewsResult = await db
@@ -143,7 +213,7 @@ export async function GET(request: Request) {
         `
       )
       .bind(dayAgo)
-      .first<{ count: number }>();
+      .first<CountResult>();
 
     const todayVisitorsResult = await db
       .prepare(
@@ -154,7 +224,7 @@ export async function GET(request: Request) {
         `
       )
       .bind(dayAgo)
-      .first<{ count: number }>();
+      .first<CountResult>();
 
     // --------------------------------------------------
     // LAST 7 DAYS
@@ -169,7 +239,7 @@ export async function GET(request: Request) {
         `
       )
       .bind(sevenDaysAgo)
-      .first<{ count: number }>();
+      .first<CountResult>();
 
     const sevenDaysVisitorsResult = await db
       .prepare(
@@ -179,8 +249,7 @@ export async function GET(request: Request) {
         WHERE viewed_at >= ?
         `
       )
-      .bind(sevenDaysAgo)
-      .first<{ count: number }>();
+      .first<CountResult>();
 
     // --------------------------------------------------
     // LAST 30 DAYS
@@ -195,7 +264,7 @@ export async function GET(request: Request) {
         `
       )
       .bind(thirtyDaysAgo)
-      .first<{ count: number }>();
+      .first<CountResult>();
 
     const thirtyDaysVisitorsResult = await db
       .prepare(
@@ -206,7 +275,7 @@ export async function GET(request: Request) {
         `
       )
       .bind(thirtyDaysAgo)
-      .first<{ count: number }>();
+      .first<CountResult>();
 
     // --------------------------------------------------
     // PAGE-WISE ANALYTICS
@@ -225,15 +294,15 @@ export async function GET(request: Request) {
         LIMIT 100
         `
       )
-      .all<{
-        page: string;
-        views: number;
-        unique_visitors: number;
-      }>();
+      .all<PageStatsRow>();
+
+    // --------------------------------------------------
+    // MERGE LIVE + PAGE ANALYTICS
+    // --------------------------------------------------
 
     const livePageMap = new Map<string, number>();
 
-    for (const item of livePagesResult.results || []) {
+    for (const item of livePages) {
       livePageMap.set(item.page, Number(item.live || 0));
     }
 
@@ -245,7 +314,7 @@ export async function GET(request: Request) {
     }));
 
     // --------------------------------------------------
-    // RESPONSE
+    // FULL ANALYTICS RESPONSE
     // --------------------------------------------------
 
     return Response.json({
@@ -253,7 +322,7 @@ export async function GET(request: Request) {
 
       live: {
         visitors: Number(liveResult?.count || 0),
-        pages: livePagesResult.results || [],
+        pages: livePages,
       },
 
       total: {
