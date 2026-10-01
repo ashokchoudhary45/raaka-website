@@ -1,46 +1,43 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import Link from "next/link";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+
+type VerificationType = "blue" | "gold" | "grey" | "none";
 
 type User = {
   userId: string;
   handle: string;
   displayName: string;
   verified: boolean;
-  verificationType: "blue" | "gold" | "grey" | "none";
+  verificationType: VerificationType;
 };
 
 type ApiResponse = {
   success?: boolean;
   error?: string;
   user?: User;
-  results?: unknown[];
-  users?: unknown[];
+  results?: User[];
+  users?: User[];
 };
 
-function isUser(value: unknown): value is User {
-  if (!value || typeof value !== "object") return false;
+async function readApiResponse(response: Response): Promise<ApiResponse> {
+  try {
+    const json: unknown = await response.json();
 
-  const user = value as Record<string, unknown>;
+    if (!json || typeof json !== "object") {
+      return {};
+    }
 
-  return (
-    typeof user.userId === "string" &&
-    typeof user.handle === "string" &&
-    typeof user.displayName === "string"
-  );
-}
-
-function getVerificationType(value: unknown): User["verificationType"] {
-  if (value === "blue" || value === "gold" || value === "grey") {
-    return value;
+    return json as ApiResponse;
+  } catch {
+    return {};
   }
-
-  return "none";
 }
 
 function normalizeUser(value: unknown): User | null {
-  if (!value || typeof value !== "object") return null;
+  if (!value || typeof value !== "object") {
+    return null;
+  }
 
   const user = value as Record<string, unknown>;
 
@@ -49,122 +46,259 @@ function normalizeUser(value: unknown): User | null {
       ? user.userId
       : typeof user.visitorId === "string"
         ? user.visitorId
-        : typeof user.id === "string"
-          ? user.id
-          : "";
-
-  const handle =
-    typeof user.handle === "string"
-      ? user.handle
-      : "";
-
-  const displayName =
-    typeof user.displayName === "string"
-      ? user.displayName
-      : typeof user.display_name === "string"
-        ? user.display_name
         : "";
 
-  if (!userId || !handle) return null;
+  const handle = typeof user.handle === "string" ? user.handle : "";
+  const displayName =
+    typeof user.displayName === "string" ? user.displayName : "";
 
-  const verificationType = getVerificationType(
-    user.verificationType
-  );
+  if (!userId || !handle) {
+    return null;
+  }
 
-  const verified =
-    user.verified === true ||
-    user.verified === 1 ||
-    user.verified === "1" ||
-    verificationType !== "none";
+  const verificationTypeValue = user.verificationType;
+
+  const verificationType: VerificationType =
+    verificationTypeValue === "blue" ||
+    verificationTypeValue === "gold" ||
+    verificationTypeValue === "grey" ||
+    verificationTypeValue === "none"
+      ? verificationTypeValue
+      : user.verified
+        ? "blue"
+        : "none";
 
   return {
     userId,
     handle,
     displayName,
-    verified,
+    verified:
+      typeof user.verified === "boolean"
+        ? user.verified
+        : verificationType !== "none",
     verificationType,
   };
+}
+
+function VerificationBadge({
+  type,
+  size = "normal",
+}: {
+  type: VerificationType;
+  size?: "small" | "normal";
+}) {
+  if (type === "none") {
+    return null;
+  }
+
+  const sizeClass = size === "small" ? "text-sm" : "text-base";
+
+  if (type === "blue") {
+    return (
+      <span
+        className={`inline-flex items-center justify-center ${sizeClass} font-bold text-blue-500`}
+        title="Verified"
+        aria-label="Verified"
+      >
+        ✓
+      </span>
+    );
+  }
+
+  if (type === "gold") {
+    return (
+      <span
+        className={`inline-flex items-center justify-center ${sizeClass} font-bold text-yellow-500`}
+        title="Official Organization"
+        aria-label="Official Organization"
+      >
+        ✓
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center ${sizeClass} font-bold text-gray-400`}
+      title="Official Account"
+      aria-label="Official Account"
+    >
+      ✓
+    </span>
+  );
+}
+
+function VerificationInfo({
+  type,
+}: {
+  type: VerificationType;
+}) {
+  if (type === "blue") {
+    return (
+      <span className="text-xs text-blue-500">
+        Blue ✓ · Verified
+      </span>
+    );
+  }
+
+  if (type === "gold") {
+    return (
+      <span className="text-xs text-yellow-500">
+        Gold ✓ · Official Organization
+      </span>
+    );
+  }
+
+  if (type === "grey") {
+    return (
+      <span className="text-xs text-gray-400">
+        Grey ✓ · Official Account
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-xs text-gray-500">
+      No verification
+    </span>
+  );
 }
 
 export default function VerificationAdminPage() {
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
-  const [search, setSearch] = useState("");
+
+  const [query, setQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const [searching, setSearching] = useState(false);
+  const [updating, setUpdating] = useState<VerificationType | null>(null);
+
   const [message, setMessage] = useState("");
-  const [busyUser, setBusyUser] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
-  async function checkAdmin() {
-    try {
-      const response = await fetch("/api/social-auth/me", {
-        cache: "no-store",
-      });
+  const [currentAdmin, setCurrentAdmin] = useState<{
+    userId: string;
+    email: string;
+  } | null>(null);
 
-      const data: ApiResponse = await response.json();
+  useEffect(() => {
+    async function checkAdmin() {
+      try {
+        const response = await fetch("/api/social-auth/me", {
+          method: "GET",
+          cache: "no-store",
+        });
 
-      if (!response.ok || !data.success || !data.user) {
+        const data: ApiResponse = await readApiResponse(response);
+
+        if (!response.ok || !data.success) {
+          setAuthorized(false);
+          setLoading(false);
+          return;
+        }
+
+        const me = data.user;
+
+        if (!me) {
+          setAuthorized(false);
+          setLoading(false);
+          return;
+        }
+
+        setCurrentAdmin({
+          userId: me.userId,
+          email:
+            typeof (me as unknown as { email?: string }).email === "string"
+              ? (me as unknown as { email: string }).email
+              : "",
+        });
+
+        setAuthorized(true);
+      } catch {
         setAuthorized(false);
-        return;
+      } finally {
+        setLoading(false);
       }
-
-      setAuthorized(true);
-    } catch {
-      setAuthorized(false);
-    } finally {
-      setLoading(false);
     }
-  }
+
+    void checkAdmin();
+  }, []);
+
+  const selectedType = useMemo<VerificationType>(() => {
+    return selectedUser?.verificationType ?? "none";
+  }, [selectedUser]);
 
   async function searchUsers(event?: FormEvent) {
     event?.preventDefault();
 
-    setMessage("");
+    const trimmedQuery = query.trim();
 
-    const query = search.trim();
-
-    if (!query) {
+    if (!trimmedQuery) {
       setUsers([]);
+      setSelectedUser(null);
+      setError("");
+      setMessage("");
       return;
     }
 
+    setSearching(true);
+    setError("");
+    setMessage("");
+
     try {
       const response = await fetch(
-        `/api/social?action=search&q=${encodeURIComponent(query)}`,
+        `/api/social?action=search&q=${encodeURIComponent(trimmedQuery)}`,
         {
+          method: "GET",
           cache: "no-store",
         }
       );
 
-      const data: ApiResponse = await response.json();
+      const data: ApiResponse = await readApiResponse(response);
 
       if (!response.ok || !data.success) {
-        setMessage(data.error || "Unable to search users.");
+        setError(data.error || "Search failed.");
         setUsers([]);
+        setSelectedUser(null);
         return;
       }
 
-      const rawResults = Array.isArray(data.results)
-        ? data.results
-        : Array.isArray(data.users)
-          ? data.users
+      const rawUsers = Array.isArray(data.users)
+        ? data.users
+        : Array.isArray(data.results)
+          ? data.results
           : [];
 
-      const normalizedUsers = rawResults
-        .map(normalizeUser)
-        .filter((user): user is User => user !== null);
+      const normalizedUsers = rawUsers
+        .map((item) => normalizeUser(item))
+        .filter((item): item is User => item !== null);
 
       setUsers(normalizedUsers);
+      setSelectedUser(normalizedUsers[0] ?? null);
+
+      if (normalizedUsers.length === 0) {
+        setMessage("No users found.");
+      }
     } catch {
-      setMessage("Something went wrong while searching.");
+      setError("Unable to search users.");
       setUsers([]);
+      setSelectedUser(null);
+    } finally {
+      setSearching(false);
     }
   }
 
   async function changeVerification(
-    user: User,
-    verificationType: User["verificationType"]
+    verificationType: VerificationType
   ) {
-    setBusyUser(user.userId);
+    if (!selectedUser) {
+      return;
+    }
+
+    setUpdating(verificationType);
+    setError("");
     setMessage("");
 
     try {
@@ -174,55 +308,69 @@ export default function VerificationAdminPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: user.userId,
+          userId: selectedUser.userId,
           verificationType,
         }),
       });
 
-      const data: ApiResponse = await response.json();
+      const data: ApiResponse = await readApiResponse(response);
 
       if (!response.ok || !data.success) {
-        setMessage(data.error || "Verification update failed.");
+        setError(data.error || "Verification update failed.");
         return;
       }
 
-      setUsers((current) =>
-        current.map((item) =>
-          item.userId === user.userId
-            ? {
-                ...item,
-                verified: verificationType !== "none",
-                verificationType,
-              }
-            : item
-        )
-      );
+      const updatedUser = normalizeUser(data.user);
 
-      if (verificationType === "none") {
-        setMessage(
-          `Verification removed from @${user.handle}.`
+      if (updatedUser) {
+        setSelectedUser(updatedUser);
+
+        setUsers((currentUsers) =>
+          currentUsers.map((user) =>
+            user.userId === updatedUser.userId
+              ? updatedUser
+              : user
+          )
         );
       } else {
-        setMessage(
-          `@${user.handle} is now ${verificationType} verified.`
+        const fallbackUser: User = {
+          ...selectedUser,
+          verified: verificationType !== "none",
+          verificationType,
+        };
+
+        setSelectedUser(fallbackUser);
+
+        setUsers((currentUsers) =>
+          currentUsers.map((user) =>
+            user.userId === selectedUser.userId
+              ? fallbackUser
+              : user
+          )
         );
       }
+
+      if (verificationType === "none") {
+        setMessage("Verification removed successfully.");
+      } else if (verificationType === "blue") {
+        setMessage("Blue verification applied successfully.");
+      } else if (verificationType === "gold") {
+        setMessage("Gold verification applied successfully.");
+      } else {
+        setMessage("Grey verification applied successfully.");
+      }
     } catch {
-      setMessage("Something went wrong.");
+      setError("Unable to update verification.");
     } finally {
-      setBusyUser(null);
+      setUpdating(null);
     }
   }
-
-  useEffect(() => {
-    checkAdmin();
-  }, []);
 
   if (loading) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-sm text-white/60">
-          Loading admin panel...
+        <div className="text-sm text-gray-400">
+          Checking admin access...
         </div>
       </main>
     );
@@ -231,26 +379,24 @@ export default function VerificationAdminPage() {
   if (!authorized) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
-        <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-3xl">
-            🔒
-          </div>
+        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111] p-8 text-center">
+          <div className="text-4xl mb-4">🔒</div>
 
-          <h1 className="text-2xl font-bold">
-            Admin Access
+          <h1 className="text-xl font-bold mb-2">
+            Admin Access Required
           </h1>
 
-          <p className="mt-3 text-sm leading-6 text-white/55">
-            You must be signed in to access the RAAKA Social
-            verification management panel.
+          <p className="text-sm text-gray-400 mb-6">
+            You are not authorized to access the RAAKA Social
+            verification panel.
           </p>
 
-          <Link
+          <a
             href="/social"
-            className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
+            className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-gray-200 transition"
           >
             Back to RAAKA Social
-          </Link>
+          </a>
         </div>
       </main>
     );
@@ -258,272 +404,426 @@ export default function VerificationAdminPage() {
 
   return (
     <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
+      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-2xl">✓</span>
 
-        <Link
-          href="/social"
-          className="text-sm text-white/50 transition hover:text-white"
-        >
-          ← Back to RAAKA Social
-        </Link>
+              <h1 className="text-2xl font-bold">
+                Verification Center
+              </h1>
+            </div>
 
-        <div className="mt-6 flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl text-black">
-            ✓
+            <p className="text-sm text-gray-400">
+              Manually manage verification badges for RAAKA Social
+              accounts.
+            </p>
+
+            {currentAdmin?.email ? (
+              <p className="mt-2 text-xs text-gray-500">
+                Admin session active
+              </p>
+            ) : null}
           </div>
 
-          <div>
-            <h1 className="text-2xl font-bold sm:text-3xl">
-              Verification Management
-            </h1>
+          <a
+            href="/social"
+            className="inline-flex w-fit items-center rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-white/5 transition"
+          >
+            ← Back to Social
+          </a>
+        </div>
 
-            <p className="mt-1 text-sm text-white/50">
-              Manage blue, gold and grey verification badges.
+        {/* Verification types */}
+        <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4">
+            <div className="mb-1 flex items-center gap-2">
+              <VerificationBadge type="blue" size="normal" />
+
+              <span className="font-semibold">
+                Blue Verification
+              </span>
+            </div>
+
+            <p className="text-xs leading-5 text-gray-400">
+              Verified individual, creator or public account.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-4">
+            <div className="mb-1 flex items-center gap-2">
+              <VerificationBadge type="gold" size="normal" />
+
+              <span className="font-semibold">
+                Gold Verification
+              </span>
+            </div>
+
+            <p className="text-xs leading-5 text-gray-400">
+              Official organization or brand account.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-gray-500/20 bg-gray-500/5 p-4">
+            <div className="mb-1 flex items-center gap-2">
+              <VerificationBadge type="grey" size="normal" />
+
+              <span className="font-semibold">
+                Grey Verification
+              </span>
+            </div>
+
+            <p className="text-xs leading-5 text-gray-400">
+              Official account or institution.
             </p>
           </div>
         </div>
 
-        <section className="mt-8 rounded-3xl border border-white/10 bg-white/[0.04] p-4 sm:p-6">
-          <h2 className="text-lg font-semibold">
-            Find a user
-          </h2>
+        {/* Search */}
+        <section className="rounded-2xl border border-white/10 bg-[#0d0d0d] p-5 sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-lg font-bold">
+              Find a user
+            </h2>
 
-          <p className="mt-1 text-sm text-white/45">
-            Search by username, handle or display name.
-          </p>
+            <p className="mt-1 text-sm text-gray-500">
+              Search by username, handle or display name.
+            </p>
+          </div>
 
           <form
             onSubmit={searchUsers}
-            className="mt-5 flex flex-col gap-3 sm:flex-row"
+            className="flex flex-col gap-3 sm:flex-row"
           >
             <input
-              value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
-              placeholder="Search @handle or name"
-              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-white/30"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search @username..."
+              className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-white/30"
             />
 
             <button
               type="submit"
-              className="rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
+              disabled={searching}
+              className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Search
+              {searching ? "Searching..." : "Search"}
             </button>
           </form>
-        </section>
 
-        {message && (
-          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
-            {message}
-          </div>
-        )}
+          {error ? (
+            <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+              {error}
+            </div>
+          ) : null}
 
-        <section className="mt-5 space-y-4">
-          {users.length === 0 &&
-            search.trim() &&
-            !message && (
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center text-sm text-white/45">
-                No users found.
+          {message ? (
+            <div className="mt-4 rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+              {message}
+            </div>
+          ) : null}
+
+          {/* Results */}
+          {users.length > 0 ? (
+            <div className="mt-6 space-y-2">
+              <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Search results
               </div>
-            )}
 
-          {users.map((user) => (
-            <div
-              key={user.userId}
-              className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 sm:p-5"
-            >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              {users.map((user) => {
+                const isSelected =
+                  selectedUser?.userId === user.userId;
 
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 text-lg font-bold">
-                    {(user.displayName || user.handle || "?")
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
+                return (
+                  <button
+                    key={user.userId}
+                    type="button"
+                    onClick={() => {
+                      setSelectedUser(user);
+                      setError("");
+                      setMessage("");
+                    }}
+                    className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition ${
+                      isSelected
+                        ? "border-white/30 bg-white/10"
+                        : "border-white/10 bg-black hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate font-semibold">
+                          {user.displayName || user.handle}
+                        </span>
 
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate font-semibold">
-                        {user.displayName || user.handle}
-                      </span>
-
-                      {user.verified && (
                         <VerificationBadge
                           type={user.verificationType}
+                          size="small"
                         />
-                      )}
+                      </div>
+
+                      <div className="mt-1 truncate text-sm text-gray-500">
+                        @{user.handle}
+                      </div>
                     </div>
 
-                    <div className="truncate text-sm text-white/45">
-                      @{user.handle}
+                    <div className="ml-4 shrink-0">
+                      <VerificationInfo
+                        type={user.verificationType}
+                      />
                     </div>
-                  </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </section>
+
+        {/* Selected user */}
+        {selectedUser ? (
+          <section className="mt-6 rounded-2xl border border-white/10 bg-[#0d0d0d] p-5 sm:p-6">
+            <div className="mb-6 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 text-xl font-bold">
+                  {(selectedUser.displayName ||
+                    selectedUser.handle ||
+                    "R")
+                    .charAt(0)
+                    .toUpperCase()}
                 </div>
 
-                <div className="flex flex-wrap gap-2 sm:justify-end">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <h2 className="truncate text-lg font-bold">
+                      {selectedUser.displayName ||
+                        selectedUser.handle}
+                    </h2>
 
-                  <VerificationButton
-                    label="🔵 Blue"
-                    active={user.verificationType === "blue"}
-                    disabled={busyUser === user.userId}
-                    onClick={() =>
-                      changeVerification(user, "blue")
-                    }
-                  />
+                    <VerificationBadge
+                      type={selectedUser.verificationType}
+                      size="normal"
+                    />
+                  </div>
 
-                  <VerificationButton
-                    label="🟡 Gold"
-                    active={user.verificationType === "gold"}
-                    disabled={busyUser === user.userId}
-                    onClick={() =>
-                      changeVerification(user, "gold")
-                    }
-                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    @{selectedUser.handle}
+                  </p>
 
-                  <VerificationButton
-                    label="⚪ Grey"
-                    active={user.verificationType === "grey"}
-                    disabled={busyUser === user.userId}
-                    onClick={() =>
-                      changeVerification(user, "grey")
-                    }
-                  />
+                  <div className="mt-2">
+                    <VerificationInfo
+                      type={selectedUser.verificationType}
+                    />
+                  </div>
+                </div>
+              </div>
 
-                  <button
-                    type="button"
-                    disabled={busyUser === user.userId}
-                    onClick={() =>
-                      changeVerification(user, "none")
-                    }
-                    className="rounded-full border border-red-400/25 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Remove
-                  </button>
+              <div className="rounded-xl border border-white/10 bg-black px-4 py-3">
+                <div className="text-[10px] uppercase tracking-wider text-gray-600">
+                  User ID
+                </div>
 
+                <div className="mt-1 max-w-[260px] truncate font-mono text-xs text-gray-400">
+                  {selectedUser.userId}
                 </div>
               </div>
             </div>
-          ))}
-        </section>
 
-        <section className="mt-8 rounded-3xl border border-blue-400/10 bg-blue-500/[0.06] p-5">
-          <h3 className="font-semibold">
-            Verification types
-          </h3>
+            {/* Controls */}
+            <div>
+              <h3 className="mb-3 text-sm font-semibold">
+                Change verification
+              </h3>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <VerificationInfo
-              type="blue"
-              title="Blue"
-              description="Verified individual, creator or public account."
-            />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {/* Blue */}
+                <button
+                  type="button"
+                  disabled={updating !== null}
+                  onClick={() =>
+                    void changeVerification("blue")
+                  }
+                  className={`rounded-xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    selectedType === "blue"
+                      ? "border-blue-500/50 bg-blue-500/10"
+                      : "border-white/10 bg-black hover:border-blue-500/30 hover:bg-blue-500/5"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <VerificationBadge type="blue" />
 
-            <VerificationInfo
-              type="gold"
-              title="Gold"
-              description="Official organization or brand."
-            />
+                    <span className="font-semibold">
+                      Blue ✓
+                    </span>
+                  </div>
 
-            <VerificationInfo
-              type="grey"
-              title="Grey"
-              description="Official government or institutional account."
-            />
+                  <p className="mt-2 text-xs leading-5 text-gray-500">
+                    Verified individual / creator / public account.
+                  </p>
+
+                  {updating === "blue" ? (
+                    <div className="mt-3 text-xs text-blue-400">
+                      Updating...
+                    </div>
+                  ) : selectedType === "blue" ? (
+                    <div className="mt-3 text-xs font-medium text-blue-400">
+                      Currently active
+                    </div>
+                  ) : null}
+                </button>
+
+                {/* Gold */}
+                <button
+                  type="button"
+                  disabled={updating !== null}
+                  onClick={() =>
+                    void changeVerification("gold")
+                  }
+                  className={`rounded-xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    selectedType === "gold"
+                      ? "border-yellow-500/50 bg-yellow-500/10"
+                      : "border-white/10 bg-black hover:border-yellow-500/30 hover:bg-yellow-500/5"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <VerificationBadge type="gold" />
+
+                    <span className="font-semibold">
+                      Gold ✓
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-xs leading-5 text-gray-500">
+                    Official organization / brand account.
+                  </p>
+
+                  {updating === "gold" ? (
+                    <div className="mt-3 text-xs text-yellow-400">
+                      Updating...
+                    </div>
+                  ) : selectedType === "gold" ? (
+                    <div className="mt-3 text-xs font-medium text-yellow-400">
+                      Currently active
+                    </div>
+                  ) : null}
+                </button>
+
+                {/* Grey */}
+                <button
+                  type="button"
+                  disabled={updating !== null}
+                  onClick={() =>
+                    void changeVerification("grey")
+                  }
+                  className={`rounded-xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    selectedType === "grey"
+                      ? "border-gray-400/40 bg-gray-400/10"
+                      : "border-white/10 bg-black hover:border-gray-400/30 hover:bg-gray-400/5"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <VerificationBadge type="grey" />
+
+                    <span className="font-semibold">
+                      Grey ✓
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-xs leading-5 text-gray-500">
+                    Official account / institution.
+                  </p>
+
+                  {updating === "grey" ? (
+                    <div className="mt-3 text-xs text-gray-400">
+                      Updating...
+                    </div>
+                  ) : selectedType === "grey" ? (
+                    <div className="mt-3 text-xs font-medium text-gray-400">
+                      Currently active
+                    </div>
+                  ) : null}
+                </button>
+
+                {/* Remove */}
+                <button
+                  type="button"
+                  disabled={updating !== null}
+                  onClick={() =>
+                    void changeVerification("none")
+                  }
+                  className={`rounded-xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    selectedType === "none"
+                      ? "border-red-500/30 bg-red-500/5"
+                      : "border-white/10 bg-black hover:border-red-500/30 hover:bg-red-500/5"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-red-400">
+                      ×
+                    </span>
+
+                    <span className="font-semibold">
+                      Remove
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-xs leading-5 text-gray-500">
+                    Remove the current verification badge.
+                  </p>
+
+                  {updating === "none" ? (
+                    <div className="mt-3 text-xs text-red-400">
+                      Removing...
+                    </div>
+                  ) : selectedType === "none" ? (
+                    <div className="mt-3 text-xs font-medium text-gray-500">
+                      No badge active
+                    </div>
+                  ) : null}
+                </button>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {/* Information */}
+        <section className="mt-6 rounded-2xl border border-white/10 bg-[#0d0d0d] p-5 sm:p-6">
+          <h2 className="text-sm font-bold">
+            Verification system
+          </h2>
+
+          <div className="mt-4 space-y-3 text-sm leading-6 text-gray-400">
+            <p>
+              <span className="font-semibold text-blue-400">
+                Blue ✓
+              </span>{" "}
+              is used for verified individual, creator and public
+              accounts.
+            </p>
+
+            <p>
+              <span className="font-semibold text-yellow-400">
+                Gold ✓
+              </span>{" "}
+              is used for official organizations and brands.
+            </p>
+
+            <p>
+              <span className="font-semibold text-gray-300">
+                Grey ✓
+              </span>{" "}
+              is used for official accounts and institutions.
+            </p>
+
+            <p>
+              <span className="font-semibold text-red-400">
+                Remove
+              </span>{" "}
+              removes the verification from the selected account.
+            </p>
           </div>
         </section>
-
       </div>
     </main>
-  );
-}
-
-function VerificationBadge({
-  type,
-}: {
-  type: User["verificationType"];
-}) {
-  if (type === "gold") {
-    return (
-      <span
-        title="Official Organization"
-        className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-[10px] font-black text-black"
-      >
-        ✓
-      </span>
-    );
-  }
-
-  if (type === "grey") {
-    return (
-      <span
-        title="Official Account"
-        className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gray-300 text-[10px] font-black text-black"
-      >
-        ✓
-      </span>
-    );
-  }
-
-  return (
-    <span
-      title="Verified"
-      className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#1d9bf0] text-[10px] font-black text-white"
-    >
-      ✓
-    </span>
-  );
-}
-
-function VerificationButton({
-  label,
-  active,
-  disabled,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={`rounded-full px-4 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-        active
-          ? "bg-white text-black"
-          : "border border-white/10 bg-white/[0.05] text-white/70 hover:bg-white/10"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-function VerificationInfo({
-  type,
-  title,
-  description,
-}: {
-  type: "blue" | "gold" | "grey";
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-      <div className="flex items-center gap-2">
-        <VerificationBadge type={type} />
-        <span className="font-semibold">
-          {title}
-        </span>
-      </div>
-
-      <p className="mt-2 text-xs leading-5 text-white/45">
-        {description}
-      </p>
-    </div>
   );
 }

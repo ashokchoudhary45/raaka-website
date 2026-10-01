@@ -65,15 +65,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (targetUserId === admin.userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "You cannot change your own verification status here",
-        },
-        { status: 400 }
-      );
-    }
+   
 
     const db = getD1();
 

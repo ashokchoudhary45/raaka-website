@@ -354,6 +354,8 @@ export async function GET(request: Request) {
 
     /*
      * SEARCH
+     *
+     * People + posts, with exact-match and engagement ranking.
      */
     if (action === "search") {
       const q = (
@@ -370,23 +372,44 @@ export async function GET(request: Request) {
         });
       }
 
-      const safeQuery = q.replace(
-        /[%_]/g,
-        ""
-      );
+      const safeQuery = q.replace(/[%_]/g, "").trim();
+
+      if (!safeQuery) {
+        return Response.json({
+          success: true,
+          users: [],
+          posts: [],
+        });
+      }
 
       const like = `%${safeQuery}%`;
+      const exact = safeQuery.toLowerCase();
 
       const users = await db
         .prepare(
-          `SELECT *
+          `SELECT
+             *,
+             CASE
+               WHEN LOWER(handle) = ? THEN 1000
+               WHEN LOWER(display_name) = ? THEN 900
+               ELSE 0
+             END AS search_score
            FROM social_profiles
            WHERE handle LIKE ? COLLATE NOCASE
               OR display_name LIKE ? COLLATE NOCASE
-           ORDER BY followers_count DESC
-           LIMIT 10`
+           ORDER BY
+             search_score DESC,
+             verified DESC,
+             followers_count DESC,
+             visitor_id ASC
+           LIMIT 20`
         )
-        .bind(like, like)
+        .bind(
+          exact,
+          exact,
+          like,
+          like
+        )
         .all<any>();
 
       const posts = await db
@@ -418,7 +441,63 @@ export async function GET(request: Request) {
                FROM social_follows f
                WHERE f.following_id = s.visitor_id
                  AND f.follower_id = ?
-             ) AS following
+             ) AS following,
+
+             (
+               CASE
+                 WHEN LOWER(s.body) = ? THEN 1000
+                 WHEN LOWER(s.body) LIKE ? THEN 500
+                 ELSE 0
+               END
+               +
+               (COALESCE(s.likes_count, 0) * 2)
+               +
+               (COALESCE(s.replies_count, 0) * 4)
+               +
+               (COALESCE(s.reposts_count, 0) * 5)
+               +
+               CASE
+                 WHEN
+                   (
+                     48 -
+                     (
+                       (
+                         julianday('now') -
+                         julianday(
+                           REPLACE(
+                             s.created_at,
+                             ' ',
+                             'T'
+                           )
+                         )
+                       ) * 24
+                     )
+                   ) > 0
+                 THEN
+                   MIN(
+                     48,
+                     MAX(
+                       0,
+                       (
+                         48 -
+                         (
+                           (
+                             julianday('now') -
+                             julianday(
+                               REPLACE(
+                                 s.created_at,
+                                 ' ',
+                                 'T'
+                               )
+                             )
+                           ) * 24
+                         )
+                       )
+                     )
+                   )
+                 ELSE 0
+               END
+             ) AS search_score
 
            FROM social_posts s
 
@@ -427,63 +506,144 @@ export async function GET(request: Request) {
 
            WHERE s.body LIKE ?
 
-           ORDER BY s.id DESC
-           LIMIT 10`
+           ORDER BY
+             search_score DESC,
+             s.id DESC
+
+           LIMIT 20`
         )
         .bind(
           userId,
           userId,
           userId,
+          exact,
+          like,
           like
         )
         .all<any>();
 
       return Response.json({
         success: true,
-
-        users: users.results.map(
-          profileShape
-        ),
-
-        posts: posts.results.map(
-          postShape
-        ),
+        users: users.results.map(profileShape),
+        posts: posts.results.map(postShape),
       });
     }
 
     /*
      * FEED
+     *
+     * FOLLOWING:
+     *   Chronological posts from accounts the user follows.
+     *
+     * FOR YOU:
+     *   Lightweight ranking based on:
+     *   - followed creators
+     *   - verified creators
+     *   - likes
+     *   - replies
+     *   - reposts
+     *   - freshness
      */
-    const followingOnly =
-      action === "following";
+    const followingOnly = action === "following";
 
-    const where = followingOnly
-      ? `WHERE s.visitor_id IN (
-           SELECT following_id
-           FROM social_follows
-           WHERE follower_id = ?
-         )`
-      : `WHERE 1 = 1`;
+    if (followingOnly) {
+      const cursorSql =
+        cursor > 0 ? " AND s.id < ?" : "";
 
-    const params: any[] =
-      followingOnly
-        ? [userId]
-        : [];
+      const params: unknown[] = [
+        userId,
+        userId,
+        userId,
+        userId,
+      ];
 
+      if (cursor > 0) {
+        params.push(cursor);
+      }
+
+      const rows = await db
+        .prepare(
+          `SELECT
+             s.*,
+             p.handle,
+             p.display_name,
+             p.verified,
+             p.verification_type,
+             p.verification_label,
+
+             1 AS following,
+
+             CASE
+               WHEN l.visitor_id IS NOT NULL
+               THEN 1
+               ELSE 0
+             END AS liked,
+
+             CASE
+               WHEN b.visitor_id IS NOT NULL
+               THEN 1
+               ELSE 0
+             END AS bookmarked
+
+           FROM social_posts s
+
+           JOIN social_profiles p
+             ON p.visitor_id = s.visitor_id
+
+           JOIN social_follows following_filter
+             ON following_filter.following_id = s.visitor_id
+            AND following_filter.follower_id = ?
+
+           LEFT JOIN social_likes l
+             ON l.post_id = s.id
+            AND l.visitor_id = ?
+
+           LEFT JOIN social_bookmarks b
+             ON b.post_id = s.id
+            AND b.visitor_id = ?
+
+           LEFT JOIN social_follows f
+             ON f.following_id = s.visitor_id
+            AND f.follower_id = ?
+
+           WHERE 1 = 1
+           ${cursorSql}
+
+           ORDER BY s.id DESC
+           LIMIT ${PAGE_SIZE}`
+        )
+        .bind(...params)
+        .all<any>();
+
+      const posts = rows.results.map(postShape);
+
+      return Response.json({
+        success: true,
+        posts,
+        nextCursor:
+          posts.length === PAGE_SIZE
+            ? posts[posts.length - 1].id
+            : 0,
+      });
+    }
+
+    /*
+     * FOR YOU RANKING
+     */
     const cursorSql =
       cursor > 0
         ? " AND s.id < ?"
         : "";
 
+    const params: unknown[] = [
+      userId,
+      userId,
+      userId,
+    ];
+
     if (cursor > 0) {
       params.push(cursor);
     }
-
-    params.push(
-      userId,
-      userId,
-      userId
-    );
 
     const rows = await db
       .prepare(
@@ -495,48 +655,120 @@ export async function GET(request: Request) {
            p.verification_type,
            p.verification_label,
 
-           EXISTS(
-             SELECT 1
-             FROM social_likes l
-             WHERE l.post_id = s.id
-               AND l.visitor_id = ?
-           ) AS liked,
+           CASE
+             WHEN f.follower_id IS NOT NULL
+             THEN 1
+             ELSE 0
+           END AS following,
 
-           EXISTS(
-             SELECT 1
-             FROM social_bookmarks b
-             WHERE b.post_id = s.id
-               AND b.visitor_id = ?
-           ) AS bookmarked,
+           CASE
+             WHEN l.visitor_id IS NOT NULL
+             THEN 1
+             ELSE 0
+           END AS liked,
 
-           EXISTS(
-             SELECT 1
-             FROM social_follows f
-             WHERE f.following_id = s.visitor_id
-               AND f.follower_id = ?
-           ) AS following
+           CASE
+             WHEN b.visitor_id IS NOT NULL
+             THEN 1
+             ELSE 0
+           END AS bookmarked,
+
+           (
+             CASE
+               WHEN f.follower_id IS NOT NULL
+               THEN 100
+               ELSE 0
+             END
+             +
+             CASE
+               WHEN COALESCE(p.verified, 0) = 1
+               THEN 15
+               ELSE 0
+             END
+             +
+             (COALESCE(s.likes_count, 0) * 2)
+             +
+             (COALESCE(s.replies_count, 0) * 4)
+             +
+             (COALESCE(s.reposts_count, 0) * 5)
+             +
+             CASE
+               WHEN
+                 (
+                   72 -
+                   (
+                     (
+                       julianday('now') -
+                       julianday(
+                         REPLACE(
+                           s.created_at,
+                           ' ',
+                           'T'
+                         )
+                       )
+                     ) * 24
+                   )
+                 ) > 0
+               THEN
+                 MIN(
+                   72,
+                   MAX(
+                     0,
+                     (
+                       72 -
+                       (
+                         (
+                           julianday('now') -
+                           julianday(
+                             REPLACE(
+                               s.created_at,
+                               ' ',
+                               'T'
+                             )
+                           )
+                         ) * 24
+                       )
+                     )
+                   )
+                 )
+               ELSE 0
+             END
+           ) AS algorithm_score
 
          FROM social_posts s
 
          JOIN social_profiles p
            ON p.visitor_id = s.visitor_id
 
-         ${where}
+         LEFT JOIN social_follows f
+           ON f.following_id = s.visitor_id
+          AND f.follower_id = ?
+
+         LEFT JOIN social_likes l
+           ON l.post_id = s.id
+          AND l.visitor_id = ?
+
+         LEFT JOIN social_bookmarks b
+           ON b.post_id = s.id
+          AND b.visitor_id = ?
+
+         WHERE 1 = 1
          ${cursorSql}
 
-         ORDER BY s.id DESC
+         ORDER BY
+           algorithm_score DESC,
+           s.id DESC
+
          LIMIT ${PAGE_SIZE}`
       )
       .bind(...params)
       .all<any>();
 
-    const posts =
-      rows.results.map(postShape);
+    const posts = rows.results.map(postShape);
 
     return Response.json({
       success: true,
       posts,
-
       nextCursor:
         posts.length === PAGE_SIZE
           ? posts[posts.length - 1].id

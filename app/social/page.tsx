@@ -195,6 +195,9 @@ export default function RaakaSocialPage() {
     users: Profile[];
     posts: Post[];
   } | null>(null);
+  const [searchTab, setSearchTab] = useState<"people" | "posts" | "top" | "latest">("people");
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [selectedProfileLoading, setSelectedProfileLoading] = useState(false);
 
   const [view, setView] = useState<"home" | "profile" | "settings">("home");
   const [editingProfile, setEditingProfile] = useState(false);
@@ -354,6 +357,11 @@ export default function RaakaSocialPage() {
 
       if (me.success) {
         setProfile(me.profile ?? null);
+        setSelectedProfile((current) =>
+          current && current.visitorId !== me.profile?.visitorId
+            ? current
+            : (me.profile ?? null)
+        );
       }
     } catch {
       setMessage("Could not load RAAKA Social");
@@ -424,15 +432,36 @@ export default function RaakaSocialPage() {
     });
 
     if (result.success) {
+      const nextFollowing = result.following ?? false;
+
       setPosts((items) =>
         items.map((p) =>
           p.author.visitorId === targetId
             ? {
                 ...p,
-                following: result.following ?? p.following,
+                following: nextFollowing,
               }
             : p
         )
+      );
+
+      setSearchResults((current) =>
+        current
+          ? {
+              ...current,
+              users: current.users.map((user) =>
+                user.visitorId === targetId
+                  ? { ...user, isFollowing: nextFollowing }
+                  : user
+              ),
+            }
+          : current
+      );
+
+      setSelectedProfile((current) =>
+        current && current.visitorId === targetId
+          ? { ...current, isFollowing: nextFollowing }
+          : current
       );
     }
   };
@@ -539,9 +568,34 @@ export default function RaakaSocialPage() {
     }
   };
 
-  const openProfile = () => {
+  const openProfile = async (handle?: string) => {
     setView("profile");
     setEditingProfile(false);
+
+    if (!handle || handle.toLowerCase() === profile?.handle?.toLowerCase()) {
+      setSelectedProfile(profile);
+      return;
+    }
+
+    setSelectedProfileLoading(true);
+    try {
+      const result = await api("GET", {
+        action: "profile",
+        handle,
+      });
+
+      if (result.success && result.profile) {
+        setSelectedProfile(result.profile);
+      } else {
+        setSelectedProfile(null);
+        setMessage(result.error || "Could not load profile");
+      }
+    } catch {
+      setSelectedProfile(null);
+      setMessage("Could not load profile");
+    } finally {
+      setSelectedProfileLoading(false);
+    }
   };
 
   const openSettings = () => {
@@ -593,6 +647,8 @@ export default function RaakaSocialPage() {
       setSearchResults(null);
       return;
     }
+
+    setSearchTab("people");
 
     const result = await api("GET", {
       action: "search",
@@ -791,7 +847,7 @@ export default function RaakaSocialPage() {
             <button onClick={() => setView("home")} className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-white/70 transition hover:bg-white/5 hover:text-white">
               <span>🔖</span><span>Bookmarks</span>
             </button>
-            <button onClick={openProfile} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "profile" ? "bg-white/10 text-white" : "text-white/70"}`}>
+            <button onClick={() => void openProfile()} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "profile" ? "bg-white/10 text-white" : "text-white/70"}`}>
               <span>♙</span><span>Profile</span>
             </button>
             <button onClick={openSettings} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "settings" ? "bg-white/10 text-white" : "text-white/70"}`}>
@@ -799,7 +855,7 @@ export default function RaakaSocialPage() {
             </button>
           </div>
 
-          <button onClick={openProfile} className="mt-8 w-full rounded-3xl border border-red-500/20 bg-gradient-to-br from-red-500/10 to-transparent p-5 text-left transition hover:border-red-500/40">
+          <button onClick={() => void openProfile()} className="mt-8 w-full rounded-3xl border border-red-500/20 bg-gradient-to-br from-red-500/10 to-transparent p-5 text-left transition hover:border-red-500/40">
             <div className="text-xs uppercase tracking-[.25em] text-red-400">
               RAAKA FAN
             </div>
@@ -882,7 +938,9 @@ export default function RaakaSocialPage() {
               </div>
 
               <div className="p-10 text-center text-sm text-white/30">
-                Your posts will appear here as the profile timeline is expanded.
+                {selectedProfileLoading
+                  ? "Loading profile…"
+                  : "Posts from this profile will appear here as the profile timeline is expanded."}
               </div>
             </div>
           ) : view === "settings" ? (
@@ -1057,6 +1115,27 @@ export default function RaakaSocialPage() {
 
             </div>
           </header>
+
+          <div className="border-b border-white/10 p-4 lg:hidden">
+            <div className="flex gap-2 rounded-2xl border border-white/10 bg-white/[.03] p-2">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void doSearch();
+                }}
+                placeholder="Search RAAKA Social"
+                className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-white/25"
+              />
+              <button
+                type="button"
+                onClick={() => void doSearch()}
+                className="rounded-xl bg-white/10 px-3 py-2 text-xs font-bold"
+              >
+                Search
+              </button>
+            </div>
+          </div>
 
           <div className="border-b border-white/10 p-5">
             <div className="flex gap-3">
@@ -1375,39 +1454,127 @@ export default function RaakaSocialPage() {
           </div>
 
           {searchResults ? (
-            <div className="mt-5 rounded-3xl border border-white/10 bg-white/[.03] p-5">
+            <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-white/[.03]">
+              <div className="border-b border-white/10 px-5 pt-5">
+                <div className="text-xs font-bold uppercase tracking-[.2em] text-white/40">
+                  Search results
+                </div>
 
-              <div className="text-xs font-bold uppercase tracking-[.2em] text-white/40">
-                Search
+                <div className="mt-4 grid grid-cols-4">
+                  {[
+                    ["people", "People"],
+                    ["posts", "Posts"],
+                    ["top", "Top"],
+                    ["latest", "Latest"],
+                  ].map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSearchTab(key as typeof searchTab)}
+                      className={`border-b-2 px-1 py-3 text-xs font-bold transition ${
+                        searchTab === key
+                          ? "border-red-500 text-white"
+                          : "border-transparent text-white/35 hover:text-white/70"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="mt-4 space-y-3">
+              <div className="p-3">
+                {searchTab === "people" ? (
+                  searchResults.users.length ? (
+                    <div className="space-y-1">
+                      {searchResults.users.map((user) => (
+                        <div
+                          key={user.visitorId}
+                          className="flex items-center gap-3 rounded-2xl p-3 transition hover:bg-white/[.05]"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => void openProfile(user.handle)}
+                            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                          >
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 font-black">
+                              {user.displayName.slice(0, 1).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex min-w-0 items-center gap-1.5 font-bold">
+                                <span className="truncate">{user.displayName}</span>
+                                <VerificationBadge
+                                  type={user.verificationType}
+                                  label={user.verificationLabel}
+                                />
+                              </div>
+                              <div className="truncate text-xs text-white/35">
+                                @{user.handle} · {user.followers} followers
+                              </div>
+                            </div>
+                          </button>
 
-                {searchResults.users.map((user) => (
-                  <div key={user.visitorId}>
-
-                    <div className="flex items-center gap-1.5 font-bold">
-                      <span>{user.displayName}</span>
-                      <VerificationBadge
-                        type={user.verificationType}
-                        label={user.verificationLabel}
-                      />
+                          {user.visitorId !== visitorId && (
+                            <button
+                              type="button"
+                              onClick={() => follow(user.visitorId)}
+                              className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black ${
+                                user.isFollowing
+                                  ? "border border-white/15 text-white/70"
+                                  : "bg-white text-black"
+                              }`}
+                            >
+                              {user.isFollowing ? "Following" : "Follow"}
+                            </button>
+                          )}
+                        </div>
+                      ))}
                     </div>
-
-                    <div className="text-xs text-white/35">
-                      @{user.handle} · {user.followers} followers
-                    </div>
-
+                  ) : (
+                    <div className="p-5 text-sm text-white/30">No people found.</div>
+                  )
+                ) : searchResults.posts.length ? (
+                  <div className="space-y-1">
+                    {[...searchResults.posts]
+                      .sort((a, b) => {
+                        if (searchTab === "top") {
+                          return (
+                            b.likes + b.replies * 2 + b.reposts * 3 -
+                            (a.likes + a.replies * 2 + a.reposts * 3)
+                          );
+                        }
+                        return (
+                          new Date(b.createdAt.replace(" ", "T") + "Z").getTime() -
+                          new Date(a.createdAt.replace(" ", "T") + "Z").getTime()
+                        );
+                      })
+                      .map((post) => (
+                        <button
+                          key={post.id}
+                          type="button"
+                          onClick={() => void openProfile(post.author.handle)}
+                          className="block w-full rounded-2xl p-3 text-left transition hover:bg-white/[.05]"
+                        >
+                          <div className="flex items-center gap-1.5 text-sm font-bold">
+                            <span>{post.author.displayName}</span>
+                            <VerificationBadge
+                              type={post.author.verificationType}
+                              label={post.author.verificationLabel}
+                            />
+                            <span className="font-normal text-white/30">@{post.author.handle}</span>
+                          </div>
+                          <div className="mt-1 line-clamp-3 text-sm leading-5 text-white/70">
+                            {post.body}
+                          </div>
+                          <div className="mt-2 text-[11px] text-white/25">
+                            {post.likes} likes · {post.replies} replies · {post.reposts} reposts · {timeAgo(post.createdAt)}
+                          </div>
+                        </button>
+                      ))}
                   </div>
-                ))}
-
-                {!searchResults.users.length &&
-                  !searchResults.posts.length && (
-                    <div className="text-sm text-white/30">
-                      Nothing found.
-                    </div>
-                  )}
-
+                ) : (
+                  <div className="p-5 text-sm text-white/30">No posts found.</div>
+                )}
               </div>
             </div>
           ) : (
