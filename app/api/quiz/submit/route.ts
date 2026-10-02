@@ -49,6 +49,13 @@ function generatePassportCode() {
   );
 }
 
+function normalizeSocial(value: string | null | undefined) {
+  return (value || "")
+    .trim()
+    .replace(/^@/, "")
+    .toLowerCase();
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as SubmitBody;
@@ -158,6 +165,70 @@ export async function POST(request: Request) {
         },
         { status: 500 }
       );
+    }
+
+    // ------------------------------------------
+    // PREVENT DUPLICATE SOCIAL IDENTITY
+    // ------------------------------------------
+    //
+    // A visitorId is browser/device-local, so the same person can
+    // otherwise submit again from another browser/device.
+    //
+    // The social username is the real identity key:
+    //   @Ashok  == Ashok == ASHOK
+    //
+    // If either Twitter/X OR Instagram username already belongs
+    // to another fan passport, reject the new registration.
+    // ------------------------------------------
+
+    const normalizedTwitter = normalizeSocial(twitterUsername);
+    const normalizedInstagram = normalizeSocial(instagramUsername);
+
+    if (normalizedTwitter || normalizedInstagram) {
+      const socialMatches = await db
+        .prepare(
+          `
+            SELECT
+              visitor_id,
+              twitter_username,
+              instagram_username
+            FROM fan_passports
+            WHERE
+              (
+                ? <> ""
+                AND LOWER(TRIM(REPLACE(COALESCE(twitter_username, ""), "@", ""))) = ?
+              )
+              OR
+              (
+                ? <> ""
+                AND LOWER(TRIM(REPLACE(COALESCE(instagram_username, ""), "@", ""))) = ?
+              )
+            LIMIT 1
+          `
+        )
+        .bind(
+          normalizedTwitter,
+          normalizedTwitter,
+          normalizedInstagram,
+          normalizedInstagram
+        )
+        .first<{
+          visitor_id: string;
+          twitter_username: string | null;
+          instagram_username: string | null;
+        }>();
+
+      if (socialMatches && socialMatches.visitor_id !== visitorId) {
+        return Response.json(
+          {
+            success: false,
+            alreadyRegistered: true,
+            error:
+              "This Twitter/X or Instagram username is already registered in the RAAKA Fan Passport.",
+          },
+          { status: 409 }
+        );
+      }
     }
 
     // ------------------------------------------
