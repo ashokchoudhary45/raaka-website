@@ -23,6 +23,26 @@ function normalizeSocial(value: string | null | undefined) {
     .toLowerCase();
 }
 
+const LEADERBOARD_CACHE_TTL_SECONDS = 300;
+
+type SharedCache = {
+  match(request: Request): Promise<Response | undefined>;
+  put(request: Request, response: Response): Promise<void>;
+};
+
+function getSharedCache(): SharedCache {
+  return (globalThis.caches as unknown as {
+    default: SharedCache;
+  }).default;
+}
+
+function leaderboardCacheKey(request: Request) {
+  const url = new URL(request.url);
+  return new Request(`${url.origin}/__raaka_leaderboard__`, {
+    method: "GET",
+  });
+}
+
 function isBetterFan(candidate: FanRow, current: FanRow) {
   if (Number(candidate.quiz_score || 0) !== Number(current.quiz_score || 0)) {
     return Number(candidate.quiz_score || 0) > Number(current.quiz_score || 0);
@@ -49,21 +69,18 @@ function isBetterFan(candidate: FanRow, current: FanRow) {
   return String(candidate.updated_at || "") > String(current.updated_at || "");
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const cache = getSharedCache();
+    const cacheKey = leaderboardCacheKey(request);
+
+    const cached = await cache.match(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
     const db = getD1();
-
-    const schema = await db
-      .prepare(`PRAGMA table_info(fan_passports)`)
-      .all<{ name: string }>();
-
-    const hasInstagramColumn = schema.results.some(
-      (column) => column.name === "instagram_username"
-    );
-
-    const instagramSelect = hasInstagramColumn
-      ? "instagram_username"
-      : "NULL AS instagram_username";
 
     const result = await db
       .prepare(
@@ -71,7 +88,7 @@ export async function GET() {
           visitor_id,
           fan_name,
           twitter_username,
-          ${instagramSelect},
+          instagram_username,
           country,
           quiz_score,
           quizzes_played,
@@ -203,10 +220,22 @@ export async function GET() {
       };
     });
 
-    return Response.json({
-      success: true,
-      leaderboard,
-    });
+    const response = Response.json(
+      {
+        success: true,
+        leaderboard,
+      },
+      {
+        headers: {
+          "Cache-Control": `public, max-age=${LEADERBOARD_CACHE_TTL_SECONDS}`,
+          "X-Raaka-Leaderboard-Cache": "MISS",
+        },
+      }
+    );
+
+    void cache.put(cacheKey, response.clone());
+
+    return response;
   } catch (error) {
     console.error("Leaderboard error:", error);
 

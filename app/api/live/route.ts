@@ -30,57 +30,61 @@ type PageStatsRow = {
 
 /*
  * --------------------------------------------------
- * LIVE STATS CACHE
+ * SHARED CLOUDFLARE CACHE
  * --------------------------------------------------
- * Cached per Worker isolate for 30 seconds.
+ * Worker memory is isolate-local, so an in-memory cache
+ * does not reliably protect D1. Use Cloudflare's shared
+ * Cache API for aggregate reads.
+ * --------------------------------------------------
  */
-type LiveStatsCache = {
-  expiresAt: number;
+
+type SharedCache = {
+  match(request: Request): Promise<Response | undefined>;
+  put(request: Request, response: Response): Promise<void>;
+};
+
+function getSharedCache(): SharedCache {
+  return (globalThis.caches as unknown as {
+    default: SharedCache;
+  }).default;
+}
+
+const LIVE_STATS_CACHE_TTL_SECONDS = 30;
+const PAGE_ANALYTICS_CACHE_TTL_SECONDS = 300;
+
+function makeCacheKey(request: Request, path: string) {
+  const url = new URL(request.url);
+  return new Request(`${url.origin}${path}`, { method: "GET" });
+}
+
+type LiveStats = {
   visitors: number;
   pages: LivePageRow[];
-} | null;
-
-let liveStatsCache: LiveStatsCache = null;
-const LIVE_STATS_CACHE_TTL_MS = 30_000;
-
-/*
- * --------------------------------------------------
- * ANALYTICS CACHE
- * --------------------------------------------------
- * The dashboard does not need fresh D1 aggregation every
- * second. Cache the complete page_views analytics response
- * for 5 minutes per Worker isolate.
- */
-type AnalyticsCache = {
-  expiresAt: number;
-  payload: {
-    total: { views: number; uniqueVisitors: number };
-    today: { views: number; uniqueVisitors: number };
-    last7Days: { views: number; uniqueVisitors: number };
-    last30Days: { views: number; uniqueVisitors: number };
-    pages: Array<{
-      page: string;
-      views: number;
-      uniqueVisitors: number;
-      live: number;
-    }>;
-  };
-} | null;
-
-let analyticsCache: AnalyticsCache = null;
-const ANALYTICS_CACHE_TTL_MS = 5 * 60_000;
+  timestamp: number;
+};
 
 async function getLiveStats(
   db: ReturnType<typeof getD1>,
-  minuteAgo: number
-) {
-  const now = Date.now();
+  minuteAgo: number,
+  request: Request
+): Promise<LiveStats> {
+  const cache = getSharedCache();
+  const cacheKey = makeCacheKey(request, "/__raaka_live_stats__");
 
-  if (liveStatsCache && liveStatsCache.expiresAt > now) {
-    return {
-      visitors: liveStatsCache.visitors,
-      pages: liveStatsCache.pages,
-    };
+  const cached = await cache.match(cacheKey);
+
+  if (cached) {
+    try {
+      const data = (await cached.json()) as LiveStats;
+      if (
+        typeof data.visitors === "number" &&
+        Array.isArray(data.pages)
+      ) {
+        return data;
+      }
+    } catch {
+      // Ignore malformed cache entries.
+    }
   }
 
   const liveResult = await db
@@ -109,27 +113,55 @@ async function getLiveStats(
     .bind(minuteAgo)
     .all<LivePageRow>();
 
-  const visitors = Number(liveResult?.count || 0);
-  const pages = livePagesResult.results || [];
-
-  liveStatsCache = {
-    expiresAt: now + LIVE_STATS_CACHE_TTL_MS,
-    visitors,
-    pages,
+  const result: LiveStats = {
+    visitors: Number(liveResult?.count || 0),
+    pages: livePagesResult.results || [],
+    timestamp: Date.now(),
   };
 
-  return { visitors, pages };
+  const response = new Response(JSON.stringify(result), {
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": `public, max-age=${LIVE_STATS_CACHE_TTL_SECONDS}`,
+    },
+  });
+
+  void cache.put(cacheKey, response.clone());
+
+  return result;
 }
 
 async function getPageAnalytics(
   db: ReturnType<typeof getD1>,
   now: number,
-  liveStats: { visitors: number; pages: LivePageRow[] }
+  request: Request
 ) {
-  const cached = analyticsCache;
+  const cache = getSharedCache();
+  const cacheKey = makeCacheKey(request, "/__raaka_page_analytics__");
 
-  if (cached && cached.expiresAt > now) {
-    return cached.payload;
+  type CachedAnalytics = {
+    total: { views: number; uniqueVisitors: number };
+    today: { views: number; uniqueVisitors: number };
+    last7Days: { views: number; uniqueVisitors: number };
+    last30Days: { views: number; uniqueVisitors: number };
+    pages: Array<{
+      page: string;
+      views: number;
+      uniqueVisitors: number;
+    }>;
+  };
+
+  const cached = await cache.match(cacheKey);
+
+  if (cached) {
+    try {
+      const data = (await cached.json()) as CachedAnalytics;
+      if (data && data.total && Array.isArray(data.pages)) {
+        return data;
+      }
+    } catch {
+      // Ignore malformed cache.
+    }
   }
 
   const dayAgo = now - 86_400_000;
@@ -138,9 +170,6 @@ async function getPageAnalytics(
 
   /*
    * ONE scan for all overall totals.
-   *
-   * Instead of 8 separate COUNT / COUNT(DISTINCT) queries,
-   * SQLite calculates all eight values in one pass.
    */
   const summaryResult = await db
     .prepare(
@@ -188,8 +217,6 @@ async function getPageAnalytics(
 
   /*
    * ONE page-wise query.
-   *
-   * Keep this separate because the dashboard needs a row per page.
    */
   const pageStatsResult = await db
     .prepare(
@@ -206,20 +233,7 @@ async function getPageAnalytics(
     )
     .all<PageStatsRow>();
 
-  const livePageMap = new Map<string, number>();
-
-  for (const item of liveStats.pages) {
-    livePageMap.set(item.page, Number(item.live || 0));
-  }
-
-  const pages = (pageStatsResult.results || []).map((item) => ({
-    page: item.page,
-    views: Number(item.views || 0),
-    uniqueVisitors: Number(item.unique_visitors || 0),
-    live: livePageMap.get(item.page) || 0,
-  }));
-
-  const payload = {
+  const payload: CachedAnalytics = {
     total: {
       views: Number(summaryResult?.total_views || 0),
       uniqueVisitors: Number(summaryResult?.total_unique || 0),
@@ -236,13 +250,21 @@ async function getPageAnalytics(
       views: Number(summaryResult?.thirty_views || 0),
       uniqueVisitors: Number(summaryResult?.thirty_unique || 0),
     },
-    pages,
+    pages: (pageStatsResult.results || []).map((item) => ({
+      page: item.page,
+      views: Number(item.views || 0),
+      uniqueVisitors: Number(item.unique_visitors || 0),
+    })),
   };
 
-  analyticsCache = {
-    expiresAt: now + ANALYTICS_CACHE_TTL_MS,
-    payload,
-  };
+  const response = new Response(JSON.stringify(payload), {
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": `public, max-age=${PAGE_ANALYTICS_CACHE_TTL_SECONDS}`,
+    },
+  });
+
+  void cache.put(cacheKey, response.clone());
 
   return payload;
 }
@@ -252,9 +274,46 @@ export async function GET(request: Request) {
     const db = getD1();
     const url = new URL(request.url);
 
+    const mode = url.searchParams.get("mode") || "heartbeat";
     const visitorId = url.searchParams.get("visitorId");
     const page = url.searchParams.get("page") || "/";
     const recordView = url.searchParams.get("view") === "1";
+
+    const now = Date.now();
+    const minuteAgo = now - 60_000;
+
+    /*
+     * Analytics mode is READ-ONLY.
+     * It must never create a live visitor or page view.
+     */
+    if (mode === "analytics") {
+      const liveStats = await getLiveStats(db, minuteAgo, request);
+      const analytics = await getPageAnalytics(db, now, request);
+
+      const livePageMap = new Map<string, number>();
+      for (const item of liveStats.pages) {
+        livePageMap.set(item.page, Number(item.live || 0));
+      }
+
+      return Response.json({
+        success: true,
+        live: liveStats,
+        total: analytics.total,
+        today: analytics.today,
+        last7Days: analytics.last7Days,
+        last30Days: analytics.last30Days,
+        pages: analytics.pages.map((item) => ({
+          ...item,
+          live: livePageMap.get(item.page) || 0,
+        })),
+        timestamp: now,
+      }, {
+        headers: {
+          "Cache-Control": "no-store",
+          "X-Raaka-Analytics-Mode": "readonly",
+        },
+      });
+    }
 
     if (!visitorId) {
       return Response.json(
@@ -266,11 +325,8 @@ export async function GET(request: Request) {
       );
     }
 
-    const now = Date.now();
-    const minuteAgo = now - 60_000;
-
     /*
-     * 1. Keep existing live visitor heartbeat behavior.
+     * Heartbeat / normal tracking request.
      */
     await db
       .prepare(
@@ -290,9 +346,6 @@ export async function GET(request: Request) {
       .bind(visitorId, now, page)
       .run();
 
-    /*
-     * 2. Keep existing page-view recording behavior.
-     */
     if (recordView) {
       await db
         .prepare(
@@ -309,48 +362,7 @@ export async function GET(request: Request) {
         .run();
     }
 
-    const liveStats = await getLiveStats(db, minuteAgo);
-
-    /*
-     * 3. Normal heartbeat: no page_views analytics.
-     */
-    if (!recordView) {
-      return Response.json({
-        success: true,
-        live: {
-          visitors: liveStats.visitors,
-          pages: liveStats.pages,
-        },
-        total: {
-          views: 0,
-          uniqueVisitors: 0,
-        },
-        today: {
-          views: 0,
-          uniqueVisitors: 0,
-        },
-        last7Days: {
-          views: 0,
-          uniqueVisitors: 0,
-        },
-        last30Days: {
-          views: 0,
-          uniqueVisitors: 0,
-        },
-        pages: [],
-        timestamp: now,
-      });
-    }
-
-    /*
-     * 4. Expensive analytics are now:
-     *    - one aggregate query
-     *    - one page-wise query
-     *    - cached for 5 minutes
-     *
-     * Existing response shape is preserved.
-     */
-    const analytics = await getPageAnalytics(db, now, liveStats);
+    const liveStats = await getLiveStats(db, minuteAgo, request);
 
     return Response.json({
       success: true,
@@ -358,7 +370,23 @@ export async function GET(request: Request) {
         visitors: liveStats.visitors,
         pages: liveStats.pages,
       },
-      ...analytics,
+      total: {
+        views: 0,
+        uniqueVisitors: 0,
+      },
+      today: {
+        views: 0,
+        uniqueVisitors: 0,
+      },
+      last7Days: {
+        views: 0,
+        uniqueVisitors: 0,
+      },
+      last30Days: {
+        views: 0,
+        uniqueVisitors: 0,
+      },
+      pages: [],
       timestamp: now,
     });
   } catch (error) {
