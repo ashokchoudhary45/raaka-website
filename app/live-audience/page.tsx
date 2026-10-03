@@ -191,12 +191,8 @@ export default function LiveAudiencePage() {
 
   const fetchD1Analytics = useCallback(async () => {
     try {
-      const visitorId = getVisitorId();
-
       const params = new URLSearchParams({
-        visitorId,
-        page: "/live-audience",
-        view: "1",
+        mode: "analytics",
       });
 
       const response = await fetch(`/api/live?${params.toString()}`, {
@@ -221,11 +217,7 @@ export default function LiveAudiencePage() {
 
   const fetchLiveCount = useCallback(async () => {
     try {
-      const visitorId = getVisitorId();
-
       const params = new URLSearchParams({
-        visitorId,
-        page: "/live-audience",
         mode: "count",
       });
 
@@ -308,7 +300,7 @@ export default function LiveAudiencePage() {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchLiveCount();
-    }, 30_000);
+    }, 60_000);
 
     return () => clearInterval(interval);
   }, [fetchLiveCount]);
@@ -419,7 +411,7 @@ export default function LiveAudiencePage() {
             <div className="flex flex-col items-end gap-2">
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/40">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                Live • Auto refresh 30s
+                Live • Auto refresh 60s
               </div>
               <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-white/25">
                 <span>{lastUpdated ? `Updated ${lastUpdated}` : "Waiting for live data"}</span>

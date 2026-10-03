@@ -49,8 +49,8 @@ function getSharedCache(): SharedCache {
   }).default;
 }
 
-const LIVE_STATS_CACHE_TTL_SECONDS = 30;
-const PAGE_ANALYTICS_CACHE_TTL_SECONDS = 300;
+const LIVE_STATS_CACHE_TTL_SECONDS = 60;
+const PAGE_ANALYTICS_CACHE_TTL_SECONDS = 1800;
 
 function makeCacheKey(request: Request, path: string) {
   const url = new URL(request.url);
@@ -281,6 +281,28 @@ export async function GET(request: Request) {
 
     const now = Date.now();
     const minuteAgo = now - 60_000;
+
+    /*
+     * COUNT mode is READ-ONLY.
+     * It must never write to live_visitors or page_views.
+     */
+    if (mode === "count") {
+      const liveStats = await getLiveStats(db, minuteAgo, request);
+
+      return Response.json(
+        {
+          success: true,
+          live: liveStats,
+          timestamp: now,
+        },
+        {
+          headers: {
+            "Cache-Control": "public, max-age=60",
+            "X-Raaka-Live-Mode": "readonly",
+          },
+        }
+      );
+    }
 
     /*
      * Analytics mode is READ-ONLY.
