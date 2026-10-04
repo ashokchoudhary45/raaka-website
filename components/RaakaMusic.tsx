@@ -22,7 +22,6 @@ export default function RaakaMusic() {
   const [musicVolume, setMusicVolume] = useState(0.45);
   const [ready, setReady] = useState(false);
 
-  // Restore saved track + volume.
   useEffect(() => {
     const savedIndex = Number(localStorage.getItem("raaka-music-index"));
     const savedVolume = Number(localStorage.getItem("raaka-music-volume"));
@@ -47,8 +46,6 @@ export default function RaakaMusic() {
     setReady(true);
   }, []);
 
-  // Global music engine.
-  // This component must live in app/layout.tsx so it survives page navigation.
   useEffect(() => {
     if (!ready) return;
 
@@ -62,19 +59,16 @@ export default function RaakaMusic() {
 
     const startMusic = () => {
       audio.volume = musicVolume;
-
       audio
         .play()
         .then(() => setMusicPlaying(true))
         .catch(() => setMusicPlaying(false));
     };
 
-    // Try autoplay first.
     audio
       .play()
       .then(() => setMusicPlaying(true))
       .catch(() => {
-        // Browser blocks autoplay until the visitor interacts.
         window.addEventListener("pointerdown", startMusic, { once: true });
         window.addEventListener("keydown", startMusic, { once: true });
         window.addEventListener("touchstart", startMusic, { once: true });
@@ -84,7 +78,6 @@ export default function RaakaMusic() {
       window.removeEventListener("pointerdown", startMusic);
       window.removeEventListener("keydown", startMusic);
       window.removeEventListener("touchstart", startMusic);
-
       audio.pause();
       audio.src = "";
 
@@ -94,7 +87,6 @@ export default function RaakaMusic() {
     };
   }, [ready, musicIndex]);
 
-  // Keep volume in sync.
   useEffect(() => {
     if (musicRef.current) {
       musicRef.current.volume = musicVolume;
@@ -118,90 +110,190 @@ export default function RaakaMusic() {
   const currentTrack = RAAKA_PLAYLIST[musicIndex];
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] sm:bottom-5 sm:right-5 md:bottom-7 md:right-7">
-      <div className="relative flex items-center gap-1.5 rounded-full border border-white/15 bg-black/70 p-1 sm:gap-2 sm:p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+    <>
+      <style>{`
+        @keyframes rmOrbit { to { transform: rotate(360deg); } }
+        @keyframes rmPulse {
+          0%,100% { transform: scale(.88); opacity: .72; }
+          50% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes rmBar {
+          0%,100% { transform: scaleY(.3); }
+          50% { transform: scaleY(1); }
+        }
+        @keyframes rmShine {
+          0% { transform: translateX(-140%); }
+          100% { transform: translateX(180%); }
+        }
 
-        <button
-          type="button"
-          onClick={() => setMusicOpen((value) => !value)}
-          className={`flex h-9 max-w-[120px] items-center gap-1.5 rounded-full px-2.5 text-left transition-all duration-300 sm:h-10 sm:max-w-[170px] sm:gap-2 sm:px-3 ${
-            musicPlaying
-              ? "bg-white/[0.08] text-white"
-              : "bg-white/[0.04] text-white/55"
-          }`}
-          aria-label="Open music playlist"
-          aria-expanded={musicOpen}
-          title="Music playlist"
-        >
-          <span
-            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white/15 text-[10px] sm:h-6 sm:w-6 sm:text-[12px] ${
-              musicPlaying ? "text-orange-300" : "text-white/45"
-            }`}
-          >
-            ♪
-          </span>
+        .rm-shell {
+          box-shadow:
+            0 12px 40px rgba(0,0,0,.48),
+            inset 0 1px 0 rgba(255,255,255,.06);
+        }
 
-          <span className="min-w-0 truncate text-[8px] font-medium uppercase tracking-[0.14em] sm:text-[9px] sm:tracking-[0.18em]">
-            {currentTrack.title}
-          </span>
-        </button>
+        .rm-orbit { animation: rmOrbit 9s linear infinite; }
+        .rm-core { animation: rmPulse 2.2s ease-in-out infinite; }
+        .rm-bar {
+          transform-origin: bottom;
+          animation: rmBar .75s ease-in-out infinite;
+        }
+        .rm-shine { animation: rmShine 1.5s cubic-bezier(.2,.7,.2,1); }
 
-        <button
-          type="button"
-          onClick={() => {
-            if (musicVolume > 0) {
-              previousVolumeRef.current = musicVolume;
-              setMusicVolume(0);
-            } else {
-              setMusicVolume(
-                previousVolumeRef.current > 0
-                  ? previousVolumeRef.current
-                  : 0.45
-              );
-            }
-          }}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[11px] text-white/70 transition hover:border-white/25 hover:bg-white/[0.09] hover:text-white sm:h-10 sm:w-10 sm:text-base"
-          aria-label={musicVolume === 0 ? "Unmute music" : "Mute music"}
-          title={musicVolume === 0 ? "Unmute" : "Mute"}
-        >
-          {musicVolume === 0 ? "🔇" : "🔊"}
-        </button>
+        .rm-shell:hover {
+          box-shadow:
+            0 16px 48px rgba(0,0,0,.58),
+            0 0 22px rgba(249,115,22,.07),
+            inset 0 1px 0 rgba(255,255,255,.08);
+        }
 
+        @media (prefers-reduced-motion: reduce) {
+          .rm-orbit,.rm-core,.rm-bar,.rm-shine { animation: none !important; }
+        }
+      `}</style>
+
+      <div className="fixed bottom-4 right-4 z-[9999] sm:bottom-5 sm:right-5">
         <div
-          className={`absolute bottom-[52px] right-0 w-[230px] origin-bottom-right overflow-hidden rounded-2xl border border-white/15 bg-black/90 p-2 shadow-[0_20px_70px_rgba(0,0,0,0.7)] backdrop-blur-2xl transition-all duration-300 ${
-            musicOpen
-              ? "translate-y-0 scale-100 opacity-100"
-              : "pointer-events-none translate-y-2 scale-95 opacity-0"
+          className={`rm-shell relative flex items-center gap-1 rounded-full border bg-[#080808]/95 p-1.5 backdrop-blur-xl transition-all duration-300 ${
+            musicPlaying
+              ? "border-orange-300/25"
+              : "border-white/10"
           }`}
         >
-          <div className="px-3 pb-2 pt-2 text-[8px] uppercase tracking-[0.28em] text-white/30">
-            RAAKA Playlist
-          </div>
-
-          <div className="space-y-1">
-            {RAAKA_PLAYLIST.map((track, index) => (
-              <button
-                key={track.src}
-                type="button"
-                onClick={() => {
-                  setMusicIndex(index);
-                  setMusicOpen(false);
-                }}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
-                  index === musicIndex
-                    ? "bg-white/[0.09] text-white"
-                    : "text-white/55 hover:bg-white/[0.06] hover:text-white"
+          <button
+            type="button"
+            onClick={() => setMusicOpen((v) => !v)}
+            className="group relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/[.025] transition-all duration-300 hover:scale-[1.04] hover:border-orange-300/35"
+            aria-label="Open RAAKA music playlist"
+            aria-expanded={musicOpen}
+          >
+            <span className="rm-orbit pointer-events-none absolute inset-[3px] rounded-full border border-transparent border-t-orange-300/75" />
+            <span
+              className={`rm-core relative flex h-6 w-6 items-center justify-center rounded-full ${
+                musicPlaying
+                  ? "bg-orange-400/10 shadow-[0_0_16px_rgba(249,115,22,.22)]"
+                  : "bg-white/[.035]"
+              }`}
+            >
+              <span
+                className={`text-[10px] leading-none ${
+                  musicPlaying ? "text-orange-200" : "text-white/55"
                 }`}
               >
-                <span className="text-orange-300/80">♪</span>
-                <span className="truncate text-[10px] font-medium uppercase tracking-[0.14em]">
-                  {track.title}
+                {musicPlaying ? "Ⅱ" : "▶"}
+              </span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMusicOpen((v) => !v)}
+            className="group flex min-w-0 items-center gap-2 px-1.5 text-left"
+            aria-label="Open music playlist"
+          >
+            <span className="max-w-[118px] truncate text-[10px] font-medium tracking-[.02em] text-white/72 transition group-hover:text-white">
+              {currentTrack.title}
+            </span>
+
+            {musicPlaying && (
+              <span className="flex h-3 items-end gap-[2px]">
+                {[1, 2, 3, 4].map((n) => (
+                  <i
+                    key={n}
+                    className="rm-bar block w-[2px] rounded-full bg-orange-300/80"
+                    style={{
+                      height: `${5 + n * 2}px`,
+                      animationDelay: `${n * 90}ms`,
+                    }}
+                  />
+                ))}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (musicVolume > 0) {
+                previousVolumeRef.current = musicVolume;
+                setMusicVolume(0);
+              } else {
+                setMusicVolume(previousVolumeRef.current || 0.45);
+              }
+            }}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-[12px] text-white/35 transition hover:bg-white/[.06] hover:text-orange-200"
+            aria-label={musicVolume === 0 ? "Unmute music" : "Mute music"}
+          >
+            {musicVolume === 0 ? "×" : "⌁"}
+          </button>
+
+          <div
+            className={`absolute bottom-full right-0 mb-2 w-[220px] origin-bottom-right overflow-hidden rounded-[18px] border border-white/10 bg-[#080808]/96 p-1.5 shadow-[0_18px_55px_rgba(0,0,0,.68)] backdrop-blur-2xl transition-all duration-300 ${
+              musicOpen
+                ? "translate-y-0 scale-100 opacity-100"
+                : "pointer-events-none translate-y-2 scale-[.97] opacity-0"
+            }`}
+          >
+            <div className="relative overflow-hidden rounded-xl px-3 py-2.5">
+              <span className="rm-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 bg-gradient-to-r from-transparent via-orange-300/10 to-transparent" />
+              <div className="relative flex items-center justify-between">
+                <span className="text-[8px] uppercase tracking-[.22em] text-white/30">
+                  RAAKA Music
                 </span>
-              </button>
-            ))}
+                <span className="text-[8px] text-orange-300/50">
+                  {musicPlaying ? "PLAYING" : "PAUSED"}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-0.5">
+              {RAAKA_PLAYLIST.map((track, index) => {
+                const active = index === musicIndex;
+
+                return (
+                  <button
+                    key={track.src}
+                    type="button"
+                    onClick={() => {
+                      setMusicIndex(index);
+                      setMusicOpen(false);
+                    }}
+                    className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+                      active
+                        ? "bg-orange-400/[.07] text-white"
+                        : "text-white/45 hover:bg-white/[.045] hover:text-white"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[10px] ${
+                        active
+                          ? "border-orange-300/35 text-orange-200"
+                          : "border-white/10 text-white/25"
+                      }`}
+                    >
+                      {active && musicPlaying ? "Ⅱ" : "♪"}
+                    </span>
+
+                    <span className="min-w-0 flex-1 truncate text-[9px] font-medium tracking-wide">
+                      {track.title}
+                    </span>
+
+                    <span
+                      className={`text-[10px] transition-transform ${
+                        active
+                          ? "text-orange-300"
+                          : "text-white/15 group-hover:translate-x-0.5 group-hover:text-white/45"
+                      }`}
+                    >
+                      →
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
