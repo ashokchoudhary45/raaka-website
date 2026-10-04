@@ -66,14 +66,14 @@ function CountUp({ to, label }: { to: number; label: string }) {
 const NAV_LINKS: { href: string; label: string; isNew?: boolean }[] = [
   { href: "#home", label: "Home" },
   { href: "#cast", label: "Cast & Crew" },
-  { href: "#posters", label: "Posters" },
+  { href: "/posters", label: "Posters" },
   { href: "#announcements", label: "Videos" },
   { href: "/timeline", label: "Timeline", isNew: true },
 ];
 
 const HERO_ACTIONS = [
   {
-    href: "#videos",
+    href: "/videos",
     eyebrow: "Trailers & More",
     title: "Watch Videos",
     accent: "orange",
