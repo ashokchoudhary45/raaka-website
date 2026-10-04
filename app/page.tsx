@@ -365,7 +365,7 @@ function Embers({ count = 14, rise = 150 }: { count?: number; rise?: number }) {
 
 function LogoShine({ src, alt = "RAAKA", imgClassName = "" }: { src: string; alt?: string; imgClassName?: string }) {
   return (
-    <span className="rx-logo-stage relative z-10 block">
+    <span className="rx-logo-stage relative block">
       <img src={src} alt={alt} className={`rx-logo-img block h-auto w-full object-contain ${imgClassName}`} />
       <span className="rx-logo-shine" style={{ "--mask": `url(${src})` } as React.CSSProperties} aria-hidden />
     </span>
@@ -394,23 +394,15 @@ function ActionArt({ kind }: { kind: string }) {
 
 function TimerUnit({ label, value, pct, glow }: { label: string; value: number; pct: number; glow?: boolean }) {
   return (
-    <div
-      className={`rx-timer relative overflow-hidden px-2 py-5 backdrop-blur-sm sm:border sm:px-4 sm:py-7 md:px-8 md:py-10 ${
-        glow ? "border-amber-100/20 bg-black/40" : "border-white/10 bg-black/35"
-      }`}
-    >
-      <p
-        className={`raaka-timer-number font-serif text-3xl font-black tracking-tight tabular-nums text-white sm:text-5xl md:text-8xl ${
-          glow ? "drop-shadow-[0_4px_20px_rgba(255,180,70,0.35)]" : "drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]"
-        }`}
-      >
+    <div className={`rx-timer ${glow ? "rx-timer-hot" : ""}`}>
+      <p className="rx-timer-number font-serif font-black tabular-nums text-white">
         <span key={value} className="rx-digit inline-block">{String(value).padStart(2, "0")}</span>
       </p>
-      <p className="mt-2 text-[8px] uppercase tracking-[0.3em] text-amber-100/65 sm:mt-3 sm:text-[9px] md:text-xs">{label}</p>
+      <p className="rx-timer-label">{label}</p>
       <span key={`t${value}`} className="rx-tick pointer-events-none absolute inset-0" />
-      <svg className="rx-timer-ring pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-        <rect x="0.5" y="0.5" width="99" height="99" rx="2" pathLength={100} vectorEffect="non-scaling-stroke" strokeDasharray={`${pct} 100`} style={pct === 0 ? { transition: "none" } : undefined} />
-      </svg>
+      <span className="rx-timer-bar" aria-hidden>
+        <i style={{ width: `${pct}%`, transition: pct === 0 ? "none" : undefined }} />
+      </span>
     </div>
   );
 }
@@ -1603,7 +1595,7 @@ img,video,iframe{max-width:100%}
 /* logos: breathing glow + shine that follows the PNG letters */
 .rx-logo-wrap{animation:rxLogoIn 1.5s cubic-bezier(.16,1,.3,1) .35s backwards}
 @keyframes rxLogoIn{from{opacity:0;transform:scale(.9);filter:blur(18px)}}
-.rx-logo-stage{animation:rxLogo 4.2s cubic-bezier(.45,.05,.25,1) infinite;will-change:transform,filter}
+.rx-logo-stage{z-index:1;animation:rxLogo 4.2s cubic-bezier(.45,.05,.25,1) infinite;will-change:transform,filter}
 .rx-logo-stage .rx-logo-img{animation:none!important}
 .rx-logo-shine{position:absolute;inset:0;pointer-events:none;-webkit-mask:var(--mask) center/contain no-repeat;mask:var(--mask) center/contain no-repeat;background:linear-gradient(105deg,transparent 38%,rgba(255,238,200,.95) 50%,transparent 62%);background-size:260% 100%;background-position:160% 0;mix-blend-mode:screen;animation:rxLogoShine 5.5s ease-in-out infinite 1.8s}
 @keyframes rxLogoShine{0%{background-position:160% 0}45%,100%{background-position:-60% 0}}
@@ -1652,6 +1644,39 @@ img,video,iframe{max-width:100%}
   .rx-action,.rx-action::before,.rx-action::after,.rx-action-iring,.rx-art i,.rx-logo-wrap,.rx-logo-stage,.rx-logo-shine,.rx-logo-halo,.rx-ember,.rx-cd-beam,.rx-digit,.rx-tick,.rx-play-ring,.rx-shimmer-text{animation:none!important}
   .rx-menu-item{opacity:1;transform:none}
 }
+
+
+/* ================================================================
+   COUNTDOWN v4 — self-contained (.rx-countdown). Logo and timer sit
+   in normal flow, no min-heights, no legacy selectors.
+================================================================ */
+.rx-cd-card{isolation:isolate;box-shadow:0 35px 110px rgba(0,0,0,.55)}
+.rx-cd-card::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;z-index:3;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 58%,rgba(255,177,55,.95) 66%,rgba(255,238,170,.85) 70%,transparent 78%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:rxAng 6s linear infinite}
+.rx-cd-photo{animation:rxCountdownPhoto 14s ease-in-out infinite alternate}
+.rx-cd-glow{animation:rxHalo 5s ease-in-out infinite}
+
+.rx-timer{position:relative;overflow:hidden;min-width:0;padding:1.1rem .25rem 1.25rem;border-radius:.85rem;border:1px solid rgba(255,255,255,.1);background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(0,0,0,.45) 60%);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:transform .45s cubic-bezier(.16,1,.3,1),border-color .4s,box-shadow .45s}
+.rx-timer::before{content:"";position:absolute;top:0;bottom:0;left:-100%;width:45%;background:linear-gradient(90deg,transparent,rgba(255,210,110,.16),transparent);transform:skewX(-18deg);animation:rxTimerSweep 4s ease-in-out infinite;pointer-events:none}
+.rx-timer:hover{transform:translateY(-4px);border-color:rgba(255,190,90,.45);box-shadow:0 18px 50px rgba(255,130,20,.18)}
+.rx-timer-hot{border-color:rgba(255,200,110,.3);background:linear-gradient(160deg,rgba(255,190,90,.12),rgba(0,0,0,.45) 60%)}
+.rx-timer-number{position:relative;z-index:1;font-size:clamp(1.55rem,8.6vw,2.6rem);line-height:1;letter-spacing:-.02em;filter:drop-shadow(0 4px 14px rgba(0,0,0,.8))}
+.rx-timer-hot .rx-timer-number{color:#ffe6b8;filter:drop-shadow(0 0 22px rgba(255,170,60,.45))}
+.rx-timer-label{position:relative;z-index:1;margin-top:.55rem;font-size:8px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,236,200,.62)}
+.rx-timer-bar{position:absolute;left:10%;right:10%;bottom:.55rem;height:2px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden}
+.rx-timer-bar i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#ff7a1a,#ffd58a);box-shadow:0 0 10px rgba(255,160,50,.8);transition:width 1s linear}
+@media (min-width:640px){
+  .rx-timer{padding:1.6rem .5rem 1.8rem;border-radius:1rem}
+  .rx-timer-number{font-size:clamp(3rem,7vw,4.2rem)}
+  .rx-timer-label{font-size:10px;letter-spacing:.3em;margin-top:.8rem}
+  .rx-timer-bar{bottom:.8rem}
+}
+@media (min-width:768px){
+  .rx-timer{padding:2.2rem .75rem 2.5rem}
+  .rx-timer-number{font-size:clamp(4rem,8vw,6.2rem)}
+  .rx-timer-label{font-size:11px}
+}
+@media (hover:none){.rx-timer:hover{transform:none}}
+@media (prefers-reduced-motion:reduce){.rx-cd-card::before,.rx-cd-photo,.rx-cd-glow,.rx-timer::before{animation:none!important}.rx-timer-bar i{transition:none}}
 
       `}
 </style>
@@ -2105,49 +2130,47 @@ img,video,iframe{max-width:100%}
         </section>
 
         {/* ============================== COUNTDOWN ============================== */}
-        <section id="countdown" className="raaka-countdown-section relative mx-auto max-w-7xl overflow-hidden px-5 pb-24 pt-2 sm:px-6 md:px-8">
-          <div className="relative min-h-[640px] overflow-hidden rounded-[2rem] border border-white/10 bg-black md:min-h-[780px]">
+        <section id="countdown" className="rx-countdown relative mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6 md:px-8 md:pb-24">
+          <div className="rx-cd-card relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-black md:rounded-[2rem]">
             <div className="absolute inset-0 overflow-hidden">
-              <Image src="/images/raakabg2.jpg" alt="Raaka" fill priority className="raaka-countdown-photo object-cover object-center" />
+              <Image src="/images/raakabg2.jpg" alt="" fill priority sizes="100vw" className="rx-cd-photo object-cover object-center" />
             </div>
             <div className="absolute inset-0 bg-black/55" />
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/35 to-black/75" />
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/90" />
-            <div className="raaka-countdown-glow pointer-events-none absolute left-1/2 top-[45%] h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-500/10 blur-[120px]" />
-            <Embers count={26} rise={560} />
+            <div className="rx-cd-glow pointer-events-none absolute left-1/2 top-[42%] h-[420px] w-[420px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-500/10 blur-[110px]" />
+            <Embers count={22} rise={480} />
             <div className="rx-cd-beam pointer-events-none absolute inset-y-0 left-0 w-1/3" />
 
-            <div className="relative z-10 flex min-h-[640px] flex-col items-center justify-center px-5 py-16 text-center md:min-h-[780px]">
-              <p className="mb-6 text-[10px] uppercase tracking-[0.55em] text-amber-100/70 md:mb-7 md:text-xs">The Countdown Begins</p>
+            <div className="rx-cd-content relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-4 py-14 text-center sm:px-8 md:py-24">
+              <p className="text-[10px] uppercase tracking-[0.5em] text-amber-100/70 md:text-xs">The Countdown Begins</p>
 
-              <div className="rx-logo-wrap relative w-[240px] md:w-[500px]">
+              <div className="rx-logo-wrap relative mt-6 w-[min(70vw,250px)] md:mt-8 md:w-[480px]">
                 <div className="rx-logo-halo pointer-events-none absolute -inset-x-8 -inset-y-8 rounded-full" />
                 <LogoShine src="/images/logo2.png" imgClassName="drop-shadow-[0_0_25px_rgba(255,180,70,0.25)]" />
               </div>
 
-              <div className="mt-6 flex items-center justify-center gap-4 md:mt-7">
-                <span className="h-px w-10 bg-amber-100/40 md:w-20" />
-                <p className="rx-shimmer-text text-sm uppercase tracking-[0.35em] text-amber-50/90 md:text-lg">coming soon</p>
-                <span className="h-px w-10 bg-amber-100/40 md:w-20" />
+              <div className="mt-5 flex items-center justify-center gap-3 md:mt-7 md:gap-4">
+                <span className="h-px w-8 bg-amber-100/40 md:w-20" />
+                <p className="rx-shimmer-text text-xs uppercase tracking-[0.32em] text-amber-50/90 md:text-lg md:tracking-[0.35em]">coming soon</p>
+                <span className="h-px w-8 bg-amber-100/40 md:w-20" />
               </div>
 
-              <div className="mt-12 w-full max-w-5xl md:mt-20">
-                <div className="grid grid-cols-4 gap-2 sm:gap-0">
-                  {[
-                    { label: "Days", value: timeLeft.days, pct: Math.min(timeLeft.days / 365, 1) * 100 },
-                    { label: "Hours", value: timeLeft.hours, pct: (timeLeft.hours / 24) * 100 },
-                    { label: "Minutes", value: timeLeft.minutes, pct: (timeLeft.minutes / 60) * 100 },
-                    { label: "Seconds", value: timeLeft.seconds, pct: (timeLeft.seconds / 60) * 100, glow: true },
-                  ].map((unit) => (
-                    <TimerUnit key={unit.label} {...unit} />
-                  ))}
-                </div>
+              <div className="rx-timer-grid mt-10 grid w-full grid-cols-4 gap-2 sm:gap-3 md:mt-14 md:gap-4">
+                {[
+                  { label: "Days", value: timeLeft.days, pct: Math.min(timeLeft.days / 365, 1) * 100 },
+                  { label: "Hours", value: timeLeft.hours, pct: (timeLeft.hours / 24) * 100 },
+                  { label: "Minutes", value: timeLeft.minutes, pct: (timeLeft.minutes / 60) * 100 },
+                  { label: "Seconds", value: timeLeft.seconds, pct: (timeLeft.seconds / 60) * 100, glow: true },
+                ].map((unit) => (
+                  <TimerUnit key={unit.label} {...unit} />
+                ))}
               </div>
 
-              <div className="mt-12 flex items-center justify-center gap-4 md:mt-20">
-                <span className="h-px w-8 bg-amber-100/30 md:w-16" />
-                <p className="text-[10px] uppercase tracking-[0.45em] text-amber-50/80 md:text-sm">The Wait Is Almost Over</p>
-                <span className="h-px w-8 bg-amber-100/30 md:w-16" />
+              <div className="mt-10 flex items-center justify-center gap-3 md:mt-14 md:gap-4">
+                <span className="h-px w-6 bg-amber-100/30 md:w-16" />
+                <p className="text-[10px] uppercase tracking-[0.4em] text-amber-50/80 md:text-sm md:tracking-[0.45em]">The Wait Is Almost Over</p>
+                <span className="h-px w-6 bg-amber-100/30 md:w-16" />
               </div>
             </div>
           </div>
