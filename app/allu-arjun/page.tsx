@@ -1,1473 +1,503 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as RPE } from "react";
 import Image from "next/image";
 
+const cssVars = (o: Record<string, string | number>) => o as unknown as CSSProperties;
+
+/* pointer handler: feeds tilt + spotlight CSS vars on any card */
+const pt = (e: RPE<HTMLElement>) => {
+  const el = e.currentTarget, r = el.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+  el.style.setProperty("--rx", ((0.5 - y) * 10).toFixed(2) + "deg");
+  el.style.setProperty("--ry", ((x - 0.5) * 12).toFixed(2) + "deg");
+  el.style.setProperty("--mx", x * 100 + "%");
+  el.style.setProperty("--my", y * 100 + "%");
+};
+const unpt = (e: RPE<HTMLElement>) => {
+  e.currentTarget.style.setProperty("--rx", "0deg");
+  e.currentTarget.style.setProperty("--ry", "0deg");
+};
+
+const NAV: [string, string][] = [["home", "Home"], ["about", "About"], ["filmography", "Filmography"], ["awards", "Awards"], ["birthday", "Birthday"], ["social", "Connect"]];
+
+const MOVIES: [string, string, string][] = [
+  ["2003", "Gangotri", "movie1a.jpg"], ["2004", "Arya", "movie2.jpg"], ["2005", "Bunny", "movie3.jpg"], ["2006", "Happy", "movie41.jpg"],
+  ["2007", "Desamuduru", "movie5.jpg"], ["2008", "Parugu", "movie6.jpg"], ["2009", "Arya 2", "movie7.jpg"], ["2010", "Varudu", "movie8.jpg"],
+  ["2010", "Vedam", "movie91.jpg"], ["2011", "Badrinath", "movie10.jpg"], ["2012", "Julayi", "movie111.jpg"], ["2013", "Iddarammayilatho", "movie12.jpg"],
+  ["2014", "Race Gurram", "movie13.jpg"], ["2015", "S/O Satyamurthy", "movie14.jpg"], ["2015", "Rudhramadevi", "movie15.jpg"], ["2016", "Sarrainodu", "movie16.jpg"],
+  ["2017", "Duvvada Jagannadham", "movie17.jpg"], ["2018", "Naa Peru Surya, Naa Illu India", "movie18a.jpg"], ["2020", "Ala Vaikunthapurramuloo", "movie19.jpg"],
+  ["2021", "Pushpa: The Rise", "movie20.jpg"], ["2024", "Pushpa 2: The Rule", "movie21.jpg"], ["Coming Soon", "Raaka", "movie22.jpg"], ["Coming Soon", "AA23", "movie23.jpg"],
+];
+const CAMEOS: [string, string, string][] = [["2007", "Shankar Dada Zindabad", "cameo1.jpg"], ["2014", "Yevadu", "cameo3.jpg"]];
+const CHILD: [string, string][] = [["1985", "Vijetha"], ["1986", "Swathi Muthyam"], ["2001", "Daddy"]];
+const FACTS: [string, string][] = [["Profession", "Actor & Performer"], ["Industry", "Indian Cinema"], ["Debut", "Gangotri · 2003"], ["Known for", "Film · Dance · Style"]];
+
+const AWARDS: [string, string[]][] = [
+  ["Gangotri", ["CineMAA Award – Best Male Debut", "Nandi Award – Special Jury Award", "Santosham Film Award – Best Male Debut"]],
+  ["Arya", ["CineMAA Award – Best Actor (Jury)", "Nandi Award – Special Jury Award", "Santosham Film Award – Best Young Performer"]],
+  ["Bunny", ["Santosham Film Award – Best Young Performer"]],
+  ["Desamuduru", ["CineMAA Award – Best Actor (Jury)"]],
+  ["Parugu", ["Filmfare Award South – Best Actor (Telugu)", "CineMAA Award – Best Actor", "Nandi Award – Special Jury Award", "South Scope Lifestyle Award – Best Actor"]],
+  ["Arya 2", ["South Scope Lifestyle Award – Best Stylish Actor"]],
+  ["Vedam", ["Filmfare Award South – Best Actor (Telugu)", "Nandi Award – Special Jury Award", "South Scope Lifestyle Award – Best Actor"]],
+  ["Race Gurram", ["Filmfare Award South – Best Actor (Telugu)", "CineMAA Award – Best Actor", "Mirchi Music Award South – Youth Icon of the Year", "TSR–TV9 National Film Award – Best Hero", "SIIMA – Stylish Youth Icon of South Indian Cinema (Male)"]],
+  ["Rudhramadevi", ["Filmfare Award South – Best Supporting Actor (Telugu)", "CineMAA Award – Best Actor (Jury)", "Nandi Award – Best Character Actor", "IIFA Utsavam – Performance in a Supporting Role (Male)", "SIIMA – Best Actor (Critics – Telugu)", "TSR–TV9 National Film Award – Best Outstanding Performance"]],
+  ["S/O Satyamurthy", ["TSR–TV9 National Film Award – Best Hero"]],
+  ["Sarrainodu", ["Filmfare Critics Award South – Best Actor (Telugu)", "Sakshi Excellence Award – Most Popular Actor of the Year (Male)"]],
+  ["DJ: Duvvada Jagannadham", ["Zee Cine Awards Telugu – Favourite Actor"]],
+  ["Ala Vaikunthapurramuloo", ["Sakshi Excellence Award – Most Popular Actor of the Year (Male)", "SIIMA – Best Actor (Telugu)"]],
+  ["Pushpa: The Rise", ["National Film Award – Best Actor", "Filmfare Award South – Best Actor (Telugu)", "SIIMA – Best Actor (Telugu)", "Santosham Film Award – Best Actor", "GAMA Award – Best Actor", "Sakshi Excellence Award – Most Popular Actor of the Year (Male)"]],
+  ["Pushpa 2: The Rule", ["Filmfare Award South – Best Actor (Telugu)", "SIIMA – Best Actor (Telugu)", "Gaddar Telangana Film Award – Best Actor", "Sakshi Excellence Award – Most Popular Actor of the Year (Male)"]],
+];
+
+const LATEST: [string, string, string][] = [["2024", "Pushpa 2: The Rule", "movie21.jpg"], ["2021", "Pushpa: The Rise", "movie20.jpg"], ["2020", "Ala Vaikunthapurramuloo", "movie19.jpg"], ["2016", "Sarrainodu", "movie16.jpg"]];
+const SOCIAL: [string, string, string][] = [["Instagram", "Follow", "https://www.instagram.com/alluarjunonline/"], ["Facebook", "Follow", "https://www.facebook.com/AlluArjun"], ["X", "Follow", "https://x.com/alluarjun"], ["YouTube", "Watch", "https://www.youtube.com/@alluarjun"]];
+
+const fmt = (n: number) => String(n).padStart(2, "0");
+const nextBday = (now: Date) => {
+  const d = new Date(`${now.getFullYear()}-04-08T00:00:00+05:30`);
+  return d > now ? d : new Date(`${now.getFullYear() + 1}-04-08T00:00:00+05:30`);
+};
+
+function Head({ k, lines, text }: { k: string; lines: string[]; text?: string }) {
+  return (
+    <div className="head">
+      <p className="kk" data-r>{k}</p>
+      <h2 className="h2">
+        {lines.map((l, i) => (
+          <span key={i} className={"ln" + (i > 0 ? " dim" : "")} data-r><span style={cssVars({ "--l": i })}>{l}</span></span>
+        ))}
+      </h2>
+      {text && <p className="lead" data-r>{text}</p>}
+    </div>
+  );
+}
+
+function Poster({ src, title, chip, sub, i, soon }: { src: string; title: string; chip: string; sub?: string; i: number; soon?: boolean }) {
+  return (
+    <figure className={"poster" + (soon ? " soon" : "")} data-r style={cssVars({ "--i": i % 4 })} onPointerMove={pt} onPointerLeave={unpt}>
+      <div className="pc">
+        <Image src={`/images/${src}`} alt={title} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+        <span className="chip">{chip}</span><span className="poster-sheen" aria-hidden="true" /><span className="poster-no">{String(i + 1).padStart(2, "0")}</span>
+      </div>
+      <figcaption className="cap">{sub && <small>{sub}</small>}<b>{title}</b></figcaption>
+    </figure>
+  );
+}
+
+function CountUp({ to }: { to: number }) {
+  const r = useRef<HTMLSpanElement>(null);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const el = r.current;
+    if (!el) return;
+    let raf = 0;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      const t0 = performance.now();
+      const tick = (t: number) => {
+        const p = Math.min(1, (t - t0) / 1600);
+        setN(Math.round(to * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    });
+    io.observe(el);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, [to]);
+  return <span ref={r}>{n}</span>;
+}
+
+const Word = ({ w, cls, o = 0 }: { w: string; cls: string; o?: number }) => (
+  <span className="block">
+    {w.split("").map((c, i) => (
+      <span key={i} aria-hidden="true" className={"letter " + cls} style={cssVars({ "--i": i + o })}>{c}</span>
+    ))}
+  </span>
+);
+
 export default function AlluArjunPage() {
-  const [birthdayTime, setBirthdayTime] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
+  const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState("home");
+  const [sel, setSel] = useState(MOVIES.findIndex((m) => m[1] === "Pushpa 2: The Rule"));
+  const heroRef = useRef<HTMLElement>(null);
+  const progRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const updateBirthdayCountdown = () => {
+    const tick = () => {
       const now = new Date();
-
-      const birthday = new Date(
-        "2027-04-08T00:00:00+05:30"
-      );
-
-      const difference = Math.max(
-        0,
-        birthday.getTime() - now.getTime()
-      );
-
-      setBirthdayTime({
-        days: Math.floor(
-          difference / (1000 * 60 * 60 * 24)
-        ),
-        hours: Math.floor(
-          (difference / (1000 * 60 * 60)) % 24
-        ),
-        minutes: Math.floor(
-          (difference / (1000 * 60)) % 60
-        ),
-        seconds: Math.floor(
-          (difference / 1000) % 60
-        ),
-      });
+      const diff = Math.max(0, nextBday(now).getTime() - now.getTime());
+      setTime({ days: Math.floor(diff / 864e5), hours: Math.floor((diff / 36e5) % 24), minutes: Math.floor((diff / 6e4) % 60), seconds: Math.floor((diff / 1e3) % 60) });
     };
-
-    updateBirthdayCountdown();
-
-    const timer = setInterval(
-      updateBirthdayCountdown,
-      1000
-    );
-
-    return () => clearInterval(timer);
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
   }, []);
 
-  const movies = [
-    { year: "2003", title: "Gangotri", image: "movie1a.jpg" },
-    { year: "2004", title: "Arya", image: "movie2.jpg" },
-    { year: "2005", title: "Bunny", image: "movie3.jpg" },
-    { year: "2006", title: "Happy", image: "movie41.jpg" },
-    { year: "2007", title: "Desamuduru", image: "movie5.jpg" },
-    { year: "2008", title: "Parugu", image: "movie6.jpg" },
-    { year: "2009", title: "Arya 2", image: "movie7.jpg" },
-    { year: "2010", title: "Varudu", image: "movie8.jpg" },
-    { year: "2010", title: "Vedam", image: "movie91.jpg" },
-    { year: "2011", title: "Badrinath", image: "movie10.jpg" },
-    { year: "2012", title: "Julayi", image: "movie111.jpg" },
-    {
-      year: "2013",
-      title: "Iddarammayilatho",
-      image: "movie12.jpg",
-    },
-    {
-      year: "2014",
-      title: "Race Gurram",
-      image: "movie13.jpg",
-    },
-    {
-      year: "2015",
-      title: "S/O Satyamurthy",
-      image: "movie14.jpg",
-    },
-    {
-      year: "2015",
-      title: "Rudhramadevi",
-      image: "movie15.jpg",
-    },
-    {
-      year: "2016",
-      title: "Sarrainodu",
-      image: "movie16.jpg",
-    },
-    {
-      year: "2017",
-      title: "Duvvada Jagannadham",
-      image: "movie17.jpg",
-    },
-    {
-      year: "2018",
-      title: "Naa Peru Surya, Naa Illu India",
-      image: "movie18a.jpg",
-    },
-    {
-      year: "2020",
-      title: "Ala Vaikunthapurramuloo",
-      image: "movie19.jpg",
-    },
-    {
-      year: "2021",
-      title: "Pushpa: The Rise",
-      image: "movie20.jpg",
-    },
-    {
-      year: "2024",
-      title: "Pushpa 2: The Rule",
-      image: "movie21.jpg",
-    },
-    {
-      year: "Coming Soon",
-      title: "Raaka",
-      image: "movie22.jpg",
-    },
-    {
-      year: "Coming Soon",
-      title: "AA23",
-      image: "movie23.jpg",
-    },
-  ];
+  useEffect(() => {
+    const on = () => {
+      const h = document.documentElement, m = h.scrollHeight - h.clientHeight;
+      progRef.current?.style.setProperty("transform", "scaleX(" + (m > 0 ? h.scrollTop / m : 0) + ")");
+      heroRef.current?.style.setProperty("--sy", Math.min(h.scrollTop, 900) + "px");
+      setScrolled(h.scrollTop > 40);
+    };
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+    document.querySelectorAll("[data-r]").forEach((el) => io.observe(el));
+    const so = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && setActive(e.target.id)), { rootMargin: "-45% 0px -50% 0px" });
+    document.querySelectorAll("section[id]").forEach((el) => so.observe(el));
+    return () => { window.removeEventListener("scroll", on); io.disconnect(); so.disconnect(); };
+  }, []);
 
-  const cameos = [
-    {
-      year: "2007",
-      title: "Shankar Dada Zindabad",
-      image: "cameo1.jpg",
-    },
-    {
-      year: "2014",
-      title: "Yevadu",
-      image: "cameo3.jpg",
-    },
-  ];
-
-  const childArtist = [
-    {
-      year: "1985",
-      title: "Vijetha",
-    },
-    {
-      year: "1986",
-      title: "Swathi Muthyam",
-    },
-    {
-      year: "2001",
-      title: "Daddy",
-    },
-  ];
+  const navLinks = (cls: string) => NAV.map(([id, l]) => (
+    <a key={id} href={"#" + id} className={"nl " + cls} aria-current={active === id ? "true" : undefined}>{l}</a>
+  ));
+  const m = MOVIES[sel];
+  const order = MOVIES.map((_, i) => i).reverse();
 
   return (
-    <main className="allu-site relative min-h-screen bg-black text-white overflow-hidden">
+    <main className="allu-site relative min-h-screen overflow-x-hidden">
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <div className="lb lb-top" aria-hidden="true" />
+      <div className="lb lb-bot" aria-hidden="true" />
+      <div className="progress" ref={progRef} aria-hidden="true" />
+      <div className="grain" aria-hidden="true" />
 
-      {/* FULL WEBSITE ALLU ARJUN BACKGROUND */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-
-        <Image
-          src="/images/raakabg2.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
-
-        <div className="absolute inset-0 bg-black/60" />
-
-        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/45 to-black/90" />
-
-      </div>
-
-      {/* PAGE CONTENT */}
       <div className="relative z-10">
-
-        {/* PREMIUM NAVIGATION */}
-        <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-8 pt-4">
+        <header className={"nav fixed inset-x-0 top-0 z-50 px-4 md:px-8" + (scrolled ? " s" : "")}>
           <div className="mx-auto max-w-7xl">
-            <div className="flex h-16 items-center justify-between border-b border-white/15 px-1">
-              <a href="#home" className="group flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 text-[10px] font-bold tracking-[0.15em] transition group-hover:bg-white group-hover:text-black">
-                  AA
-                </span>
-                <span className="hidden sm:block text-[9px] uppercase tracking-[0.35em] text-white/55">
-                  Allu Arjun
-                </span>
-              </a>
-
-              <nav className="hidden lg:flex items-center gap-8">
-                <a href="#home" className="premium-nav">Home</a>
-                <a href="#about" className="premium-nav">About</a>
-                <a href="#filmography" className="premium-nav">Filmography</a>
-                <a href="#awards" className="premium-nav">Awards</a>
-                <a href="#birthday" className="premium-nav">Birthday</a>
-                <a href="#gallery" className="premium-nav">Gallery</a>
-                <a href="#social" className="premium-nav">Connect</a>
-              </nav>
-
-              <a
-                href="#contact"
-                className="rounded-full border border-white/25 px-4 md:px-5 py-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.22em] text-white transition hover:bg-white hover:text-black"
-              >
-                Contact
-              </a>
+            <div className="flex h-16 items-center justify-between">
+              <a href="#home" className="group flex items-center gap-3"><span className="logo fd">AA</span><span className="hidden text-sm sm:block" style={{ color: "var(--smoke)" }}>Allu Arjun</span></a>
+              <nav className="hidden items-center gap-8 lg:flex">{navLinks("")}</nav>
+              <a href="#contact" className="btn btn-g !px-5 !py-2.5 !text-sm">Contact</a>
             </div>
+            <nav className="no-sb flex gap-6 overflow-x-auto pb-3 lg:hidden">{navLinks("shrink-0")}</nav>
           </div>
         </header>
 
         {/* HERO */}
-        <section id="home" className="relative min-h-screen w-full overflow-hidden">
-
-          {/* MOBILE / DESKTOP HERO IMAGE */}
-          <div className="absolute inset-0 w-full h-full">
-
-            <Image
-              src="/images/actor1b.jpg"
-              alt="Allu Arjun"
-              fill
-              priority
-              sizes="100vw"
-              className="allu-hero-image object-cover object-center scale-[1.03] motion-safe:animate-[heroZoom_14s_ease-out_infinite_alternate]"
-            />
-
+        <section id="home" ref={heroRef} className="relative min-h-screen w-full overflow-hidden">
+          <div className="hero-bg absolute inset-0">
+            <Image src="/images/actor1b.jpg" alt="Allu Arjun" fill priority sizes="100vw" className="hero-img object-cover object-center" />
           </div>
-
-          {/* DARK OVERLAY */}
-          <div className="absolute inset-0 bg-black/25" />
-
-          {/* LEFT GRADIENT */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/45 to-transparent" />
-
-          {/* BOTTOM GRADIENT */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
-
-          {/* HERO CONTENT */}
-          <div className="relative z-10 min-h-screen flex items-end">
-
-            <div className="max-w-7xl mx-auto w-full px-6 md:px-10 pb-12 md:pb-20">
-
-              <div className="mb-5 flex items-center gap-3">
-                <span className="h-px w-10 bg-white/50" />
-                <p className="text-[10px] md:text-xs uppercase tracking-[0.42em] text-white/65">
-                  Icon Star
-                </p>
-              </div>
-
-              <h1 className="max-w-5xl text-6xl sm:text-7xl md:text-9xl lg:text-[10rem] font-black tracking-[-0.06em] leading-[0.78]">
-                ALLU<br />
-                <span className="text-white/90">ARJUN</span>
+          <div className="absolute inset-0" style={{ background: "linear-gradient(90deg,rgba(6,5,6,.92),rgba(6,5,6,.3) 55%,rgba(6,5,6,.1)),linear-gradient(0deg,#060506,rgba(6,5,6,.15) 55%)" }} />
+          <div className="leak" aria-hidden="true" /><div className="hero-vignette" aria-hidden="true" /><div className="hero-orbit hero-orbit-a" aria-hidden="true" /><div className="hero-orbit hero-orbit-b" aria-hidden="true" />
+          <p className="hero-side" aria-hidden="true">National Film Award · Best Actor · 2023</p><div className="hero-meta" aria-hidden="true"><span>01</span><i></i><span>THE ICON STAR</span></div>
+          <div className="relative z-10 flex min-h-screen items-end">
+            <div className="mx-auto w-full max-w-7xl px-6 pb-14 md:px-10 md:pb-20">
+              <p className="rise mb-6 flex items-center gap-4 fd" style={cssVars({ "--d": "0s", color: "var(--brass)", fontStyle: "italic", fontSize: "1.25rem" })}>
+                <span className="h-px w-12" style={{ background: "var(--brass)" }} />The Icon Star
+              </p>
+              <h1 className="hero-title fd" aria-label="Allu Arjun">
+                <Word w="Allu" cls="l-ivory" />
+                <span className="block hero-l2"><Word w="Arjun" cls="l-gold" o={4} /></span>
               </h1>
-
-              <p className="mt-7 max-w-xl text-sm md:text-base leading-7 text-white/65">
-                A cinematic journey of style, performance and a career that
-                continues to shape Indian popular culture.
-              </p>
-
-              <div className="mt-7 md:mt-8 flex flex-col sm:flex-row gap-3 md:gap-4">
-
-                <a
-                  href="#filmography"
-                  className="w-fit px-7 py-3.5 rounded-full bg-white text-black text-sm md:text-base font-semibold hover:bg-zinc-200 transition"
-                >
-                  Filmography
-                </a>
-                <a
-  href="/allu-arjun/awards"
-  className="group inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-6 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/70 backdrop-blur-md transition hover:border-white/30 hover:bg-white/10 hover:text-white"
->
-  🏆 Awards
-</a>
-
-                <a
-                  href="#birthday"
-                  className="w-fit px-7 py-3.5 rounded-full border border-white/30 bg-black/30 backdrop-blur-sm text-sm md:text-base font-semibold hover:bg-white/10 transition"
-                >
-                  Birthday Countdown
-                </a>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </section>
-
-
-
-        {/* ABOUT / PROFILE */}
-        <section id="about" className="premium-section border-t border-white/10 px-6 md:px-10 py-24 md:py-32">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-14 lg:grid-cols-[1fr_1.15fr] items-start">
-              <div>
-                <p className="premium-kicker">Profile</p>
-                <h2 className="mt-5 text-5xl md:text-7xl font-black tracking-[-0.05em] leading-[0.86]">
-                  A career<br />
-                  <span className="text-white/35">in motion.</span>
-                </h2>
-              </div>
-
-              <div>
-                <p className="max-w-2xl text-base md:text-xl leading-8 text-white/65">
-                  Allu Arjun's screen journey spans multiple eras of Telugu cinema,
-                  with performances, style and cultural moments that have built a
-                  distinctive identity across Indian popular culture.
-                </p>
-
-                <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10">
-                  <div className="bg-black/70 p-6 md:p-8">
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-white/35">Profession</p>
-                    <p className="mt-3 text-lg font-semibold">Actor & Performer</p>
-                  </div>
-                  <div className="bg-black/70 p-6 md:p-8">
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-white/35">Industry</p>
-                    <p className="mt-3 text-lg font-semibold">Indian Cinema</p>
-                  </div>
-                  <div className="bg-black/70 p-6 md:p-8">
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-white/35">Debut</p>
-                    <p className="mt-3 text-lg font-semibold">Gangotri · 2003</p>
-                  </div>
-                  <div className="bg-black/70 p-6 md:p-8">
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-white/35">Known For</p>
-                    <p className="mt-3 text-lg font-semibold">Film · Dance · Style</p>
-                  </div>
-                </div>
+              <div className="rise mt-9 flex flex-col gap-3 sm:flex-row md:gap-4" style={cssVars({ "--d": "1.3s" })}>
+                <a href="#filmography" className="btn btn-s">Enter the filmography</a>
+                <a href="/allu-arjun/awards" className="btn btn-g">Awards</a>
+                <a href="#birthday" className="btn btn-o">Birthday countdown</a>
               </div>
             </div>
           </div>
+          <div className="scue" aria-hidden="true"><span>Scroll</span><i /></div>
         </section>
 
-        {/* EDITORIAL INTRO */}
-        <section className="relative border-t border-white/10 bg-black/70 px-6 md:px-10 py-20 md:py-28">
-          <div className="mx-auto grid max-w-7xl gap-12 md:grid-cols-[1.2fr_0.8fr] items-end">
+        <div className="mq" aria-hidden="true">
+          <div className="mq-t fd">{[...MOVIES, ...MOVIES].map(([, t], i) => (<span key={i}>{t}<em>◆</em></span>))}</div>
+        </div>
+
+        {/* PROFILE */}
+        <section id="about" className="sec">
+          <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[.9fr_1.1fr]">
+            <figure className="profile-img" data-r>
+              <Image src="/images/movie21.jpg" alt="Pushpa 2: The Rule" fill sizes="(max-width:1024px) 90vw, 40vw" className="object-cover" />
+            </figure>
             <div>
-              <p className="premium-kicker">The Icon</p>
-              <h2 className="mt-4 max-w-4xl text-4xl md:text-6xl font-semibold tracking-[-0.035em] leading-[0.95]">
-                More than a screen presence.
-                <br />
-                <span className="text-white/45">A visual identity.</span>
-              </h2>
-            </div>
-            <div className="border-l border-white/10 pl-6 md:pl-8">
-              <p className="text-sm md:text-base leading-7 text-white/55">
-                Explore the work, milestones and moments that define Allu Arjun —
-                presented through a modern, editorial-style digital experience.
-              </p>
+              <Head k="Profile" lines={["A career", "in motion."]} />
+              <p className="lead big" data-r>Allu Arjun&apos;s screen journey spans multiple eras of Telugu cinema, with performances, style and cultural moments that have built a distinctive identity across Indian popular culture.</p>
+              <dl className="facts">
+                {FACTS.map(([l, v], i) => (<div key={l} data-r style={cssVars({ "--i": i })}><dt>{l}</dt><dd className="fd">{v}</dd></div>))}
+              </dl>
             </div>
           </div>
         </section>
 
-        {/* FILMOGRAPHY */}
-        <section
-          id="filmography"
-          data-design-section="filmography"
-          className="premium-section px-6 md:px-10 py-24 md:py-32 border-t border-white/10"
-        >
-
-          <div className="max-w-6xl mx-auto">
-
-            <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
-              The Journey
-            </p>
-
-            <h2 className="text-4xl md:text-5xl font-bold">
-              Filmography
-            </h2>
-
-            <p className="mt-5 max-w-2xl text-zinc-500 leading-7">
-              A look through Allu Arjun&apos;s journey on the big screen,
-              from his debut to his upcoming projects.
-            </p>
-
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
-
-              {movies.map((movie) => (
-
-                <div
-                  key={`${movie.year}-${movie.title}`}
-                  className="group"
-                >
-
-                  <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
-
-                    <Image
-                      src={`/images/${movie.image}`}
-                      alt={movie.title}
-                      fill
-                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-
-                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
-
-                    <div className="absolute top-3 left-3 rounded-full border border-white/20 bg-black/70 backdrop-blur-md px-3 py-1">
-
-                      <span className="text-[9px] uppercase tracking-[0.2em] text-white/80">
-                        {movie.year}
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                  <h3 className="mt-4 text-base md:text-lg font-semibold leading-tight group-hover:text-amber-100 transition">
-                    {movie.title}
-                  </h3>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          </div>
-
-        </section>
-
-
-        {/* CAMEO / GUEST APPEARANCES */}
-        <section className="premium-section allu-special-section px-6 md:px-10 py-24 md:py-32 border-t border-white/10">
-
-          <div className="max-w-6xl mx-auto">
-
-            <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
-              Special Appearances
-            </p>
-
-            <h2 className="text-4xl md:text-5xl font-bold">
-              Cameo & Guest Appearances
-            </h2>
-
-            <p className="mt-5 max-w-2xl text-zinc-500 leading-7">
-              Special appearances and cameo roles across Allu Arjun&apos;s career.
-            </p>
-
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6">
-
-              {cameos.map((movie) => (
-
-                <div
-                  key={movie.title}
-                  className="group"
-                >
-
-                  <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-zinc-900 border border-white/10">
-
-                    <Image
-                      src={`/images/${movie.image}`}
-                      alt={movie.title}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-
-                    <div className="absolute top-3 left-3 rounded-full border border-white/20 bg-black/70 backdrop-blur-md px-3 py-1">
-
-                      <span className="text-[9px] uppercase tracking-[0.2em] text-white/70">
-                        Cameo
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                  <p className="mt-4 text-xs uppercase tracking-[0.25em] text-zinc-500">
-                    {movie.year}
-                  </p>
-
-                  <h3 className="mt-2 text-lg md:text-xl font-semibold leading-tight">
-                    {movie.title}
-                  </h3>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          </div>
-
-        </section>
-
-
-        {/* CHILD ARTIST */}
-        <section className="premium-section allu-special-section px-6 md:px-10 py-24 md:py-32 border-t border-white/10">
-
-          <div className="max-w-6xl mx-auto">
-
-            <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
-              Early Appearance
-            </p>
-
-            <h2 className="text-4xl md:text-5xl font-bold">
-              As Child Artist
-            </h2>
-
-            <p className="mt-5 max-w-2xl text-zinc-500 leading-7">
-              Early screen appearances from Allu Arjun&apos;s childhood.
-            </p>
-
-            <div className="mt-12 space-y-3">
-
-              {childArtist.map((movie) => (
-
-                <div
-                  key={movie.title}
-                  className="group flex items-center justify-between gap-6 border-b border-white/10 py-5 hover:border-white/25 transition"
-                >
-
-                  <div className="flex items-center gap-6">
-
-                    <span className="text-sm md:text-base font-medium text-zinc-500 w-16">
-                      {movie.year}
-                    </span>
-
-                    <h3 className="text-lg md:text-2xl font-semibold group-hover:text-amber-100 transition">
-                      {movie.title}
-                    </h3>
-
-                  </div>
-
-                  <span className="text-[9px] md:text-xs uppercase tracking-[0.25em] text-zinc-600">
-                    Child Artist
-                  </span>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          </div>
-
-        </section>
-
-
-        {/* BIRTHDAY COUNTDOWN */}
-        <section
-          id="birthday"
-          className="relative overflow-hidden border-t border-white/10 bg-black px-6 md:px-10 py-24 md:py-32"
-        >
+        {/* FILMOGRAPHY — the reel */}
+        <section id="filmography" className="sec">
           <div className="mx-auto max-w-7xl">
-            <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] items-end">
-              <div>
-                <p className="premium-kicker">8 April · Birthday</p>
-                <h2 className="mt-5 text-5xl md:text-7xl font-black tracking-[-0.055em] leading-[0.86]">
-                  Birthday
-                  <br />
-                  <span className="text-white/30">Countdown.</span>
-                </h2>
-                <p className="mt-6 max-w-md text-sm md:text-base leading-7 text-white/45">
-                  Counting down to Allu Arjun's next birthday.
-                </p>
+            <Head k="The Journey" lines={["Twenty years,", "one reel."]} text="From the debut to what comes next. Choose a film to bring its poster to the screen." />
+            <div className="reel-intro"><span>FILM ARCHIVE</span><i></i><span>2003 — PRESENT</span></div><div className="reel">
+              <div className="reel-view" data-r>
+                <div className="reel-frame" key={m[1]}>
+                  <Image src={`/images/${m[2]}`} alt={m[1]} fill sizes="(max-width:1024px) 90vw, 40vw" className="object-cover" />
+                </div>
+                <p className="reel-y">{m[0]}</p>
+                <p className="reel-t fd">{m[1]}</p>
               </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-px border border-white/10 bg-white/10 overflow-hidden">
-                {[
-                  ["Days", birthdayTime.days],
-                  ["Hours", birthdayTime.hours],
-                  ["Minutes", birthdayTime.minutes],
-                  ["Seconds", birthdayTime.seconds],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="bg-white/[0.025] px-5 py-7 md:px-7 md:py-9"
-                  >
-                    <p className="text-4xl md:text-6xl font-black tracking-[-0.05em] leading-none tabular-nums">
-                      {String(value).padStart(2, "0")}
-                    </p>
-                    <p className="mt-4 text-[9px] uppercase tracking-[0.28em] text-white/30">
-                      {label}
-                    </p>
-                  </div>
+              <ol className="reel-list no-sb" data-r>
+                {order.map((i) => (
+                  <li key={`${MOVIES[i][0]}-${MOVIES[i][1]}`}>
+                    <button type="button" className={(i === sel ? "on " : "") + (MOVIES[i][0] === "Coming Soon" ? "soon" : "")} onMouseEnter={() => setSel(i)} onFocus={() => setSel(i)} onClick={() => setSel(i)}>
+                      <span className="tnum">{MOVIES[i][0]}</span><b className="fd">{MOVIES[i][1]}</b>
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ol>
             </div>
           </div>
         </section>
 
-<section id="awards" className="awards-premium border-t border-white/10 px-6 md:px-10 py-24 md:py-32">
+        {/* LATEST */}
+        <section id="latest" className="sec">
           <div className="mx-auto max-w-7xl">
-            <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] items-end">
-              <div>
-                <p className="premium-kicker">Achievements</p>
-                <h2 className="mt-5 text-5xl md:text-7xl font-black tracking-[-0.055em] leading-[0.86]">
-                  Awards<br />
-                  <span className="text-white/30">& Recognition.</span>
-                </h2>
-              </div>
-
-              <div className="lg:pb-2">
-                <p className="max-w-2xl text-sm md:text-base leading-7 text-white/45">
-                  A film-by-film archive of major awards and recognitions associated
-                  with Allu Arjun's career.
-                </p>
-
-                <div className="mt-8 flex gap-10">
-                  <div>
-                    <p className="text-3xl md:text-4xl font-black">15</p>
-                    <p className="mt-1 text-[9px] uppercase tracking-[0.25em] text-white/30">Featured Films</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl md:text-4xl font-black">2023</p>
-                    <p className="mt-1 text-[9px] uppercase tracking-[0.25em] text-white/30">National Film Award</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-16 grid md:grid-cols-2 gap-px border border-white/10 bg-white/10 overflow-hidden">
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">01</span>
-                  <span className="award-line" />
-                  <span className="award-count">3 awards</span>
-                </div>
-                <h3>1. Gangotri</h3>
-                <ul>
-                    <li>CineMAA Award – Best Male Debut</li>
-                    <li>Nandi Award – Special Jury Award</li>
-                    <li>Santosham Film Award – Best Male Debut</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">02</span>
-                  <span className="award-line" />
-                  <span className="award-count">3 awards</span>
-                </div>
-                <h3>2. Arya</h3>
-                <ul>
-                    <li>CineMAA Award – Best Actor (Jury)</li>
-                    <li>Nandi Award – Special Jury Award</li>
-                    <li>Santosham Film Award – Best Young Performer</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">03</span>
-                  <span className="award-line" />
-                  <span className="award-count">1 award</span>
-                </div>
-                <h3>3. Bunny</h3>
-                <ul>
-                    <li>Santosham Film Award – Best Young Performer</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">04</span>
-                  <span className="award-line" />
-                  <span className="award-count">1 award</span>
-                </div>
-                <h3>4. Desamuduru</h3>
-                <ul>
-                    <li>CineMAA Award – Best Actor (Jury)</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">05</span>
-                  <span className="award-line" />
-                  <span className="award-count">4 awards</span>
-                </div>
-                <h3>5. Parugu</h3>
-                <ul>
-                    <li>Filmfare Award South – Best Actor (Telugu)</li>
-                    <li>CineMAA Award – Best Actor</li>
-                    <li>Nandi Award – Special Jury Award</li>
-                    <li>South Scope Lifestyle Award – Best Actor</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">06</span>
-                  <span className="award-line" />
-                  <span className="award-count">1 award</span>
-                </div>
-                <h3>6. Arya 2</h3>
-                <ul>
-                    <li>South Scope Lifestyle Award – Best Stylish Actor</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">07</span>
-                  <span className="award-line" />
-                  <span className="award-count">3 awards</span>
-                </div>
-                <h3>7. Vedam</h3>
-                <ul>
-                    <li>Filmfare Award South – Best Actor (Telugu)</li>
-                    <li>Nandi Award – Special Jury Award</li>
-                    <li>South Scope Lifestyle Award – Best Actor</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">08</span>
-                  <span className="award-line" />
-                  <span className="award-count">5 awards</span>
-                </div>
-                <h3>8. Race Gurram</h3>
-                <ul>
-                    <li>Filmfare Award South – Best Actor (Telugu)</li>
-                    <li>CineMAA Award – Best Actor</li>
-                    <li>Mirchi Music Award South – Youth Icon of the Year</li>
-                    <li>TSR–TV9 National Film Award – Best Hero</li>
-                    <li>SIIMA – Stylish Youth Icon of South Indian Cinema (Male)</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">09</span>
-                  <span className="award-line" />
-                  <span className="award-count">6 awards</span>
-                </div>
-                <h3>9. Rudhramadevi</h3>
-                <ul>
-                    <li>Filmfare Award South – Best Supporting Actor (Telugu)</li>
-                    <li>CineMAA Award – Best Actor (Jury)</li>
-                    <li>Nandi Award – Best Character Actor</li>
-                    <li>IIFA Utsavam – Performance in a Supporting Role (Male)</li>
-                    <li>SIIMA – Best Actor (Critics – Telugu)</li>
-                    <li>TSR–TV9 National Film Award – Best Outstanding Performance</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">10</span>
-                  <span className="award-line" />
-                  <span className="award-count">1 award</span>
-                </div>
-                <h3>10. S/O Satyamurthy</h3>
-                <ul>
-                    <li>TSR–TV9 National Film Award – Best Hero</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">11</span>
-                  <span className="award-line" />
-                  <span className="award-count">2 awards</span>
-                </div>
-                <h3>11. Sarrainodu</h3>
-                <ul>
-                    <li>Filmfare Critics Award South – Best Actor (Telugu)</li>
-                    <li>Sakshi Excellence Award – Most Popular Actor of the Year (Male)</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">12</span>
-                  <span className="award-line" />
-                  <span className="award-count">1 award</span>
-                </div>
-                <h3>12. DJ: Duvvada Jagannadham</h3>
-                <ul>
-                    <li>Zee Cine Awards Telugu – Favourite Actor</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">13</span>
-                  <span className="award-line" />
-                  <span className="award-count">2 awards</span>
-                </div>
-                <h3>13. Ala Vaikunthapurramuloo</h3>
-                <ul>
-                    <li>Sakshi Excellence Award – Most Popular Actor of the Year (Male)</li>
-                    <li>SIIMA – Best Actor (Telugu)</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">14</span>
-                  <span className="award-line" />
-                  <span className="award-count">6 awards</span>
-                </div>
-                <h3>14. Pushpa: The Rise</h3>
-                <ul>
-                    <li>National Film Award – Best Actor</li>
-                    <li>Filmfare Award South – Best Actor (Telugu)</li>
-                    <li>SIIMA – Best Actor (Telugu)</li>
-                    <li>Santosham Film Award – Best Actor</li>
-                    <li>GAMA Award – Best Actor</li>
-                    <li>Sakshi Excellence Award – Most Popular Actor of the Year (Male)</li>
-                </ul>
-              </article>
-              <article className="award-card">
-                <div className="award-card-top">
-                  <span className="award-index">15</span>
-                  <span className="award-line" />
-                  <span className="award-count">4 awards</span>
-                </div>
-                <h3>15. Pushpa 2: The Rule</h3>
-                <ul>
-                    <li>Filmfare Award South – Best Actor (Telugu)</li>
-                    <li>SIIMA – Best Actor (Telugu)</li>
-                    <li>Gaddar Telangana Film Award – Best Actor</li>
-                    <li>Sakshi Excellence Award – Most Popular Actor of the Year (Male)</li>
-                </ul>
-              </article>
+            <Head k="Selected Work" lines={["Latest chapters"]} />
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+              {LATEST.map(([y, t, img], i) => (<Poster key={t} src={img} title={t} chip={y} i={i} />))}
             </div>
           </div>
         </section>
 
- {/* SOCIAL MEDIA */}
-        <section id="social" className="premium-section allu-special-section px-6 md:px-10 py-24 md:py-32 border-t border-white/10">
-
-          <div className="max-w-6xl mx-auto">
-
-            <p className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-4">
-              Connect
-            </p>
-
-            <h2 className="text-4xl md:text-5xl font-bold">
-              Social Media
-            </h2>
-
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-5">
-
-              <a
-                href="https://www.instagram.com/alluarjunonline/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:bg-white/[0.08] transition"
-              >
-
-                <p className="text-lg font-semibold">
-                  Instagram
-                </p>
-
-                <p className="mt-2 text-sm text-zinc-500">
-                  Follow
-                </p>
-
-              </a>
-
-
-              <a
-                href="https://www.facebook.com/AlluArjun"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:bg-white/[0.08] transition"
-              >
-
-                <p className="text-lg font-semibold">
-                  Facebook
-                </p>
-
-                <p className="mt-2 text-sm text-zinc-500">
-                  Follow
-                </p>
-
-              </a>
-
-
-              <a
-                href="https://x.com/alluarjun"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:bg-white/[0.08] transition"
-              >
-
-                <p className="text-lg font-semibold">
-                  X
-                </p>
-
-                <p className="mt-2 text-sm text-zinc-500">
-                  Follow
-                </p>
-
-              </a>
-
-
-              <a
-                href="https://www.youtube.com/@alluarjun"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:bg-white/[0.08] transition"
-              >
-
-                <p className="text-lg font-semibold">
-                  YouTube
-                </p>
-
-                <p className="mt-2 text-sm text-zinc-500">
-                  Watch
-                </p>
-
-              </a>
-
-            </div>
-
-          </div>
-
-</section>
-
-
-
-        {/* VISUAL ARCHIVE */}
-        <section id="gallery" className="premium-section border-t border-white/10 px-6 md:px-10 py-24 md:py-32">
-          <div className="mx-auto max-w-7xl">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-              <div>
-                <p className="premium-kicker">Visual Archive</p>
-                <h2 className="mt-4 text-5xl md:text-7xl font-black tracking-[-0.055em] leading-[0.86]">Gallery</h2>
-              </div>
-              <p className="max-w-sm text-sm leading-6 text-white/35">
-                Selected portraits, performances and career-defining moments.
-              </p>
-            </div>
-
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              <figure className="editorial-photo">
-                <div className="editorial-photo-media">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Allu_Arjun_National_Award.jpg" alt="Allu Arjun at the National Film Awards" loading="lazy" />
-                </div>
-                <figcaption><span>01</span> National Film Awards</figcaption>
-              </figure>
-
-              <figure className="editorial-photo">
-                <div className="editorial-photo-media">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Icon_Star_AA.jpg" alt="Allu Arjun portrait" loading="lazy" />
-                </div>
-                <figcaption><span>02</span> Portrait</figcaption>
-              </figure>
-
-              <figure className="editorial-photo">
-                <div className="editorial-photo-media">
-                  <img src="https://i.pinimg.com/originals/78/cf/ed/78cfed6d511c83b10896d888adc1a519.jpg" alt="Allu Arjun in Pushpa" loading="lazy" />
-                </div>
-                <figcaption><span>03</span> Pushpa</figcaption>
-              </figure>
-
-              <figure className="editorial-photo">
-                <div className="editorial-photo-media">
-                  <img src="https://media.assettype.com/gulfnews/import/2021/12/16/Pushpa--The-Rise_17dc32f5a09_large.jpg?auto=format%2Ccompress&enlarge=true&fit=max&h=675&w=1200" alt="Allu Arjun as Pushpa Raj" loading="lazy" />
-                </div>
-                <figcaption><span>04</span> Pushpa Raj</figcaption>
-              </figure>
-
-              <figure className="editorial-photo">
-                <div className="editorial-photo-media">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Ek_Niranjan_Audio_Release_Function_%28168%29.jpg" alt="Allu Arjun at an early film event" loading="lazy" />
-                </div>
-                <figcaption><span>05</span> Archive</figcaption>
-              </figure>
-
-              <figure className="editorial-photo">
-                <div className="editorial-photo-media">
-                  <img src="/images/movie13.jpg" alt="Race Gurram" loading="lazy" />
-                </div>
-                <figcaption><span>06</span> Race Gurram</figcaption>
-              </figure>
-
-              <figure className="editorial-photo">
-                <div className="editorial-photo-media">
-                  <img src="/images/movie16.jpg" alt="Sarrainodu" loading="lazy" />
-                </div>
-                <figcaption><span>07</span> Sarrainodu</figcaption>
-              </figure>
-
-              <figure className="editorial-photo">
-                <div className="editorial-photo-media">
-                  <img src="/images/movie20.jpg" alt="Pushpa: The Rise" loading="lazy" />
-                </div>
-                <figcaption><span>08</span> Pushpa: The Rise</figcaption>
-              </figure>
-            </div>
-          </div>
-        </section>
-
-        {/* LATEST / FEATURED */}
-        <section id="latest" className="premium-section border-t border-white/10 px-6 md:px-10 py-24 md:py-32">
-          <div className="mx-auto max-w-7xl">
-            <div className="flex items-end justify-between gap-6">
-              <div>
-                <p className="premium-kicker">Selected Work</p>
-                <h2 className="mt-4 text-5xl md:text-7xl font-black tracking-[-0.05em]">Latest Chapters</h2>
-              </div>
-              <a href="#filmography" className="hidden md:block text-[10px] uppercase tracking-[0.25em] text-white/40 hover:text-white transition">
-                View filmography →
-              </a>
-            </div>
-
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
-              <a href="#filmography" className="chapter-card">
-                <div className="chapter-media"><img src="/images/movie21.jpg" alt="Pushpa 2: The Rule" /></div>
-                <div className="chapter-meta"><span>2024</span><strong>Pushpa 2: The Rule</strong></div>
-              </a>
-              <a href="#filmography" className="chapter-card">
-                <div className="chapter-media"><img src="/images/movie20.jpg" alt="Pushpa: The Rise" /></div>
-                <div className="chapter-meta"><span>2021</span><strong>Pushpa: The Rise</strong></div>
-              </a>
-              <a href="#filmography" className="chapter-card">
-                <div className="chapter-media"><img src="/images/movie19.jpg" alt="Ala Vaikunthapurramuloo" /></div>
-                <div className="chapter-meta"><span>2020</span><strong>Ala Vaikunthapurramuloo</strong></div>
-              </a>
-              <a href="#filmography" className="chapter-card">
-                <div className="chapter-media"><img src="/images/movie16.jpg" alt="Sarrainodu" /></div>
-                <div className="chapter-meta"><span>2016</span><strong>Sarrainodu</strong></div>
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* PREMIUM CTA */}
-        <section className="relative overflow-hidden border-t border-white/10 bg-white/[0.025] px-6 md:px-10 py-24 md:py-32">
-          <div className="mx-auto max-w-7xl">
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-8 md:p-16">
-              <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/[0.06] blur-3xl" />
-              <div className="relative max-w-3xl">
-                <p className="premium-kicker">Stay Connected</p>
-                <h2 className="mt-4 text-4xl md:text-7xl font-black tracking-[-0.04em] leading-[0.9]">
-                  The journey
-                  <br />
-                  continues.
-                </h2>
-                <p className="mt-6 max-w-xl text-sm md:text-base leading-7 text-white/55">
-                  Follow the latest moments, appearances and updates from the
-                  world of Allu Arjun.
-                </p>
-                <a
-                  href="#social"
-                  className="mt-8 inline-flex rounded-full bg-white px-7 py-3.5 text-xs font-bold uppercase tracking-[0.22em] text-black transition hover:bg-zinc-200"
-                >
-                  Follow the Journey
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-
-        {/* CONTACT */}
-        <section id="contact" className="border-t border-white/10 bg-black px-6 md:px-10 py-20 md:py-28">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-12 md:grid-cols-[1fr_1.2fr]">
-              <div>
-                <p className="premium-kicker">Contact</p>
-                <h2 className="mt-4 text-4xl md:text-6xl font-black tracking-[-0.04em]">
-                  Get in touch.
-                </h2>
-                <p className="mt-5 max-w-md text-sm leading-7 text-white/45">
-                  For website feedback, corrections, collaborations or general enquiries,
-                  use the contact details below.
-                </p>
-              </div>
-
-              <div className="grid gap-3">
-              <a
-  href="https://x.com/cricvizanalys"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="contact-row"
->
-  <span>General Enquiries</span>
-  <span>www.x.com/cricvizanalys ↗</span>
-</a>
-                <a href="mailto:press@allu-arjun.com" className="contact-row">
-                  <span>Contact</span>
-                  <span>worldofraakaverse@gmail.com ↗</span>
-                </a>
-                <a href="#social" className="contact-row">
-                  <span>AA Social Channels</span>
-                  <span>View Social ↗</span>
-                </a>
-              </div>
-            </div>
-
-            <div className="mt-20 border-t border-white/10 pt-7">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-white/25">Disclaimer</p>
-              <p className="mt-3 max-w-4xl text-[11px] leading-6 text-white/30">
-                This is an independent fan-made website created for informational and
-                entertainment purposes. It is not the official website of Allu Arjun,
-                his management, production companies, or any associated organization.
-                All trademarks, names, photographs and copyrighted materials belong to
-                their respective owners. No official affiliation or endorsement is claimed.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* SITE FOOTER */}
-        <footer className="border-t border-white/10 bg-black px-6 md:px-10 py-10">
-          <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        {/* CAMEOS + CHILD */}
+        <section className="sec">
+          <div className="mx-auto grid max-w-7xl gap-16 lg:grid-cols-2">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70">
-                Allu Arjun
-              </p>
-              <p className="mt-2 text-[10px] text-white/25">
-                An independent fan-made digital archive.
+              <Head k="Special Appearances" lines={["Cameos & guest roles"]} text="Special appearances across Allu Arjun's career." />
+              <div className="grid grid-cols-2 gap-6">{CAMEOS.map(([y, t, img], i) => (<Poster key={t} src={img} title={t} chip="Cameo" sub={y} i={i} />))}</div>
+            </div>
+            <div>
+              <Head k="Early Appearance" lines={["As a child artist"]} text="Early screen appearances from Allu Arjun's childhood." />
+              {CHILD.map(([y, t], i) => (
+                <div key={t} className="row" data-r style={cssVars({ "--i": i })}>
+                  <span className="fd tnum">{y}</span><h3 className="fd">{t}</h3>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* BIRTHDAY */}
+        <section id="birthday" className="sec relative overflow-hidden">
+          <span className="ghost fd" aria-hidden="true">8 April</span>
+          <div className="relative mx-auto max-w-7xl">
+            <Head k="8 April" lines={["Until the next", "birthday."]} text="Counting down to Allu Arjun's next birthday." />
+            <div className="clock">
+              {([["Days", time.days], ["Hours", time.hours], ["Minutes", time.minutes], ["Seconds", time.seconds]] as [string, number][]).map(([label, v], i) => (
+                <div key={label} data-r style={cssVars({ "--i": i })}>
+                  <p className={"fd tnum" + (label === "Seconds" ? " gold" : "")}><span key={v} className="tick">{fmt(v)}</span></p>
+                  <small>{label}</small>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* AWARDS */}
+        <section id="awards" className="sec awards">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid items-end gap-10 lg:grid-cols-[1fr_1fr]">
+              <Head k="Achievements" lines={["Awards", "& recognition."]} />
+              <div className="mb-12 flex gap-12" data-r>
+                <div><p className="fd big-n"><CountUp to={AWARDS.length} /></p><small>Honoured films</small></div>
+                <div><p className="fd big-n">2023</p><small>National Film Award</small></div>
+              </div>
+            </div>
+            <div className="aw-grid">
+              {AWARDS.map(([film, list], i) => (
+                <article key={film} className="aw" data-r style={cssVars({ "--i": i % 2 })}>
+                  <h3 className="fd">{film}</h3>
+                  <ul>{list.map((a) => (<li key={a} className={a.startsWith("National Film Award") ? "nat" : ""}>{a}</li>))}</ul>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+
+        {/* SOCIAL */}
+        <section id="social" className="sec">
+          <div className="mx-auto max-w-7xl">
+            <Head k="Connect" lines={["Follow the journey"]} />
+            <div>
+              {SOCIAL.map(([n, a, href], i) => (
+                <a key={n} href={href} target="_blank" rel="noopener noreferrer" className="soc" data-r style={cssVars({ "--i": i })}>
+                  <span className="fd">{n}</span><span className="soc-a">{a} <i>↗</i></span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CLOSING + CONTACT */}
+        <section id="contact" className="sec closing">
+          <div className="mx-auto max-w-7xl">
+            <h2 className="fd close-t" data-r>The journey<br /><span className="gold-text">continues.</span></h2>
+            <div className="mt-16 grid gap-12 md:grid-cols-[1fr_1.2fr]">
+              <p className="lead !mt-0" data-r>For website feedback, corrections, collaborations or general enquiries, use the details here.</p>
+              <div data-r>
+                <a href="https://x.com/cricvizanalys" target="_blank" rel="noopener noreferrer" className="contact-row"><span>General enquiries</span><span>www.x.com/cricvizanalys ↗</span></a>
+                <a href="mailto:worldofraakaverse@gmail.com" className="contact-row"><span>Contact</span><span>worldofraakaverse@gmail.com ↗</span></a>
+                <a href="#social" className="contact-row"><span>AA social channels</span><span>View social ↗</span></a>
+              </div>
+            </div>
+            <div className="mt-20 border-t pt-7" style={{ borderColor: "var(--line)" }}>
+              <p className="text-sm" style={{ color: "var(--smoke)" }}>Disclaimer</p>
+              <p className="mt-3 max-w-4xl text-xs leading-6" style={{ color: "var(--smoke)" }}>
+                This is an independent fan-made website created for informational and entertainment purposes. It is not the official website of Allu Arjun, his management, production companies, or any associated organization. All trademarks, names, photographs and copyrighted materials belong to their respective owners. No official affiliation or endorsement is claimed.
               </p>
             </div>
-            <div className="flex flex-wrap gap-5 text-[9px] uppercase tracking-[0.2em] text-white/35">
-              <a href="#home" className="hover:text-white transition">Top</a>
-              <a href="#about" className="hover:text-white transition">About</a>
-              <a href="#filmography" className="hover:text-white transition">Filmography</a>
-              <a href="#contact" className="hover:text-white transition">Contact</a>
-            </div>
-            <p className="text-[9px] uppercase tracking-[0.18em] text-white/20">
-              © {new Date().getFullYear()} · Fan Project
-            </p>
+          </div>
+        </section>
+
+        <div className="end-credits" aria-hidden="true"><div className="end-line"><span>AN INDEPENDENT DIGITAL ARCHIVE</span><i></i><span>ALLU ARJUN</span><i></i><span>THE JOURNEY CONTINUES</span></div></div>
+
+        <footer className="foot">
+          <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div><p className="fd text-2xl">Allu Arjun</p><p className="mt-1 text-sm" style={{ color: "var(--smoke)" }}>An independent fan-made digital archive.</p></div>
+            <div className="flex flex-wrap gap-6 text-sm"><a href="#home" className="nl">Top</a><a href="#about" className="nl">About</a><a href="#filmography" className="nl">Filmography</a><a href="#contact" className="nl">Contact</a></div>
+            <p className="text-sm" style={{ color: "var(--smoke)" }}>© {new Date().getFullYear()} · Fan Project</p>
           </div>
         </footer>
-
       </div>
-
-      <style jsx global>{`
-        html {
-          scroll-behavior: smooth;
-        }
-
-        ::selection {
-          background: rgba(255, 255, 255, 0.18);
-          color: white;
-        }
-
-        .premium-nav {
-          position: relative;
-          color: rgba(255,255,255,.55);
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: .18em;
-          text-transform: uppercase;
-          transition: color .3s ease;
-        }
-
-        .premium-nav:hover {
-          color: white;
-        }
-
-        .premium-nav::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: -7px;
-          height: 1px;
-          transform: scaleX(0);
-          transform-origin: center;
-          background: rgba(255,255,255,.8);
-          transition: transform .3s ease;
-        }
-
-        .premium-nav:hover::after {
-          transform: scaleX(1);
-        }
-
-        .premium-kicker {
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: .38em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,.42);
-        }
-
-        .premium-section {
-          position: relative;
-          background:
-            radial-gradient(circle at 85% 15%, rgba(255,255,255,.045), transparent 28%),
-            linear-gradient(to bottom, rgba(0,0,0,.72), rgba(0,0,0,.88));
-        }
-
-        .premium-section::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background-image: linear-gradient(
-            rgba(255,255,255,.018) 1px,
-            transparent 1px
-          );
-          background-size: 100% 72px;
-          mask-image: linear-gradient(to bottom, black, transparent 85%);
-        }
-
-        .allu-site h2,
-        .allu-site h1 {
-          text-wrap: balance;
-        }
-
-        .allu-site a,
-        .allu-site button {
-          -webkit-tap-highlight-color: transparent;
-        }
-
-
-
-        .photo-frame {
-          position: relative;
-          overflow: hidden;
-          border: 1px solid rgba(255,255,255,.10);
-          background: #090909;
-        }
-
-        .photo-frame img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-          transition: transform 1s cubic-bezier(.2,.7,.2,1), filter .7s ease;
-          filter: saturate(.82) contrast(1.02);
-        }
-
-        .photo-frame:hover img {
-          transform: scale(1.045);
-          filter: saturate(1) contrast(1.04);
-        }
-
-        .photo-frame figcaption {
-          position: absolute;
-          left: 1rem;
-          bottom: 1rem;
-          font-size: 8px;
-          text-transform: uppercase;
-          letter-spacing: .2em;
-          color: rgba(255,255,255,.72);
-          text-shadow: 0 2px 15px rgba(0,0,0,.8);
-        }
-
-        .feature-tile {
-          position: relative;
-          display: block;
-          overflow: hidden;
-          min-height: 420px;
-          background: #080808;
-          border: 1px solid rgba(255,255,255,.10);
-        }
-
-        .feature-tile img {
-          width: 100%;
-          height: 100%;
-          min-height: 420px;
-          object-fit: cover;
-          display: block;
-          transition: transform 1s cubic-bezier(.2,.7,.2,1);
-        }
-
-        .feature-tile:hover img {
-          transform: scale(1.04);
-        }
-
-        .feature-overlay {
-          position: absolute;
-          inset: auto 0 0;
-          padding: 2rem;
-          background: linear-gradient(to top, rgba(0,0,0,.9), transparent);
-        }
-
-        .feature-overlay span {
-          display: block;
-          font-size: 9px;
-          letter-spacing: .25em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,.5);
-        }
-
-        .feature-overlay strong {
-          display: block;
-          margin-top: .5rem;
-          font-size: clamp(1.5rem, 4vw, 3rem);
-          letter-spacing: -.04em;
-          line-height: .95;
-        }
-
-        .editorial-photo { min-width: 0; }
-        .editorial-photo-media {
-          position: relative;
-          width: 100%;
-          aspect-ratio: 4 / 5;
-          overflow: hidden;
-          border: 1px solid rgba(255,255,255,.10);
-          background: #0a0a0a;
-        }
-        .editorial-photo-media img {
-          width: 100%;
-          height: 100%;
-          display: block;
-          object-fit: cover;
-          object-position: center;
-          transition: transform .65s cubic-bezier(.2,.7,.2,1), filter .5s ease;
-          filter: saturate(.78) contrast(1.02);
-        }
-        .editorial-photo:hover .editorial-photo-media img {
-          transform: scale(1.035);
-          filter: saturate(1) contrast(1.04);
-        }
-        .editorial-photo figcaption {
-          display: flex;
-          align-items: center;
-          gap: .65rem;
-          padding-top: .75rem;
-          color: rgba(255,255,255,.48);
-          font-size: 9px;
-          text-transform: uppercase;
-          letter-spacing: .17em;
-        }
-        .editorial-photo figcaption span { color: rgba(255,255,255,.22); }
-
-        .chapter-card { min-width: 0; display: block; }
-        .chapter-media {
-          position: relative;
-          width: 100%;
-          aspect-ratio: 2 / 3;
-          overflow: hidden;
-          border: 1px solid rgba(255,255,255,.10);
-          background: #090909;
-        }
-        .chapter-media img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-          transition: transform .65s cubic-bezier(.2,.7,.2,1), filter .5s ease;
-          filter: saturate(.82);
-        }
-        .chapter-card:hover .chapter-media img {
-          transform: scale(1.035);
-          filter: saturate(1);
-        }
-        .chapter-meta { padding-top: .8rem; }
-        .chapter-meta span {
-          display: block;
-          font-size: 8px;
-          letter-spacing: .22em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,.28);
-        }
-        .chapter-meta strong {
-          display: block;
-          margin-top: .4rem;
-          font-size: clamp(.85rem,1.4vw,1rem);
-          line-height: 1.15;
-          font-weight: 600;
-          color: rgba(255,255,255,.82);
-        }
-
-        .awards-premium {
-          position: relative;
-          background:
-            radial-gradient(circle at 10% 10%, rgba(255,255,255,.035), transparent 28%),
-            #050505;
-        }
-        .award-card {
-          min-width: 0;
-          padding: 1.75rem;
-          background: rgba(7,7,7,.96);
-          transition: background .35s ease;
-        }
-        .award-card:hover { background: rgba(18,18,18,.98); }
-        .award-card-top { display: flex; align-items: center; gap: .7rem; }
-        .award-index {
-          font-size: 9px;
-          letter-spacing: .2em;
-          color: rgba(255,255,255,.25);
-        }
-        .award-line {
-          height: 1px;
-          flex: 1;
-          background: rgba(255,255,255,.10);
-        }
-        .award-count {
-          font-size: 8px;
-          text-transform: uppercase;
-          letter-spacing: .16em;
-          color: rgba(255,255,255,.24);
-        }
-        .award-card h3 {
-          margin-top: 2rem;
-          font-size: clamp(1.2rem,2.2vw,1.7rem);
-          line-height: 1;
-          letter-spacing: -.025em;
-          font-weight: 700;
-          color: rgba(255,255,255,.92);
-        }
-        .award-card ul {
-          margin-top: 1.25rem;
-          padding: 0;
-          list-style: none;
-          display: grid;
-          gap: .7rem;
-        }
-        .award-card li {
-          position: relative;
-          padding-left: 1rem;
-          font-size: .76rem;
-          line-height: 1.45;
-          color: rgba(255,255,255,.42);
-        }
-        .award-card li::before {
-          content: "";
-          position: absolute;
-          left: 0;
-          top: .55em;
-          width: 3px;
-          height: 3px;
-          border-radius: 999px;
-          background: rgba(255,255,255,.38);
-        }
-        @media (max-width: 767px) {
-          .award-card { padding: 1.35rem; }
-        }
-
-        .gallery-card {
-          position: relative;
-          overflow: hidden;
-          border-radius: 1.25rem;
-          border: 1px solid rgba(255,255,255,.10);
-          background: rgba(255,255,255,.025);
-        }
-
-        .gallery-card img {
-          transition: transform .8s cubic-bezier(.2,.7,.2,1), filter .5s ease;
-          filter: saturate(.8);
-        }
-
-        .gallery-card:hover img {
-          transform: scale(1.06);
-          filter: saturate(1);
-        }
-
-        .contact-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 1rem;
-          padding: 1.25rem 0;
-          border-bottom: 1px solid rgba(255,255,255,.10);
-          color: rgba(255,255,255,.62);
-          font-size: .8rem;
-          transition: color .3s ease, padding .3s ease;
-        }
-
-        .contact-row:hover {
-          color: white;
-          padding-left: .5rem;
-          padding-right: .5rem;
-        }
-
-        @media (max-width: 640px) {
-          .contact-row {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-        }
-
-
-        @keyframes heroZoom {
-          from { transform: scale(1.03); }
-          to { transform: scale(1.09); }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          html {
-            scroll-behavior: auto;
-          }
-
-          .allu-hero-image {
-            animation: none !important;
-            transform: none !important;
-          }
-        }
-      `}</style>
-
     </main>
   );
 }
+
+const CSS = `
+@import url("https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;0,6..96,800;1,6..96,400;1,6..96,600&family=Instrument+Sans:wght@400;500;600&display=swap");
+.allu-site{--ink:#060506;--bone:#EDE5D6;--brass:#C9A26B;--wine:#7A1F31;--smoke:#8C8479;--line:rgba(237,229,214,.12);background:var(--ink);color:var(--bone);font-family:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+html{scroll-behavior:smooth}::selection{background:rgba(201,162,107,.3)}
+.fd{font-family:"Bodoni Moda","Didot",Georgia,serif}.tnum{font-variant-numeric:tabular-nums}
+.no-sb{scrollbar-width:none}.no-sb::-webkit-scrollbar{display:none}
+.allu-site a:focus-visible,.allu-site button:focus-visible{outline:2px solid var(--brass);outline-offset:3px}
+.gold-text{background:linear-gradient(100deg,#D9B77E,#FFF1D2,#D9B77E,#9A6B38);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 7s linear infinite}
+@keyframes sheen{to{background-position:-250% 0}}
+
+/* opening: the letterbox parts once */
+.lb{position:fixed;left:0;right:0;height:50vh;background:#000;z-index:90;pointer-events:none;animation:lbOpen 1.6s cubic-bezier(.77,0,.18,1) .3s forwards}
+.lb-top{top:0;transform-origin:top}.lb-bot{bottom:0;transform-origin:bottom}
+@keyframes lbOpen{to{transform:scaleY(0)}}
+.progress{position:fixed;top:0;left:0;right:0;height:2px;z-index:80;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,var(--wine),var(--brass))}
+.grain{position:fixed;inset:0;z-index:70;pointer-events:none;opacity:.06;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.nav{transition:background .4s,backdrop-filter .4s;border-bottom:1px solid transparent}
+.nav.s{background:rgba(6,5,6,.72);backdrop-filter:blur(14px);border-color:var(--line)}
+.logo{display:flex;height:2.4rem;width:2.4rem;align-items:center;justify-content:center;border:1px solid rgba(201,162,107,.5);border-radius:9999px;font-weight:800;color:var(--brass);transition:background .3s,color .3s}
+.group:hover .logo{background:var(--brass);color:#000}
+.nl{position:relative;color:var(--smoke);font-size:.9rem;font-weight:500;transition:color .3s}
+.nl:hover,.nl[aria-current="true"]{color:var(--bone)}
+.nl::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:1px;background:var(--brass);transform:scaleX(0);transition:transform .35s}
+.nl:hover::after,.nl[aria-current="true"]::after{transform:scaleX(1)}
+.btn{display:inline-flex;width:fit-content;align-items:center;justify-content:center;border-radius:9999px;padding:.9rem 1.8rem;font-weight:600;font-size:.95rem;transition:transform .3s,background .3s,border-color .3s,color .3s}
+.btn:hover{transform:translateY(-2px)}
+.btn-s{background:var(--bone);color:var(--ink)}.btn-s:hover{background:var(--brass)}
+.btn-g{border:1px solid var(--line);background:rgba(237,229,214,.05);backdrop-filter:blur(10px)}.btn-g:hover{border-color:rgba(201,162,107,.6)}
+.btn-o{border:1px solid rgba(201,162,107,.5);color:var(--brass)}.btn-o:hover{background:var(--brass);color:var(--ink)}
+
+/* director-cut depth system */
+.hero-vignette{position:absolute;inset:-8%;pointer-events:none;background:radial-gradient(circle at 68% 46%,transparent 0 20%,rgba(0,0,0,.12) 46%,rgba(0,0,0,.78) 100%);z-index:2}
+.hero-orbit{position:absolute;z-index:3;pointer-events:none;border:1px solid rgba(201,162,107,.18);border-radius:50%;mix-blend-mode:screen}
+.hero-orbit-a{width:38vw;height:38vw;right:-13vw;top:18vh;animation:orbit 24s linear infinite}
+.hero-orbit-b{width:23vw;height:23vw;right:-5vw;top:27vh;border-color:rgba(237,229,214,.12);animation:orbit 17s linear infinite reverse}
+@keyframes orbit{to{transform:rotate(360deg)}}
+.hero-meta{position:absolute;left:1.5rem;top:50%;z-index:10;display:none;align-items:center;gap:.7rem;transform:rotate(-90deg) translateX(-50%);transform-origin:left center;color:rgba(237,229,214,.45);font-size:.65rem;letter-spacing:.22em}
+.hero-meta i{display:block;width:42px;height:1px;background:var(--brass)}
+@media(min-width:1024px){.hero-meta{display:flex;left:2.2rem}}
+
+/* hero: one orchestrated moment */
+.hero-bg{transform:translate3d(0,calc(var(--sy,0px)*.28),0);will-change:transform}
+.hero-img{filter:saturate(.85) contrast(1.06);animation:zoom 18s ease-out infinite alternate}
+@keyframes zoom{from{transform:scale(1.03)}to{transform:scale(1.09)}}
+.leak{position:absolute;top:-20%;right:-10%;width:70%;height:90%;pointer-events:none;mix-blend-mode:screen;opacity:.3;background:radial-gradient(ellipse,rgba(255,214,150,.22),transparent 65%)}
+.hero-title{font-size:clamp(5rem,21vw,17rem);line-height:.82;letter-spacing:-.045em;font-weight:500;text-shadow:0 20px 70px rgba(0,0,0,.55)}
+.hero-l2{margin-left:.45em;font-style:italic}
+.letter{display:inline-block;padding:0 .02em;-webkit-background-clip:text;background-clip:text;color:transparent;animation:letterIn 1.3s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(1.2s + var(--i)*.1s)}
+.l-ivory{background-image:linear-gradient(180deg,#fff 10%,#E4DAC8)}
+.l-gold{background-image:linear-gradient(180deg,#FFF4DA 8%,#D9B77E 55%,#9A6B38)}
+@keyframes letterIn{from{opacity:0;filter:blur(18px);transform:translate3d(0,40px,0) scale(1.1)}to{opacity:1;filter:none;transform:none}}
+.rise{animation:rise 1s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(1.3s + var(--d,0s))}
+@keyframes rise{from{opacity:0;transform:translate3d(0,24px,0);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+.hero-side{position:absolute;right:1.5rem;top:50%;z-index:10;writing-mode:vertical-rl;transform:rotate(180deg) translateY(50%);font-size:.8rem;letter-spacing:.2em;color:rgba(237,229,214,.55);display:none}
+.scue{position:absolute;right:2.2rem;bottom:2rem;z-index:10;display:none;flex-direction:column;align-items:center;gap:.6rem;font-size:.8rem;color:var(--smoke)}
+.scue i{width:1px;height:56px;background:linear-gradient(var(--brass),transparent);transform-origin:top;animation:scue 2.4s ease-in-out infinite}
+@keyframes scue{0%{transform:scaleY(0)}60%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}
+@media(min-width:1024px){.hero-side{display:block}.scue{display:flex;bottom:6rem}}
+
+.mq{overflow:hidden;border-block:1px solid var(--line);background:rgba(6,5,6,.85);padding:1.1rem 0}
+.mq-t{display:flex;width:max-content;gap:2rem;animation:mq 120s linear infinite;font-size:2.2rem;font-style:italic;color:transparent;-webkit-text-stroke:1px rgba(237,229,214,.32)}
+.mq-t span{display:flex;align-items:center;gap:2rem;white-space:nowrap}.mq-t em{font-style:normal;font-size:.9rem;color:var(--brass);-webkit-text-stroke:0}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+.sec{position:relative;padding:6rem 1.5rem;border-top:1px solid var(--line);background:radial-gradient(circle at 88% 8%,rgba(122,31,49,.12),transparent 38%),var(--ink)}
+@media(min-width:768px){.sec{padding:9rem 2.5rem}}
+.head{margin-bottom:3.5rem;max-width:44rem}
+.kk{display:flex;align-items:center;gap:.8rem;color:var(--brass);font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.05rem}
+.kk::before{content:"";height:1px;width:0;background:var(--brass);transition:width 1s .2s}.kk.in::before{width:2.5rem}
+.h2{font-family:"Bodoni Moda",serif;font-size:clamp(2.8rem,7.5vw,6rem);font-weight:500;line-height:.95;letter-spacing:-.035em;margin-top:1rem;text-wrap:balance}
+.lead{margin-top:1.5rem;max-width:36rem;color:#A59B8D;line-height:1.8}.lead.big{margin-top:0;font-size:1.15rem;color:#C2B8A9}
+[data-r]{opacity:0;transform:translateY(28px);transition:opacity .9s ease calc(var(--i,0)*.1s),transform .9s cubic-bezier(.2,.7,.2,1) calc(var(--i,0)*.1s)}
+[data-r].in{opacity:1;transform:none}.ln[data-r],.poster[data-r]{opacity:1;transform:none}
+.ln{display:block;overflow:hidden;padding-bottom:.1em}.ln.dim{color:rgba(237,229,214,.4);font-style:italic}
+.ln>span{display:block;transform:translateY(105%);transition:transform 1.1s cubic-bezier(.2,.7,.2,1) calc(var(--l,0)*.13s)}.ln.in>span{transform:none}
+
+.profile-img{position:relative;aspect-ratio:3/4;overflow:hidden;border-radius:2px;max-height:80vh}
+.profile-img::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,5,6,.55),transparent 40%)}
+.facts{margin-top:2.5rem;display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
+.facts div{padding:1.4rem 0;border-bottom:1px solid var(--line)}.facts dt{font-size:.85rem;color:var(--smoke)}.facts dd{margin-top:.4rem;font-size:1.6rem}
+
+.reel-intro{display:flex;align-items:center;gap:1rem;margin:-1rem 0 2rem;color:var(--smoke);font-size:.7rem;letter-spacing:.2em}.reel-intro i{width:60px;height:1px;background:var(--brass);opacity:.65}.reel{display:grid;gap:2rem}
+@media(min-width:1024px){.reel{grid-template-columns:.8fr 1.2fr;gap:5rem}.reel-view{position:sticky;top:6rem;align-self:start}}
+.reel-frame{position:relative;aspect-ratio:2/3;max-height:72vh;overflow:hidden;animation:frame .9s cubic-bezier(.77,0,.18,1)}
+@keyframes frame{from{clip-path:inset(0 0 100% 0);transform:scale(1.06)}to{clip-path:inset(0);transform:none}}
+.reel-y{margin-top:1.2rem;color:var(--brass);font-size:.9rem}.reel-t{font-size:clamp(1.8rem,3.4vw,2.8rem);line-height:1.05;margin-top:.3rem}
+.reel-list{list-style:none;padding:0;margin:0;max-height:78vh;overflow-y:auto}
+.reel-list button{display:flex;width:100%;align-items:baseline;gap:1.5rem;padding:1.05rem 0;text-align:left;border-bottom:1px solid var(--line);color:rgba(237,229,214,.42);transition:color .35s,padding .45s cubic-bezier(.2,.7,.2,1)}
+.reel-list button span{width:5.5rem;flex:none;font-size:.85rem}.reel-list button b{font-weight:500;font-size:clamp(1.3rem,2.4vw,2rem)}
+.reel-list button:hover,.reel-list button.on{color:var(--bone);padding-left:1rem;position:relative}.reel-list button.on::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--brass);transform-origin:center;animation:lineIn .45s ease}@keyframes lineIn{from{transform:scaleY(0)}to{transform:scaleY(1)}}.reel-list button.on span{color:var(--brass)}
+.reel-list button.soon span{color:var(--brass)}
+
+.poster .pc{position:relative;aspect-ratio:2/3;overflow:hidden;border-radius:2px;background:#0d090a;transition:box-shadow .5s}
+.poster{position:relative;transform:perspective(1000px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.poster::before{content:"";position:absolute;inset:-1px;z-index:4;border:1px solid rgba(237,229,214,.08);pointer-events:none;transition:border-color .4s}.poster:hover::before{border-color:rgba(201,162,107,.42)}
+.poster-sheen{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.22) 47%,transparent 62%);transform:translateX(-130%);transition:transform .9s cubic-bezier(.2,.7,.2,1)}.poster:hover .poster-sheen{transform:translateX(130%)}
+.poster-no{position:absolute;right:.8rem;bottom:.75rem;z-index:3;font-family:"Bodoni Moda",serif;font-size:.72rem;letter-spacing:.12em;color:rgba(255,255,255,.55)}
+.poster:hover .pc{box-shadow:0 30px 70px rgba(0,0,0,.6)}.pc img{transition:transform 1.1s cubic-bezier(.2,.7,.2,1),filter .6s;filter:saturate(.9)}.poster:hover .pc img{transform:scale(1.05);filter:none}
+.chip{position:absolute;top:.75rem;left:.75rem;z-index:2;border-radius:9999px;background:rgba(6,5,6,.7);backdrop-filter:blur(8px);padding:.25rem .75rem;font-size:.75rem}
+.cap b{display:block;margin-top:1rem;font-weight:500;font-size:1.05rem}.cap small{display:block;margin-top:1rem;margin-bottom:-.75rem;color:var(--smoke);font-size:.8rem}
+
+.row{display:flex;align-items:baseline;gap:1.5rem;padding:1.5rem 0;border-bottom:1px solid var(--line);transition:padding .4s}
+.row:hover{padding-left:.8rem}.row span{width:4rem;color:var(--smoke)}.row h3{font-size:clamp(1.8rem,3.4vw,2.8rem)}
+.ghost{position:absolute;right:-2%;top:6%;font-size:clamp(8rem,28vw,24rem);font-style:italic;line-height:.8;color:transparent;-webkit-text-stroke:1px rgba(237,229,214,.07);pointer-events:none;white-space:nowrap}
+.clock{display:grid;grid-template-columns:repeat(2,1fr);border-top:1px solid var(--line)}
+@media(min-width:768px){.clock{grid-template-columns:repeat(4,1fr)}}
+.clock div{padding:2.2rem 0;border-bottom:1px solid var(--line)}.clock p{font-size:clamp(4rem,9vw,7.5rem);line-height:.9;font-weight:400}.clock .gold{color:var(--brass)}.clock small{display:block;margin-top:1rem;color:var(--smoke);font-size:.85rem}
+.tick{display:inline-block;animation:tick .55s cubic-bezier(.2,.7,.2,1)}@keyframes tick{from{opacity:0;transform:translateY(35%)}to{opacity:1;transform:none}}
+
+.awards{background:radial-gradient(circle at 8% 10%,rgba(122,31,49,.14),transparent 32%),#070405}
+.big-n{font-size:clamp(3.5rem,7vw,5.5rem);line-height:.9;color:var(--brass)}.awards small{color:var(--smoke);font-size:.85rem}
+.aw-grid{display:grid;column-gap:5rem}@media(min-width:768px){.aw-grid{grid-template-columns:1fr 1fr}}
+.aw{padding:2rem 0;border-top:1px solid var(--line)}.aw h3{font-size:clamp(1.7rem,2.8vw,2.4rem);line-height:1.05}
+.aw ul{margin-top:1rem;display:grid;gap:.6rem;list-style:none;padding:0}.aw li{font-size:.85rem;line-height:1.5;color:#A59B8D}
+.aw li.nat{color:var(--brass);font-weight:600}
+
+
+.soc{display:flex;align-items:baseline;justify-content:space-between;padding:1.6rem 0;border-bottom:1px solid var(--line);transition:padding .4s,color .3s}
+.soc span:first-child{font-size:clamp(2rem,5vw,4rem)}.soc-a{color:var(--smoke);font-size:.9rem}.soc-a i{font-style:normal;color:var(--brass);display:inline-block;transition:transform .3s}
+.soc:hover{padding-inline:1rem;color:var(--brass)}.soc:hover i{transform:translate(3px,-3px)}
+.closing{background:radial-gradient(ellipse at 50% 0,rgba(201,162,107,.1),transparent 55%),var(--ink)}
+.close-t{font-size:clamp(3.5rem,11vw,9rem);line-height:.9;letter-spacing:-.04em;font-weight:500}.close-t .gold-text{font-style:italic}
+.contact-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.25rem 0;border-bottom:1px solid var(--line);color:#B5AB9C;font-size:.9rem;transition:color .3s,padding .3s}
+.contact-row:hover{color:var(--brass);padding-inline:.6rem}
+@media(max-width:640px){.hero-orbit{opacity:.55}.hero-meta{display:none}.reel-intro{font-size:.62rem}.poster{transform:none!important}.poster-no{font-size:.62rem}.contact-row{flex-direction:column;align-items:flex-start}.mq-t{font-size:1.7rem}.hero-title{font-size:clamp(4.2rem,24vw,7rem)}.hero-img{object-position:58% center}}
+.end-credits{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#030303;padding:1rem 0;color:rgba(237,229,214,.3)}.end-line{display:flex;width:max-content;align-items:center;gap:2rem;font-family:"Bodoni Moda",serif;font-size:.75rem;letter-spacing:.22em;animation:endScroll 34s linear infinite}.end-line i{width:4px;height:4px;border-radius:50%;background:var(--brass);display:block}@keyframes endScroll{to{transform:translateX(-50%)}}
+.foot{border-top:1px solid var(--line);background:#000;padding:2.5rem 1.5rem}@media(min-width:768px){.foot{padding:2.5rem}}
+
+@media (prefers-reduced-motion:reduce){
+html{scroll-behavior:auto}.lb,.grain{display:none}
+.rise,.letter,.hero-img,.mq-t,.gold-text,.scue i,.tick,.reel-frame,.hero-orbit,.end-line{animation:none!important}.poster{transform:none!important}
+[data-r],.ln>span{opacity:1!important;transform:none!important;transition:none!important}
+}
+`;
