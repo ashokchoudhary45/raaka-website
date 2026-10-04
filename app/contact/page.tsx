@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 
-const CREATOR_CONTACTS = [
+type ContactItem = {
+  label: string;
+  value: string;
+  name?: string;
+  href: string;
+  image?: string;
+  icon: string;
+};
+
+const CREATOR_CONTACTS: ContactItem[] = [
   {
     label: "Email",
     value: "worldofraakaverse@gmail.com",
@@ -27,7 +36,7 @@ const CREATOR_CONTACTS = [
   },
 ];
 
-const COMMUNITY_CONTACTS = [
+const COMMUNITY_CONTACTS: ContactItem[] = [
   {
     label: "Email",
     value: "worldofraaka@gmail.com",
@@ -64,7 +73,7 @@ function ContactCard({
   item,
   index,
 }: {
-  item: (typeof CREATOR_CONTACTS)[number];
+  item: ContactItem;
   index: number;
 }) {
   return (
