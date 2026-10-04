@@ -5,7 +5,59 @@ import Image from "next/image";
 import NewBadge from "@/components/NewBadge";
 import Link from "next/link";
 
-type Theme = "obsidian" | "ember" | "cosmic" | "graphite" | "onyx";
+type Theme = "obsidian" | "ember" | "cosmic" | "graphite" | "onyx" | "aurora" | "crimson" | "sunset";
+
+const THEME_ORDER: Theme[] = ["obsidian", "ember", "cosmic", "graphite", "onyx", "aurora", "crimson", "sunset"];
+const AURA_RGB: Record<Theme, string> = {
+  obsidian: "255,255,255", ember: "255,110,30", cosmic: "129,140,248", graphite: "212,212,216",
+  onyx: "250,204,21", aurora: "45,212,191", crimson: "244,63,94", sunset: "236,72,153",
+};
+
+// ---------- scroll helpers ----------
+function useInView<T extends HTMLElement>(threshold = 0.15) {
+  const ref = useRef<T | null>(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") { setShown(true); return; }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setShown(true); io.disconnect(); } }, { threshold, rootMargin: "0px 0px -6% 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [threshold]);
+  return [ref, shown] as const;
+}
+
+function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const [ref, shown] = useInView<HTMLDivElement>();
+  return (
+    <div ref={ref} style={{ transitionDelay: `${delay}ms` }} className={`rx-reveal ${shown ? "is-in" : ""} ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function CountUp({ to, label }: { to: number; label: string }) {
+  const [ref, shown] = useInView<HTMLDivElement>(0.4);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!shown) return;
+    let raf = 0; const t0 = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min((t - t0) / 1400, 1);
+      setN(Math.round(to * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [shown, to]);
+  return (
+    <div ref={ref} className="rx-credit-stat rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 text-center">
+      <div className="font-serif text-3xl font-semibold tabular-nums text-white sm:text-4xl">{n}</div>
+      <div className="mt-1 text-[9px] uppercase tracking-[0.3em] text-orange-200/60">{label}</div>
+    </div>
+  );
+}
 
 // ==============================
 // STATIC CONTENT
@@ -187,9 +239,9 @@ function SectionHeading({
   lede?: string;
 }) {
   return (
-    <div className="mb-12 max-w-2xl md:mb-16">
+    <div className="mb-9 max-w-2xl sm:mb-12 md:mb-16">
       <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 className="mt-3 font-serif text-4xl font-semibold leading-[1.05] tracking-tight text-white md:text-5xl">
+      <h2 className="mt-3 font-serif text-3xl font-semibold leading-[1.08] tracking-tight text-white sm:text-4xl md:text-5xl">
         {title}
       </h2>
       {lede && <p className="mt-4 text-[15px] leading-7 text-white/50">{lede}</p>}
@@ -198,24 +250,29 @@ function SectionHeading({
 }
 
 function PersonCard({
-  name, role, image, alt, href, size = "default",
+  name, role, image, alt, href, size = "default", index,
 }: {
-  name: string; role?: string; image: string; alt?: string; href?: string; size?: "large" | "default";
+  name: string; role?: string; image: string; alt?: string; href?: string; size?: "large" | "default"; index?: number;
 }) {
   const inner = (
     <>
       <div className="raaka-character-frame relative aspect-[3/4] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900">
         <div className="raaka-character-orbit pointer-events-none absolute inset-[-18%] z-10 rounded-full" />
         <div className="raaka-character-grid pointer-events-none absolute inset-0 z-10" />
-        <Image src={image} alt={alt ?? name} width={600} height={800} className="raaka-card-image relative z-[2] h-full w-full object-cover" />
+        <Image src={image} alt={alt ?? name} width={600} height={800} sizes="(max-width: 768px) 50vw, 25vw" className="raaka-card-image relative z-[2] h-full w-full object-cover" />
         <div className="raaka-character-vignette pointer-events-none absolute inset-0 z-[3]" />
         <div className="raaka-character-scan pointer-events-none absolute left-0 top-0 z-[4] h-[2px] w-full" />
         <div className="raaka-character-corners pointer-events-none absolute inset-3 z-[5]" />
         <div className="raaka-character-id pointer-events-none absolute left-4 top-4 z-[6] font-mono text-[8px] uppercase tracking-[0.28em] text-orange-200/70">RAAKA // PROFILE</div>
-        <div className="raaka-character-index pointer-events-none absolute bottom-4 right-4 z-[6] font-mono text-[9px] tracking-[0.25em] text-white/45">CLASS // {role ? role.toUpperCase() : "CAST"}</div>
+        {index !== undefined && (
+          <div className="pointer-events-none absolute right-4 top-4 z-[6] font-mono text-[10px] tracking-[0.2em] text-white/40">{String(index + 1).padStart(2, "0")}</div>
+        )}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[7] bg-gradient-to-t from-black/95 via-black/60 to-transparent p-3.5 pt-20 sm:p-5 sm:pt-24">
+          <span className="inline-block rounded-full border border-orange-300/30 bg-orange-400/10 px-2.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.2em] text-orange-200 backdrop-blur-sm sm:text-[9px]">{role ?? "Cast"}</span>
+          <h3 className={`mt-2 font-serif font-semibold leading-tight text-white ${size === "large" ? "text-lg sm:text-2xl" : "text-base sm:text-xl"}`}>{name}</h3>
+          <span className="rx-person-line mt-3 block h-px w-10 bg-gradient-to-r from-orange-400 to-transparent" />
+        </div>
       </div>
-      <h3 className={`mt-4 font-semibold text-white ${size === "large" ? "text-lg md:text-xl" : "text-base md:text-lg"}`}>{name}</h3>
-      {role && <p className="mt-1 text-sm text-white/45">{role}</p>}
     </>
   );
   return href ? <a href={href} className="raaka-person-card group block">{inner}</a> : <div className="raaka-person-card group">{inner}</div>;
@@ -238,21 +295,185 @@ function StudioCard({ name, note, logo, href }: { name: string; note: string; lo
 }
 
 function VideoCard({ title, tag, embed }: { title: string; tag: string; embed: string }) {
+  const id = embed.split("/embed/")[1]?.split(/[?&]/)[0] ?? "";
+  const [playing, setPlaying] = useState(false);
+  const [thumb, setThumb] = useState(`https://i.ytimg.com/vi/${id}/maxresdefault.jpg`);
+  const src = `${embed}${embed.includes("?") ? "&" : "?"}autoplay=1&rel=0&modestbranding=1&playsinline=1`;
   return (
-    <div className="raaka-video-card group relative">
-      <div className="raaka-video-frame relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black">
-        <div className="raaka-video-energy pointer-events-none absolute inset-[-30%] z-[1]" />
-        <div className="raaka-video-grid pointer-events-none absolute inset-0 z-[2]" />
-        <div className="raaka-video-topline pointer-events-none absolute left-0 right-0 top-0 z-[6] h-px" />
-        <div className="raaka-video-scan pointer-events-none absolute left-0 top-0 z-[6] h-[22%] w-full" />
-        <iframe className="relative z-[3] h-full w-full" src={embed} title={title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-        <div className="pointer-events-none absolute inset-0 z-[5] bg-gradient-to-t from-black/70 via-transparent to-black/20 opacity-60" />
-        <div className="raaka-video-corners pointer-events-none absolute inset-3 z-[7]" />
-        <div className="pointer-events-none absolute left-4 top-4 z-[8] flex items-center gap-2 font-mono text-[8px] uppercase tracking-[0.3em] text-orange-100/70"><span className="h-1.5 w-1.5 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(255,120,30,.9)]" />RAAKA // TRANSMISSION</div>
-        <div className="pointer-events-none absolute bottom-4 right-4 z-[8] font-mono text-[8px] uppercase tracking-[0.22em] text-white/45">SIGNAL // {tag}</div>
+    <div className="rx-video raaka-video-card group relative">
+      <div className="rx-video-frame raaka-video-frame relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black">
+        {playing ? (
+          <iframe
+            className="absolute inset-0 z-[10] h-full w-full"
+            src={src}
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <>
+            <button type="button" onClick={() => setPlaying(true)} aria-label={`Play video: ${title}`} className="absolute inset-0 z-[4] cursor-pointer">
+              <img
+                src={thumb}
+                alt=""
+                loading="lazy"
+                onError={() => setThumb(`https://i.ytimg.com/vi/${id}/hqdefault.jpg`)}
+                className="rx-video-thumb h-full w-full object-cover"
+              />
+              <span className="rx-play absolute left-1/2 top-1/2 flex h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 items-center justify-center sm:h-20 sm:w-20">
+                <span className="rx-play-ring" />
+                <span className="rx-play-ring" style={{ animationDelay: "1.2s" }} />
+                <span className="rx-play-btn relative flex h-full w-full items-center justify-center rounded-full">
+                  <svg viewBox="0 0 24 24" className="ml-1 h-6 w-6 text-white sm:h-7 sm:w-7" fill="currentColor"><path d="M8 5.5v13l11-6.5z" /></svg>
+                </span>
+              </span>
+              <span className="absolute bottom-4 left-4 z-[8] text-[9px] font-semibold uppercase tracking-[0.3em] text-white/80 opacity-0 transition-all duration-500 group-hover:translate-x-1 group-hover:opacity-100 sm:text-[10px]">Tap to play</span>
+            </button>
+            <div className="raaka-video-grid pointer-events-none absolute inset-0 z-[2]" />
+            <div className="pointer-events-none absolute inset-0 z-[5] bg-gradient-to-t from-black/75 via-transparent to-black/30" />
+            <div className="raaka-video-corners pointer-events-none absolute inset-3 z-[7]" />
+            <div className="pointer-events-none absolute left-4 top-4 z-[8] flex items-center gap-2 font-mono text-[8px] uppercase tracking-[0.3em] text-orange-100/80"><span className="h-1.5 w-1.5 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(255,120,30,.9)]" />RAAKA // TRANSMISSION</div>
+            <div className="pointer-events-none absolute bottom-4 right-4 z-[8] font-mono text-[8px] uppercase tracking-[0.22em] text-white/55">SIGNAL // {tag}</div>
+          </>
+        )}
       </div>
-      <div className="relative mt-4 pl-4"><span className="absolute left-0 top-1 h-8 w-[2px] bg-gradient-to-b from-orange-400 to-transparent" /><h3 className="text-lg font-semibold text-white md:text-xl">{title}</h3><p className="mt-1 text-sm uppercase tracking-[0.2em] text-white/35">{tag}</p></div>
+      <div className="relative mt-4 pl-4"><span className="absolute left-0 top-1 h-8 w-[2px] bg-gradient-to-b from-orange-400 to-transparent transition-all duration-500 group-hover:h-full" /><h3 className="text-lg font-semibold text-white md:text-xl">{title}</h3><p className="mt-1 text-sm uppercase tracking-[0.2em] text-white/35">{tag}</p></div>
     </div>
+  );
+}
+
+function Embers({ count = 14, rise = 150 }: { count?: number; rise?: number }) {
+  return (
+    <span className="rx-embers pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      {Array.from({ length: count }).map((_, i) => (
+        <i
+          key={i}
+          className="rx-ember"
+          style={{
+            "--x": `${(i * 37 + 11) % 100}%`,
+            "--s": `${2 + (i % 3)}px`,
+            "--d": `${3.6 + (i % 5) * 0.8}s`,
+            "--dl": `${(i * 0.55) % 5}s`,
+            "--dx": `${(i % 2 ? 1 : -1) * (10 + ((i * 13) % 34))}px`,
+            "--rise": `${rise}px`,
+          } as React.CSSProperties}
+        />
+      ))}
+    </span>
+  );
+}
+
+function LogoShine({ src, alt = "RAAKA", imgClassName = "" }: { src: string; alt?: string; imgClassName?: string }) {
+  return (
+    <span className="rx-logo-stage relative z-10 block">
+      <img src={src} alt={alt} className={`rx-logo-img block h-auto w-full object-contain ${imgClassName}`} />
+      <span className="rx-logo-shine" style={{ "--mask": `url(${src})` } as React.CSSProperties} aria-hidden />
+    </span>
+  );
+}
+
+function ActionArt({ kind }: { kind: string }) {
+  if (kind === "purple") {
+    return (
+      <span className="rx-art rx-art-spark" aria-hidden>
+        <i style={{ "--k": 0, "--z": "9px" } as React.CSSProperties} />
+        <i style={{ "--k": 1, "--z": "6px" } as React.CSSProperties} />
+        <i style={{ "--k": 2, "--z": "11px" } as React.CSSProperties} />
+      </span>
+    );
+  }
+  const heights = kind === "yellow" ? ["35%", "55%", "78%", "100%"] : ["60%", "100%", "45%", "85%", "55%"];
+  return (
+    <span className={`rx-art ${kind === "yellow" ? "rx-art-rise" : "rx-art-eq"}`} aria-hidden>
+      {heights.map((h, k) => (
+        <i key={k} style={{ "--k": k, "--h": h } as React.CSSProperties} />
+      ))}
+    </span>
+  );
+}
+
+function TimerUnit({ label, value, pct, glow }: { label: string; value: number; pct: number; glow?: boolean }) {
+  return (
+    <div
+      className={`rx-timer relative overflow-hidden px-2 py-5 backdrop-blur-sm sm:border sm:px-4 sm:py-7 md:px-8 md:py-10 ${
+        glow ? "border-amber-100/20 bg-black/40" : "border-white/10 bg-black/35"
+      }`}
+    >
+      <p
+        className={`raaka-timer-number font-serif text-3xl font-black tracking-tight tabular-nums text-white sm:text-5xl md:text-8xl ${
+          glow ? "drop-shadow-[0_4px_20px_rgba(255,180,70,0.35)]" : "drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]"
+        }`}
+      >
+        <span key={value} className="rx-digit inline-block">{String(value).padStart(2, "0")}</span>
+      </p>
+      <p className="mt-2 text-[8px] uppercase tracking-[0.3em] text-amber-100/65 sm:mt-3 sm:text-[9px] md:text-xs">{label}</p>
+      <span key={`t${value}`} className="rx-tick pointer-events-none absolute inset-0" />
+      <svg className="rx-timer-ring pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+        <rect x="0.5" y="0.5" width="99" height="99" rx="2" pathLength={100} vectorEffect="non-scaling-stroke" strokeDasharray={`${pct} 100`} style={pct === 0 ? { transition: "none" } : undefined} />
+      </svg>
+    </div>
+  );
+}
+
+function CreditGroup({ group, index, dense }: { group: { department: string; names: string[] }; index: number; dense?: boolean }) {
+  const [ref, shown] = useInView<HTMLDivElement>(0.12);
+  return (
+    <div
+      ref={ref}
+      style={{ "--d": `${(index % 3) * 110}ms` } as React.CSSProperties}
+      className={`rx-credit ${shown ? "is-in" : ""} ${dense ? "mt-4" : "mb-7 break-inside-avoid"}`}
+    >
+      <div className="flex items-center gap-3">
+        <span className="rx-credit-dot" />
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-300/80 sm:text-xs">{group.department}</h3>
+        <span className="ml-auto font-mono text-[10px] text-white/25">{String(group.names.length).padStart(2, "0")}</span>
+      </div>
+      <span className="rx-credit-rule" />
+      {dense ? (
+        <ul className="mt-4 flex flex-wrap gap-1.5 sm:gap-2">
+          {group.names.map((n, i) => (
+            <li key={n} style={{ "--i": i } as React.CSSProperties} className="rx-credit-chip rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[12px] text-white/65 sm:text-[13px]">{n}</li>
+          ))}
+        </ul>
+      ) : (
+        <ul className="mt-3 space-y-1.5">
+          {group.names.map((n, i) => (
+            <li key={n} style={{ "--i": i } as React.CSSProperties} className="rx-credit-name text-[15px] text-white/70">{n}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ExploreCard({ href, eyebrow, meta, title, copy, index, featured }: { href?: string; eyebrow: string; meta?: string; title: string; copy: string; index: number; featured?: boolean }) {
+  const onMove = (e: React.MouseEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+  };
+  const body = (
+    <>
+      <span className="rx-explore-num pointer-events-none absolute -right-2 -top-4 select-none font-serif font-black leading-none">{String(index + 1).padStart(2, "0")}</span>
+      <div className="relative flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/45">
+        <span className="rounded-full border border-orange-300/30 bg-orange-400/10 px-2.5 py-1 font-semibold text-orange-200">{eyebrow}</span>
+        {meta && <span>{meta}</span>}
+      </div>
+      <h3 className={`relative mt-4 font-serif font-semibold leading-snug text-white ${featured ? "text-2xl sm:text-3xl" : "text-xl"}`}>{title}</h3>
+      <p className="relative mt-3 text-sm leading-7 text-white/50">{copy}</p>
+      {href && (
+        <div className="relative mt-6 flex items-center gap-3 text-sm font-semibold text-white/70 transition group-hover:text-white">
+          Read Full Story
+          <span className="rx-explore-arrow flex h-8 w-8 items-center justify-center rounded-full border border-white/20">→</span>
+        </div>
+      )}
+    </>
+  );
+  const cls = `rx-explore group block p-6 sm:p-8 ${featured ? "sm:min-h-[300px]" : ""}`;
+  return href ? (
+    <Link href={href} onMouseMove={onMove} className={cls}>{body}</Link>
+  ) : (
+    <div onMouseMove={onMove} className={cls}>{body}</div>
   );
 }
 
@@ -323,13 +544,9 @@ export default function Home() {
     const savedTheme = localStorage.getItem("raaka-theme");
 
     if (
-      savedTheme === "obsidian" ||
-      savedTheme === "ember" ||
-      savedTheme === "cosmic" ||
-      savedTheme === "graphite" ||
-      savedTheme === "onyx"
+      savedTheme && (THEME_ORDER as string[]).includes(savedTheme)
     ) {
-      setTheme(savedTheme);
+      setTheme(savedTheme as Theme);
     }
   }, []);
 
@@ -339,6 +556,13 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("raaka-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, [menuOpen]);
 
   // ==============================
   // COUNTDOWN
@@ -405,7 +629,7 @@ export default function Home() {
     };
   }, []);
 
-  const themeOrder: Theme[] = ["obsidian", "ember", "cosmic", "graphite", "onyx"];
+  const themeOrder = THEME_ORDER;
 
   useEffect(() => {
     const audio = new Audio("/sounds/king.mp3");
@@ -1271,6 +1495,164 @@ prefers-reduced-motion:reduce){
 }
 
 
+
+/* ================================================================
+   RAAKA — v2: reveal, credits, explore, aura themes, responsive
+================================================================ */
+html,body{max-width:100%;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+img,video,iframe{max-width:100%}
+
+/* scroll reveal */
+.rx-reveal{opacity:0;transform:translateY(28px) scale(.98);filter:blur(6px);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1),filter .9s}
+.rx-reveal.is-in{opacity:1;transform:none;filter:none}
+.rx-person-line{transition:width .6s cubic-bezier(.16,1,.3,1)}
+.raaka-person-card:hover .rx-person-line{width:100%}
+
+/* aura button — theme-coloured */
+.raaka-aura-premium{--aura:255,110,30}
+.raaka-aura-premium::before{background:conic-gradient(from 0deg,transparent 0 35%,rgba(var(--aura),.06) 43%,rgba(var(--aura),.98) 49%,rgba(255,255,255,.95) 51%,rgba(var(--aura),.3) 54%,transparent 62%)!important}
+.raaka-aura-premium::after{background:radial-gradient(circle at 20% 50%,rgba(var(--aura),.18),transparent 60%),linear-gradient(135deg,rgba(255,255,255,.07),rgba(0,0,0,.78) 58%)!important}
+.raaka-aura-premium:hover{border-color:rgba(var(--aura),.6)!important;box-shadow:0 0 0 1px rgba(var(--aura),.2),0 0 34px rgba(var(--aura),.3),0 18px 55px rgba(0,0,0,.58)!important}
+.rx-aura-core{animation:rxAuraPop .7s cubic-bezier(.16,1,.3,1)}
+.rx-aura-ring{border:1px solid rgba(var(--aura),.7);animation:rxAuraRing 2.4s ease-out infinite}
+.raaka-aura-premium:hover .rx-aura-orb{transform:rotate(90deg);transition:transform .7s cubic-bezier(.16,1,.3,1)}
+@keyframes rxAuraPop{0%{transform:scale(0)}55%{transform:scale(1.9)}100%{transform:scale(1)}}
+@keyframes rxAuraRing{0%{transform:scale(.8);opacity:.8}100%{transform:scale(1.45);opacity:0}}
+
+/* crew credits */
+.rx-credit{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.16,1,.3,1) var(--d,0ms),transform .8s cubic-bezier(.16,1,.3,1) var(--d,0ms),background .4s,box-shadow .4s}
+.rx-credit.is-in{opacity:1;transform:none}
+.rx-credit-dot{width:7px;height:7px;border-radius:50%;background:#fb923c;box-shadow:0 0 0 0 rgba(251,146,60,.6);animation:rxCreditPulse 2.6s ease-out infinite}
+@keyframes rxCreditPulse{0%{box-shadow:0 0 0 0 rgba(251,146,60,.55)}70%,100%{box-shadow:0 0 0 9px rgba(251,146,60,0)}}
+.rx-credit-rule{display:block;height:1px;margin-top:10px;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,rgba(255,130,50,.85),rgba(255,255,255,.08) 70%,transparent);transition:transform 1.2s cubic-bezier(.16,1,.3,1) calc(var(--d,0ms) + 200ms)}
+.rx-credit.is-in .rx-credit-rule{transform:scaleX(1)}
+.rx-credit-name{opacity:0;transform:translateX(-16px);transition:opacity .6s,transform .6s,color .3s;transition-delay:calc(var(--d,0ms) + 350ms + var(--i,0)*70ms)}
+.rx-credit-chip{opacity:0;transform:translateY(10px) scale(.88);transition:opacity .5s,transform .5s,border-color .3s,background .3s,color .3s;transition-delay:calc(300ms + var(--i,0)*28ms)}
+.rx-credit.is-in .rx-credit-name,.rx-credit.is-in .rx-credit-chip{opacity:1;transform:none}
+.rx-credit.is-in .rx-credit-name:hover{color:#fff;transform:translateX(6px);transition-delay:0s}
+.rx-credit.is-in .rx-credit-chip:hover{color:#fff;border-color:rgba(255,140,60,.55);background:rgba(255,100,30,.12);transform:translateY(-2px);transition-delay:0s}
+.rx-credit-stat{position:relative;overflow:hidden}
+.rx-credit-stat::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,180,100,.14) 50%,transparent 70%);transform:translateX(-130%);animation:rxCreditSweep 5s ease-in-out infinite}
+
+/* explore more */
+.rx-explore{position:relative;isolation:isolate;overflow:hidden;height:100%;border-radius:1.5rem;border:1px solid rgba(255,255,255,.1);background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.012));backdrop-filter:blur(14px);transition:transform .6s cubic-bezier(.16,1,.3,1),border-color .4s,box-shadow .5s}
+.rx-explore::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(420px circle at var(--mx,50%) var(--my,0%),rgba(255,120,40,.2),transparent 60%);opacity:0;transition:opacity .4s}
+.rx-explore::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;transform:scaleX(0);transform-origin:left;background:linear-gradient(90deg,#fb923c,transparent);transition:transform .7s cubic-bezier(.16,1,.3,1)}
+.rx-explore:hover{transform:translateY(-6px);border-color:rgba(255,140,60,.4);box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.rx-explore:hover::before{opacity:1}
+.rx-explore:hover::after{transform:scaleX(1)}
+.rx-explore-num{font-size:clamp(5rem,12vw,8rem);color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.08);transition:-webkit-text-stroke-color .5s,transform .7s cubic-bezier(.16,1,.3,1)}
+.rx-explore:hover .rx-explore-num{-webkit-text-stroke-color:rgba(255,140,60,.35);transform:translateY(6px)}
+.rx-explore-arrow{transition:transform .45s cubic-bezier(.16,1,.3,1),background .3s,color .3s}
+.rx-explore:hover .rx-explore-arrow{transform:translateX(6px);background:#fff;color:#000}
+
+/* touch / small screens */
+@media (hover:none){
+  .rx-explore:hover,.raaka-person-card:hover{transform:none}
+  .rx-explore:active{transform:scale(.985)}
+}
+@media (max-width:640px){
+  .raaka-character-frame{animation:none!important}
+  .raaka-character-orbit{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .rx-reveal,.rx-credit,.rx-credit-name,.rx-credit-chip,.rx-credit-rule{opacity:1!important;transform:none!important;filter:none!important;transition:none!important}
+  .rx-aura-ring,.rx-credit-dot,.rx-credit-stat::after,.rx-aura-core{animation:none!important}
+}
+
+
+
+/* ================================================================
+   RAAKA v3 — hero cards, logo, menu, countdown, video
+================================================================ */
+@property --ang{syntax:"<angle>";initial-value:0deg;inherits:false}
+.rx-shimmer-text{color:transparent!important;background:linear-gradient(100deg,#ffe9c2 0%,#fff 22%,#ffb347 48%,#fff 74%,#ffe9c2 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;animation:rxShimmerText 5s linear infinite}
+@keyframes rxShimmerText{to{background-position:-260% 0}}
+
+/* hero action cards — flat, no tilt */
+.rx-action{--ac:255,120,40;position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(255,255,255,.12);background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.012) 55%),rgba(8,8,10,.62);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);transform:translateZ(0);animation:rxActionIn .9s cubic-bezier(.16,1,.3,1) backwards;animation-delay:calc(var(--i,0)*130ms + 500ms);transition:transform .5s cubic-bezier(.16,1,.3,1),border-color .4s,box-shadow .5s}
+.rx-action-orange{--ac:255,120,40}.rx-action-purple{--ac:192,132,252}.rx-action-yellow{--ac:250,204,21}
+@keyframes rxActionIn{from{opacity:0;transform:translateY(18px)}}
+.rx-action::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;z-index:3;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 62%,rgba(var(--ac),.95) 80%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.4;animation:rxAng 6s linear infinite;transition:opacity .4s}
+@keyframes rxAng{to{--ang:360deg}}
+.rx-action::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40%;z-index:1;pointer-events:none;opacity:0;transform:translateX(-120%);background:linear-gradient(100deg,transparent,rgba(var(--ac),.28),transparent)}
+.rx-action-spot{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(280px circle at var(--mx,20%) var(--my,50%),rgba(var(--ac),.22),transparent 65%)}
+.rx-action:hover,.rx-action:focus-visible{transform:translateY(-5px);border-color:rgba(var(--ac),.4);box-shadow:0 22px 60px rgba(var(--ac),.22),inset 0 0 40px rgba(var(--ac),.06)}
+.rx-action:hover::before{opacity:1;animation-duration:2.2s}
+.rx-action:hover::after{opacity:1;animation:rxActionSweep .95s ease-out}
+.rx-action:hover .rx-action-spot{opacity:1}
+@keyframes rxActionSweep{to{transform:translateX(330%)}}
+.rx-action .raaka-action-icon{background:rgba(var(--ac),.1);transition:transform .5s cubic-bezier(.16,1,.3,1),box-shadow .5s}
+.rx-action:hover .raaka-action-icon{transform:scale(1.08);box-shadow:0 0 30px rgba(var(--ac),.5)}
+.rx-action-iring{position:absolute;inset:-1px;border-radius:inherit;border:1px solid rgba(var(--ac),.55);pointer-events:none;animation:rxRingOut 2.8s ease-out infinite}
+@keyframes rxRingOut{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.5);opacity:0}}
+.rx-action-arrow{transition:transform .4s cubic-bezier(.16,1,.3,1),background-color .3s,color .3s,border-color .3s}
+.rx-action:hover .rx-action-arrow{transform:translateX(5px);color:#fff;border-color:rgba(var(--ac),.7);background-color:rgba(var(--ac),.18)}
+.rx-art{position:absolute;right:4rem;bottom:.75rem;z-index:1;display:flex;align-items:flex-end;gap:3px;height:22px;opacity:.5;pointer-events:none;transition:opacity .4s,transform .5s}
+.rx-action:hover .rx-art{opacity:1;transform:scale(1.15)}
+.rx-art i{display:block;width:3px;border-radius:2px;background:rgba(var(--ac),.95);transform-origin:bottom}
+.rx-art-eq i{height:var(--h);animation:rxEq 1.1s ease-in-out infinite;animation-delay:calc(var(--k)*.13s)}
+@keyframes rxEq{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+.rx-art-rise i{height:var(--h);animation:rxRise 2.6s ease-in-out infinite;animation-delay:calc(var(--k)*.2s)}
+@keyframes rxRise{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+.rx-art-spark{align-items:center;gap:6px}
+.rx-art-spark i{width:var(--z);height:var(--z);border-radius:0;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:rxTwinkle 1.8s ease-in-out infinite;animation-delay:calc(var(--k)*.35s)}
+@keyframes rxTwinkle{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.15)}}
+@media (hover:none){.rx-action:hover{transform:none}.rx-action:active{transform:scale(.98)}.rx-action:hover::after{animation:none;opacity:0}}
+
+/* logos: breathing glow + shine that follows the PNG letters */
+.rx-logo-wrap{animation:rxLogoIn 1.5s cubic-bezier(.16,1,.3,1) .35s backwards}
+@keyframes rxLogoIn{from{opacity:0;transform:scale(.9);filter:blur(18px)}}
+.rx-logo-stage{animation:rxLogo 4.2s cubic-bezier(.45,.05,.25,1) infinite;will-change:transform,filter}
+.rx-logo-stage .rx-logo-img{animation:none!important}
+.rx-logo-shine{position:absolute;inset:0;pointer-events:none;-webkit-mask:var(--mask) center/contain no-repeat;mask:var(--mask) center/contain no-repeat;background:linear-gradient(105deg,transparent 38%,rgba(255,238,200,.95) 50%,transparent 62%);background-size:260% 100%;background-position:160% 0;mix-blend-mode:screen;animation:rxLogoShine 5.5s ease-in-out infinite 1.8s}
+@keyframes rxLogoShine{0%{background-position:160% 0}45%,100%{background-position:-60% 0}}
+.rx-logo-halo{background:radial-gradient(closest-side,rgba(255,110,30,.24),transparent 72%);filter:blur(28px);animation:rxHalo 4.2s ease-in-out infinite}
+@keyframes rxHalo{0%,100%{opacity:.45;transform:scale(.95)}50%{opacity:1;transform:scale(1.08)}}
+.rx-logo-underline{position:absolute;left:8%;right:8%;bottom:-10px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,140,50,.9),transparent);transform-origin:center;animation:rxUnder 1.6s cubic-bezier(.16,1,.3,1) 1.2s backwards}
+@keyframes rxUnder{from{transform:scaleX(0);opacity:0}}
+.rx-ember{position:absolute;bottom:0;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#ffe2b0,#ff7a1a 60%,transparent);opacity:0;animation:rxEmber var(--d) linear var(--dl) infinite}
+@keyframes rxEmber{0%{opacity:0;transform:translate(0,0) scale(1)}12%{opacity:.95}100%{opacity:0;transform:translate(var(--dx),calc(var(--rise)*-1)) scale(.2)}}
+
+/* menu */
+.rx-burger{position:relative;display:block;width:16px;height:12px}
+.rx-burger i{position:absolute;left:0;height:1.5px;width:100%;border-radius:2px;background:currentColor;transition:transform .5s cubic-bezier(.16,1,.3,1),opacity .3s,width .4s}
+.rx-burger i:nth-child(1){top:0}.rx-burger i:nth-child(2){top:5px;width:68%}.rx-burger i:nth-child(3){top:10px}
+.raaka-menu-premium:hover .rx-burger i:nth-child(2){width:100%}
+.rx-burger.is-open i:nth-child(1){transform:translateY(5px) rotate(45deg)}
+.rx-burger.is-open i:nth-child(2){opacity:0;transform:translateX(8px)}
+.rx-burger.is-open i:nth-child(3){transform:translateY(-5px) rotate(-45deg)}
+.rx-menu{transition-duration:.7s!important;transition-timing-function:cubic-bezier(.16,1,.3,1)!important;background:radial-gradient(520px circle at 100% 0%,rgba(255,110,30,.15),transparent 60%),radial-gradient(420px circle at 0% 100%,rgba(120,90,255,.09),transparent 60%),rgba(5,5,6,.96)!important}
+.rx-menu-item{position:relative;opacity:0;transform:translateX(28px);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1),background-color .3s}
+.rx-menu-open .rx-menu-item{opacity:1;transform:none;transition-delay:calc(200ms + var(--i,0)*65ms)}
+.rx-menu-open .rx-menu-item:hover{background-color:rgba(255,255,255,.06);transform:translateX(4px);transition-delay:0s}
+.rx-menu-bar{position:absolute;left:0;top:26%;bottom:26%;width:2px;border-radius:2px;background:linear-gradient(#fb923c,transparent);transform:scaleY(0);transition:transform .4s cubic-bezier(.16,1,.3,1)}
+.rx-menu-item:hover .rx-menu-bar{transform:scaleY(1)}
+
+/* countdown */
+.rx-digit{animation:rxDigitIn .5s cubic-bezier(.16,1,.3,1)}
+@keyframes rxDigitIn{0%{opacity:0;transform:translateY(-35%) scale(1.1);filter:blur(7px)}100%{opacity:1;transform:none;filter:none}}
+.rx-tick{background:radial-gradient(circle at 50% 40%,rgba(255,190,90,.22),transparent 70%);opacity:0;animation:rxTickFlash .9s ease-out}
+@keyframes rxTickFlash{0%{opacity:1}100%{opacity:0}}
+.rx-timer-ring rect{fill:none;stroke:rgba(255,190,90,.95);stroke-width:1.6;stroke-linecap:round;filter:drop-shadow(0 0 4px rgba(255,150,40,.85));transition:stroke-dasharray 1s linear}
+.rx-cd-beam{background:linear-gradient(100deg,transparent,rgba(255,200,120,.07),transparent);transform:translateX(-120%) skewX(-16deg);animation:rxCdBeam 9s ease-in-out infinite}
+@keyframes rxCdBeam{0%,15%{transform:translateX(-120%) skewX(-16deg)}70%,100%{transform:translateX(420%) skewX(-16deg)}}
+
+/* youtube cards */
+.rx-video-frame{isolation:isolate;transition:transform .6s cubic-bezier(.16,1,.3,1),border-color .4s,box-shadow .6s}
+.rx-video:hover .rx-video-frame{transform:translateY(-4px);border-color:rgba(255,140,60,.45);box-shadow:0 28px 70px rgba(0,0,0,.55),0 0 50px rgba(255,90,20,.14)}
+.rx-video-thumb{transition:transform 1.2s cubic-bezier(.16,1,.3,1),filter .6s}
+.rx-video:hover .rx-video-thumb{transform:scale(1.07);filter:brightness(1.1) saturate(1.12)}
+.rx-play-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,170,80,.75);animation:rxPlayRing 2.4s ease-out infinite}
+@keyframes rxPlayRing{0%{transform:scale(1);opacity:.85}100%{transform:scale(2.1);opacity:0}}
+.rx-play-btn{background:linear-gradient(135deg,rgba(255,150,60,.95),rgba(230,70,10,.95));box-shadow:0 10px 40px rgba(255,90,20,.5),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .45s cubic-bezier(.16,1,.3,1),box-shadow .45s}
+.rx-video:hover .rx-play-btn{transform:scale(1.12);box-shadow:0 14px 60px rgba(255,90,20,.7),inset 0 1px 0 rgba(255,255,255,.4)}
+
+@media (prefers-reduced-motion:reduce){
+  .rx-action,.rx-action::before,.rx-action::after,.rx-action-iring,.rx-art i,.rx-logo-wrap,.rx-logo-stage,.rx-logo-shine,.rx-logo-halo,.rx-ember,.rx-cd-beam,.rx-digit,.rx-tick,.rx-play-ring,.rx-shimmer-text{animation:none!important}
+  .rx-menu-item{opacity:1;transform:none}
+}
+
       `}
 </style>
 
@@ -1367,45 +1749,71 @@ prefers-reduced-motion:reduce){
           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.22)_55%,rgba(0,0,0,0.97)_100%)]" />
         </div>
 
+        {/* AURORA — northern lights */}
+        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "aurora" ? "opacity-100" : "opacity-0"}`}>
+          <div className="absolute inset-0 bg-[#020807]" />
+          <div className="absolute left-[-10%] top-[-10%] h-[560px] w-[760px] rounded-full bg-teal-500/[0.11] blur-[140px]" />
+          <div className="absolute right-[-8%] top-[22%] h-[520px] w-[620px] rounded-full bg-emerald-500/[0.08] blur-[150px]" />
+          <div className="absolute bottom-[-15%] left-1/3 h-[480px] w-[780px] rounded-full bg-violet-600/[0.09] blur-[160px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0),rgba(0,0,0,0.85))]" />
+        </div>
+
+        {/* CRIMSON — blood moon */}
+        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "crimson" ? "opacity-100" : "opacity-0"}`}>
+          <div className="absolute inset-0 bg-[#0a0204]" />
+          <div className="absolute left-1/2 top-[-12%] h-[640px] w-[900px] -translate-x-1/2 rounded-full bg-rose-600/[0.12] blur-[150px]" />
+          <div className="absolute bottom-[-10%] right-[-6%] h-[500px] w-[560px] rounded-full bg-red-800/[0.10] blur-[150px]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(244,63,94,0.10),transparent_44%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(0,0,0,0.9))]" />
+        </div>
+
+        {/* SUNSET — dusk gradient */}
+        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "sunset" ? "opacity-100" : "opacity-0"}`}>
+          <div className="absolute inset-0 bg-[#0b0510]" />
+          <div className="absolute left-[-8%] top-[-8%] h-[560px] w-[700px] rounded-full bg-fuchsia-600/[0.12] blur-[150px]" />
+          <div className="absolute right-[-8%] top-[18%] h-[520px] w-[640px] rounded-full bg-orange-500/[0.10] blur-[150px]" />
+          <div className="absolute bottom-[-14%] left-1/2 h-[480px] w-[900px] -translate-x-1/2 rounded-full bg-purple-700/[0.10] blur-[160px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(0,0,0,0.88))]" />
+        </div>
+
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_18%,rgba(0,0,0,0.72)_100%)]" />
       </div>
 
       {/* ==================================
-          BACKGROUND THEME SWITCHER
+          BACKGROUND THEME SWITCHER (AURA)
       ================================== */}
-      <div className="fixed left-4 top-4 z-[90] sm:left-5 sm:top-5 md:left-7 md:top-6">
+      <div className="fixed left-3 top-3 z-[90] sm:left-5 sm:top-5 md:left-7 md:top-6">
         <button
           type="button"
           onClick={() =>
-            setTheme((current) => {
-              const index = themeOrder.indexOf(current);
-              return themeOrder[(index + 1) % themeOrder.length];
-            })
+            setTheme((current) => themeOrder[(themeOrder.indexOf(current) + 1) % themeOrder.length])
           }
-          className="raaka-control raaka-aura-premium group relative flex h-10 items-center gap-2.5 overflow-hidden rounded-full border border-white/15 bg-black/55 px-3 text-white/85 shadow-[0_12px_45px_rgba(0,0,0,0.45)] backdrop-blur-2xl transition-all duration-300 hover:border-white/35 hover:bg-black/75 sm:h-11 sm:px-3.5 md:px-4"
+          style={{ "--aura": AURA_RGB[theme] } as React.CSSProperties}
+          className="raaka-control raaka-aura-premium group relative flex h-11 items-center gap-2.5 overflow-hidden rounded-full border border-white/15 bg-black/55 py-1 pl-1.5 pr-3.5 text-white/85 shadow-[0_12px_45px_rgba(0,0,0,0.45)] backdrop-blur-2xl transition-all duration-300 sm:h-12 sm:gap-3 sm:pr-4"
           aria-label={`Change visual aura. Current: ${theme}`}
           title="Change visual aura"
         >
-          <span className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-r from-white/[0.08] via-transparent to-orange-400/[0.08] opacity-70" />
-          <span className="relative flex h-[22px] w-[22px] items-center justify-center rounded-full border border-white/20 bg-white/[0.04] shadow-inner sm:h-6 sm:w-6">
-            <span className="absolute inset-1 rounded-full border border-white/10 transition-transform duration-700 group-hover:rotate-180" />
+          <span className="rx-aura-orb relative flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] sm:h-9 sm:w-9">
+            <span className="rx-aura-ring absolute inset-0 rounded-full" />
             <span
-              className={`relative h-2 w-2 rounded-full transition-all duration-500 ${
-                theme === "obsidian"
-                  ? "bg-white shadow-[0_0_12px_rgba(255,255,255,0.85)]"
-                  : theme === "ember"
-                  ? "bg-orange-400 shadow-[0_0_14px_rgba(251,146,60,0.95)]"
-                  : theme === "cosmic"
-                  ? "bg-indigo-400 shadow-[0_0_14px_rgba(129,140,248,0.95)]"
-                  : theme === "graphite"
-                  ? "bg-zinc-300 shadow-[0_0_14px_rgba(212,212,216,0.9)]"
-                  : "bg-yellow-400 shadow-[0_0_14px_rgba(250,204,21,0.9)]"
-              }`}
+              key={theme}
+              className="rx-aura-core relative h-3 w-3 rounded-full"
+              style={{ background: `rgb(${AURA_RGB[theme]})`, boxShadow: `0 0 16px rgba(${AURA_RGB[theme]},.95)` }}
             />
           </span>
-          <span className="relative hidden text-[9px] font-semibold uppercase tracking-[0.32em] sm:block">Aura</span>
-          <span className="relative hidden h-3.5 w-px bg-white/15 sm:block" />
-          <span className="relative hidden text-[8px] uppercase tracking-[0.18em] text-white/40 sm:block">{theme}</span>
+          <span className="relative flex flex-col items-start leading-none">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.34em]">Aura</span>
+            <span className="mt-1.5 text-[8px] uppercase tracking-[0.2em] text-white/50">{theme}</span>
+          </span>
+          <span className="relative hidden items-center gap-1 md:flex">
+            {THEME_ORDER.map((t) => (
+              <span
+                key={t}
+                className={`h-1 rounded-full transition-all duration-500 ${t === theme ? "w-4" : "w-1 bg-white/20"}`}
+                style={t === theme ? { background: `rgb(${AURA_RGB[t]})` } : undefined}
+              />
+            ))}
+          </span>
         </button>
       </div>
 
@@ -1435,11 +1843,11 @@ prefers-reduced-motion:reduce){
           aria-expanded={menuOpen}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
         >
-          <span>{menuOpen ? "Close" : "Menu"}</span>
-          <span className="relative flex h-4 w-4 items-center justify-center overflow-hidden">
-            <span className={`absolute text-sm leading-none transition-all duration-300 ${menuOpen ? "translate-y-0 rotate-0 opacity-100" : "-translate-y-3 opacity-0"}`}>×</span>
-            <span className={`absolute text-sm leading-none transition-all duration-300 ${menuOpen ? "translate-y-3 opacity-0" : "translate-y-0 opacity-100"}`}>→</span>
+          <span className="relative block h-3 overflow-hidden leading-3">
+            <span className={`block transition-transform duration-500 ${menuOpen ? "-translate-y-full" : ""}`}>Menu</span>
+            <span className={`absolute left-0 top-full block transition-transform duration-500 ${menuOpen ? "-translate-y-full" : ""}`}>Close</span>
           </span>
+          <span className={`rx-burger ${menuOpen ? "is-open" : ""}`}><i /><i /><i /></span>
         </button>
       </div>
 
@@ -1457,27 +1865,30 @@ prefers-reduced-motion:reduce){
       />
 
       <aside
-        className={`fixed right-0 top-0 z-[100] flex h-[100dvh] w-[86vw] max-w-[400px] flex-col overflow-y-auto raaka-menu-scroll border-l border-white/10 bg-black/95 shadow-[0_25px_80px_rgba(0,0,0,0.65)] backdrop-blur-2xl transition-transform duration-500 ease-out ${
+        className={`rx-menu ${menuOpen ? "rx-menu-open" : ""} fixed right-0 top-0 z-[100] flex h-[100dvh] w-[86vw] max-w-[400px] flex-col overflow-y-auto raaka-menu-scroll border-l border-white/10 bg-black/95 shadow-[0_25px_80px_rgba(0,0,0,0.65)] backdrop-blur-2xl transition-transform duration-500 ease-out ${
           menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex items-end justify-between gap-4 border-b border-white/10 px-6 py-7">
           <div>
             <p className="text-[9px] uppercase tracking-[0.35em] text-white/35">Explore</p>
-            <h2 className="mt-1 font-serif text-3xl font-semibold tracking-tight text-white">RAAKA</h2>
+            <h2 className="rx-shimmer-text mt-1 font-serif text-3xl font-semibold tracking-tight text-white">RAAKA</h2>
           </div>
           <p className="pb-1 text-right text-[9px] uppercase tracking-[0.22em] text-white/25">The World of RAAKA</p>
         </div>
 
         <nav className="flex-1 space-y-1 px-4 py-4">
-          {NAV_LINKS.map((link) => (
+          {NAV_LINKS.map((link, idx) => (
             <a
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="raaka-nav-link group flex items-center justify-between rounded-2xl px-4 py-3.5 transition"
+              style={{ "--i": idx } as React.CSSProperties}
+              className="raaka-nav-link rx-menu-item group flex items-center justify-between rounded-2xl px-4 py-3.5 transition"
             >
+              <span className="rx-menu-bar" />
               <span className="flex items-center text-sm font-medium">
+                <span className="mr-3 font-mono text-[10px] text-white/25">{String(idx + 1).padStart(2, "0")}</span>
                 {link.label}
                 {link.isNew && <NewBadge addedAt="2026-09-06" />}
               </span>
@@ -1486,7 +1897,7 @@ prefers-reduced-motion:reduce){
           ))}
 
           {/* TICKET BOOKING */}
-          <div className="rounded-2xl">
+          <div className="rx-menu-item rounded-2xl" style={{ "--i": NAV_LINKS.length } as React.CSSProperties}>
             <button
               type="button"
               onClick={() => setTicketsOpen((value) => !value)}
@@ -1571,14 +1982,12 @@ prefers-reduced-motion:reduce){
               </div>
 
               {/* Logo */}
-              <div className="relative w-[min(84vw,560px)] md:w-[min(58vw,640px)]">
-                <div className="pointer-events-none absolute -inset-x-10 -inset-y-8 rounded-full bg-orange-500/[0.045] blur-[55px]" />
+              <div className="rx-logo-wrap relative w-[min(84vw,560px)] md:w-[min(58vw,640px)]">
+                <div className="rx-logo-halo pointer-events-none absolute -inset-x-10 -inset-y-10 rounded-full" />
+                <Embers count={16} rise={170} />
                 <div className="pointer-events-none absolute inset-x-4 bottom-0 h-10 rounded-full bg-black/70 blur-[22px]" />
-                <img
-                  src="/images/raaka-logo.png"
-                  alt="RAAKA"
-                  className="raaka-logo-premium relative z-10 block h-auto w-full object-contain drop-shadow-[0_10px_16px_rgba(0,0,0,0.95)] drop-shadow-[0_0_24px_rgba(255,130,20,0.10)]"
-                />
+                <LogoShine src="/images/raaka-logo.png" imgClassName="raaka-logo-premium drop-shadow-[0_10px_16px_rgba(0,0,0,0.95)] drop-shadow-[0_0_24px_rgba(255,130,20,0.10)]" />
+                <span className="rx-logo-underline" aria-hidden />
               </div>
 
               {/* Title rule */}
@@ -1604,30 +2013,36 @@ prefers-reduced-motion:reduce){
               </p>
 
               {/* Action rail — horizontal scroll on mobile, grid on desktop */}
-              <div className="mt-7 -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
-                {HERO_ACTIONS.map((action) => {
+              <div className="mt-7 -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-3 pt-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-3">
+                {HERO_ACTIONS.map((action, i) => {
                   const accent = ACCENTS[action.accent];
                   return (
                     <a
                       key={action.title}
                       href={action.href}
-                      className={`raaka-interactive raaka-action-${action.accent} group relative flex h-20 w-[78vw] shrink-0 snap-start items-center overflow-hidden rounded-xl border border-white/[0.13] bg-black/50 px-3.5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:bg-black/65 sm:h-[86px] sm:w-auto sm:px-4`}
+                      onMouseMove={(e) => {
+                        const r = e.currentTarget.getBoundingClientRect();
+                        e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+                        e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+                      }}
+                      style={{ "--i": i } as React.CSSProperties}
+                      className={`rx-action rx-action-${action.accent} group relative flex min-h-[84px] w-[80vw] shrink-0 snap-start items-center rounded-2xl px-3.5 sm:min-h-[98px] sm:w-auto sm:px-5`}
                     >
-                      <div className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${accent.bg} via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
-                      <div className={`raaka-action-icon relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${accent.glow} ${accent.text} md:h-12 md:w-12`}>
+                      <span className="rx-action-spot" aria-hidden />
+                      <ActionArt kind={action.accent} />
+                      <div className={`raaka-action-icon relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${accent.glow} ${accent.text} md:h-14 md:w-14`}>
+                        <span className="rx-action-iring" aria-hidden />
                         {action.icon}
                       </div>
-                      <div className="relative z-10 ml-3 min-w-0 flex-1 md:ml-4">
+                      <div className="relative z-10 ml-3.5 min-w-0 flex-1 md:ml-4">
                         <div className="flex min-w-0 items-center gap-2">
-                          <p className="truncate text-[7px] font-medium uppercase tracking-[0.28em] text-white/35 md:text-[8px]">{action.eyebrow}</p>
+                          <p className="truncate text-[8px] font-medium uppercase tracking-[0.26em] text-white/40 md:text-[9px]">{action.eyebrow}</p>
                           {"isNew" in action && action.isNew && <NewBadge addedAt="2026-09-06" />}
                         </div>
-                        <h3 className="mt-1 truncate text-[14px] font-semibold text-white md:text-[15px]">{action.title}</h3>
+                        <h3 className="mt-1 truncate text-[15px] font-semibold text-white md:text-[17px]">{action.title}</h3>
                       </div>
-                      <div className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/[0.14] text-sm text-white/40 transition-all group-hover:text-white md:h-9 md:w-9 ${accent.border}`}>
-                        →
-                      </div>
-                      <span className={`absolute bottom-0 left-0 h-[2px] w-0 transition-all duration-500 group-hover:w-full ${accent.bar}`} />
+                      <div className="rx-action-arrow relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.14] text-sm text-white/50 md:h-10 md:w-10">→</div>
+                      <span className={`absolute bottom-0 left-0 z-10 h-[2px] w-0 transition-all duration-500 group-hover:w-full ${accent.bar}`} />
                     </a>
                   );
                 })}
@@ -1699,45 +2114,32 @@ prefers-reduced-motion:reduce){
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/35 to-black/75" />
             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/90" />
             <div className="raaka-countdown-glow pointer-events-none absolute left-1/2 top-[45%] h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-500/10 blur-[120px]" />
+            <Embers count={26} rise={560} />
+            <div className="rx-cd-beam pointer-events-none absolute inset-y-0 left-0 w-1/3" />
 
             <div className="relative z-10 flex min-h-[640px] flex-col items-center justify-center px-5 py-16 text-center md:min-h-[780px]">
               <p className="mb-6 text-[10px] uppercase tracking-[0.55em] text-amber-100/70 md:mb-7 md:text-xs">The Countdown Begins</p>
 
-              <div className="relative w-[240px] md:w-[500px]">
-                <Image src="/images/logo2.png" alt="RAAKA" width={1200} height={350} priority className="h-auto w-full object-contain drop-shadow-[0_0_25px_rgba(255,180,70,0.25)]" />
+              <div className="rx-logo-wrap relative w-[240px] md:w-[500px]">
+                <div className="rx-logo-halo pointer-events-none absolute -inset-x-8 -inset-y-8 rounded-full" />
+                <LogoShine src="/images/logo2.png" imgClassName="drop-shadow-[0_0_25px_rgba(255,180,70,0.25)]" />
               </div>
 
               <div className="mt-6 flex items-center justify-center gap-4 md:mt-7">
                 <span className="h-px w-10 bg-amber-100/40 md:w-20" />
-                <p className="text-sm uppercase tracking-[0.35em] text-amber-50/90 md:text-lg">coming soon</p>
+                <p className="rx-shimmer-text text-sm uppercase tracking-[0.35em] text-amber-50/90 md:text-lg">coming soon</p>
                 <span className="h-px w-10 bg-amber-100/40 md:w-20" />
               </div>
 
               <div className="mt-12 w-full max-w-5xl md:mt-20">
                 <div className="grid grid-cols-4 gap-2 sm:gap-0">
                   {[
-                    { label: "Days", value: timeLeft.days },
-                    { label: "Hours", value: timeLeft.hours },
-                    { label: "Minutes", value: timeLeft.minutes },
-                    { label: "Seconds", value: timeLeft.seconds, glow: true },
+                    { label: "Days", value: timeLeft.days, pct: Math.min(timeLeft.days / 365, 1) * 100 },
+                    { label: "Hours", value: timeLeft.hours, pct: (timeLeft.hours / 24) * 100 },
+                    { label: "Minutes", value: timeLeft.minutes, pct: (timeLeft.minutes / 60) * 100 },
+                    { label: "Seconds", value: timeLeft.seconds, pct: (timeLeft.seconds / 60) * 100, glow: true },
                   ].map((unit) => (
-                    <div
-                      key={unit.label}
-                      className={`relative px-2 py-5 sm:border sm:px-4 sm:py-7 md:px-8 md:py-10 ${
-                        unit.glow ? "border-amber-100/20 bg-black/40" : "border-white/10 bg-black/35"
-                      } backdrop-blur-sm`}
-                    >
-                      <p
-                        className={`raaka-timer-number font-serif text-3xl font-black tracking-tight tabular-nums text-white sm:text-5xl md:text-8xl ${
-                          unit.glow ? "drop-shadow-[0_4px_20px_rgba(255,180,70,0.35)]" : "drop-shadow-[0_4px_15px_rgba(0,0,0,0.8)]"
-                        }`}
-                      >
-                        {String(unit.value).padStart(2, "0")}
-                      </p>
-                      <p className={`mt-2 text-[8px] uppercase tracking-[0.3em] sm:mt-3 sm:text-[9px] md:text-xs ${unit.glow ? "text-amber-100/70" : "text-amber-100/60"}`}>
-                        {unit.label}
-                      </p>
-                    </div>
+                    <TimerUnit key={unit.label} {...unit} />
                   ))}
                 </div>
               </div>
@@ -1752,24 +2154,28 @@ prefers-reduced-motion:reduce){
         </section>
 
         {/* ============================== CAST ============================== */}
-        <section id="cast" data-design-section="cast" className="px-5 py-20 sm:px-6 md:px-10 md:py-24">
+        <section id="cast" data-design-section="cast" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
-            <SectionHeading eyebrow="The Cast" title="Cast & Characters" />
-            <div className="grid grid-cols-2 gap-5 sm:gap-6 md:grid-cols-4">
-              {CAST.map((person) => (
-                <PersonCard key={person.name} {...person} size="large" />
+            <Reveal><SectionHeading eyebrow="The Cast" title="Cast & Characters" /></Reveal>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+              {CAST.map((person, i) => (
+                <Reveal key={person.name} delay={i * 120} className="w-[calc(50%-0.5rem)] sm:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]">
+                  <PersonCard {...person} size="large" index={i} />
+                </Reveal>
               ))}
             </div>
           </div>
         </section>
 
         {/* ============================== CREW ============================== */}
-        <section id="crew" data-design-section="crew" className="px-5 py-20 sm:px-6 md:px-10 md:py-24">
+        <section id="crew" data-design-section="crew" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
-            <SectionHeading eyebrow="Behind The World" title="Crew" />
-            <div className="grid grid-cols-2 gap-5 sm:gap-6 md:grid-cols-4">
-              {CREW.map((person) => (
-                <PersonCard key={person.name} {...person} />
+            <Reveal><SectionHeading eyebrow="Behind The World" title="Crew" /></Reveal>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4">
+              {CREW.map((person, i) => (
+                <Reveal key={person.name} delay={i * 110}>
+                  <PersonCard {...person} index={i} />
+                </Reveal>
               ))}
             </div>
           </div>
@@ -1809,7 +2215,7 @@ prefers-reduced-motion:reduce){
             <SectionHeading eyebrow="Announcements" title="Latest Announcements" />
             <div className="grid gap-8 md:grid-cols-2">
               {ANNOUNCEMENT_VIDEOS.map((video) => (
-                <VideoCard key={video.title} {...video} />
+                <Reveal key={video.title}><VideoCard {...video} /></Reveal>
               ))}
             </div>
           </div>
@@ -1839,7 +2245,7 @@ prefers-reduced-motion:reduce){
             <SectionHeading eyebrow="The Soundtrack" title="Songs" />
             <div className="grid gap-8 md:grid-cols-2">
               {SONG_VIDEOS.map((video) => (
-                <VideoCard key={video.title} {...video} />
+                <Reveal key={video.title}><VideoCard {...video} /></Reveal>
               ))}
             </div>
           </div>
@@ -1938,102 +2344,56 @@ prefers-reduced-motion:reduce){
         </section>
 
         {/* ============================== CREW CREDITS ============================== */}
-        <section id="crew-credits" className="px-5 py-20 sm:px-6 md:px-10 md:py-24">
+        <section id="crew-credits" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
-            <SectionHeading eyebrow="Behind The Film" title="Crew Credits" />
+            <Reveal><SectionHeading eyebrow="Behind The Film" title="Crew Credits" /></Reveal>
+
+            <div className="mb-12 grid grid-cols-2 gap-3 sm:max-w-md sm:gap-4">
+              <CountUp to={CREW_CREDITS.length} label="Departments" />
+              <CountUp to={CREW_CREDITS.reduce((a, g) => a + g.names.length, 0)} label="Credits" />
+            </div>
+
             <div className="columns-1 gap-x-12 sm:columns-2 lg:columns-3">
-              {CREW_CREDITS.map((group) => (
-                <div key={group.department} className="mb-8 break-inside-avoid">
-                  <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300/70">{group.department}</h3>
-                  <ul className="mt-3 space-y-1.5">
-                    {group.names.map((name) => (
-                      <li key={name} className="text-[15px] text-white/70">{name}</li>
-                    ))}
-                  </ul>
-                </div>
+              {CREW_CREDITS.filter((g) => g.names.length <= 8).map((group, i) => (
+                <CreditGroup key={group.department} group={group} index={i} />
               ))}
             </div>
+            {CREW_CREDITS.filter((g) => g.names.length > 8).map((group, i) => (
+              <CreditGroup key={group.department} group={group} index={i} dense />
+            ))}
           </div>
         </section>
 
-  {/* ============================== EXPLORE MORE ============================== */}
-<section
-  id="explore"
-  data-design-section="explore"
-  className="mx-auto max-w-7xl px-5 py-20 sm:px-6 md:px-8 md:py-24"
->
-  <SectionHeading eyebrow="More" title="Explore More" />
+        {/* ============================== EXPLORE MORE ============================== */}
+        <section id="explore" data-design-section="explore" className="mx-auto max-w-7xl px-5 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24">
+          <Reveal><SectionHeading eyebrow="More" title="Explore More" lede="Stories, theories and updates from the world of RAAKA." /></Reveal>
 
-  <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
+            <Reveal>
+              <ExploreCard
+                featured index={0} href="/news/raaka1" eyebrow="Raaka News" meta="17 Sep 2026"
+                title="Sun Pictures Teases Raaka With a Mysterious “37” Post"
+                copy="One mysterious number has fans asking the same question — what does “37” mean?"
+              />
+            </Reveal>
+            <Reveal delay={120}>
+              <ExploreCard
+                featured index={1} href="/news/raaka2" eyebrow="Mythology" meta="RAAKA"
+                title="RAAKA & Rākā — The Full Moon Connection"
+                copy="Explore the ancient Sanskrit meaning of Rākā, its connection with the full moon, and the mystery behind RAAKA's mythology."
+              />
+            </Reveal>
+          </div>
 
-    {/* RAAKA NEWS — ARTICLE 1 */}
-    <Link
-      href="/news/raaka1"
-      className="raaka-control raaka-explore-card group block rounded-2xl border border-white/10 bg-zinc-900 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-zinc-800"
-    >
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-        <span>Raaka News</span>
-        <span>•</span>
-        <span>17 Sep 2026</span>
-      </div>
+          <div className="mt-4 grid gap-4 sm:mt-5 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+            {EXPLORE_CARDS.map((card, i) => (
+              <Reveal key={card.title} delay={i * 100}>
+                <ExploreCard index={i + 2} eyebrow="Explore" title={card.title} copy={card.copy} />
+              </Reveal>
+            ))}
+          </div>
+        </section>
 
-      <h3 className="mt-3 text-lg font-bold leading-snug text-white">
-        Sun Pictures Teases Raaka With a Mysterious “37” Post
-      </h3>
-
-      <p className="mt-2 text-sm leading-6 text-zinc-500">
-        One mysterious number has fans asking the same question — what does
-        “37” mean?
-      </p>
-
-      <div className="mt-5 text-sm font-semibold text-zinc-400 transition group-hover:text-white">
-        Read Full Story →
-      </div>
-    </Link>
-
-    {/* RAAKA MYTHOLOGY — ARTICLE 2 */}
-    <Link
-      href="/news/raaka2"
-      className="raaka-control raaka-explore-card group block rounded-2xl border border-white/10 bg-zinc-900 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-zinc-800"
-    >
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-        <span>Mythology</span>
-        <span>•</span>
-        <span>RAAKA</span>
-      </div>
-
-      <h3 className="mt-3 text-lg font-bold leading-snug text-white">
-        RAAKA & Rākā — The Full Moon Connection
-      </h3>
-
-      <p className="mt-2 text-sm leading-6 text-zinc-500">
-        Explore the ancient Sanskrit meaning of Rākā, its connection with the
-        full moon, and the mystery behind RAAKA&apos;s mythology.
-      </p>
-
-      <div className="mt-5 text-sm font-semibold text-zinc-400 transition group-hover:text-white">
-        Read Full Story →
-      </div>
-    </Link>
-
-    {/* EXISTING EXPLORE CARDS */}
-    {EXPLORE_CARDS.map((card) => (
-      <div
-        key={card.title}
-        className="raaka-explore-card rounded-2xl border border-white/10 bg-zinc-900 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-zinc-800"
-      >
-        <h3 className="text-lg font-bold text-white">
-          {card.title}
-        </h3>
-
-        <p className="mt-2 text-sm leading-6 text-zinc-500">
-          {card.copy}
-        </p>
-      </div>
-    ))}
-
-  </div>
-</section>
         {/* ============================== CINEMATIC FOOTER ============================== */}
         <footer className="raaka-cinematic-footer relative mt-8 overflow-hidden">
           <div className="raaka-footer-noise pointer-events-none absolute inset-0" />

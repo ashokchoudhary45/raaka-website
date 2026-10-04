@@ -8,12 +8,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; background: #050505; }
-body { margin: 0; background: #050505; color: #f5f5f5; font-family: Arial, Helvetica, sans-serif; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+html { scroll-behavior: smooth; background: #050505; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: 72px; }
+body { margin: 0; background: #050505; color: #f5f5f5; font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 ::selection { background: #ffffff; color: #000000; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #050505; }
@@ -49,15 +50,13 @@ body { margin: 0; background: #050505; color: #f5f5f5; font-family: Arial, Helve
   .raaka-site .raaka-hero > div:last-child { padding-bottom: 3.5rem; }
   .raaka-site .raaka-hero h1 { font-size: clamp(3.6rem, 18vw, 6rem); line-height: .86; letter-spacing: -.055em; }
   .raaka-site .raaka-hero p { max-width: 20rem; font-size: .88rem; line-height: 1.65; }
-  .raaka-site .raaka-hero a { min-height: 46px; display:inline-flex; align-items:center; justify-content:center; padding-inline:1.2rem; }
+  .raaka-site .raaka-hero a:not(.rx-action) { min-height: 46px; display:inline-flex; align-items:center; justify-content:center; padding-inline:1.2rem; }
   .raaka-site section { scroll-margin-top: 18px; }
   .raaka-site .raaka-about, .raaka-site #cast, .raaka-site #crew, .raaka-site #creative-team, .raaka-site #vfx-studios, .raaka-site #announcements, .raaka-site #songs, .raaka-site #crew-credits, .raaka-site #explore { padding-top: 4.5rem; padding-bottom: 4.5rem; }
   .raaka-site h2 { font-size: clamp(2rem, 9vw, 3rem); line-height: 1; letter-spacing: -.035em; }
   .raaka-site .raaka-about > div { gap: 2rem; }
   .raaka-site .raaka-about .aspect-\[2\/3\] { border-radius: 1.25rem; }
   .raaka-site #cast .grid, .raaka-site #crew .grid { gap: .8rem; }
-  .raaka-site #cast .grid h3, .raaka-site #crew .grid h3 { font-size: .95rem; margin-top:.7rem; }
-  .raaka-site #crew .grid p { font-size: .72rem; }
   .raaka-site #creative-team .grid, .raaka-site #vfx-studios .grid { gap: .7rem; }
   .raaka-site #creative-team .grid > div { padding: 1rem; border-radius: 1rem; }
   .raaka-site #creative-team h3 { font-size: 1.15rem; }
@@ -65,10 +64,6 @@ body { margin: 0; background: #050505; color: #f5f5f5; font-family: Arial, Helve
   .raaka-site #vfx-studios p { font-size: .7rem; }
   .raaka-site #announcements, .raaka-site #songs { padding-left: 1rem; padding-right: 1rem; }
   .raaka-site #announcements > div, .raaka-site #songs > div { width:100%; }
-  .raaka-site #crew-credits .grid { grid-template-columns: 1fr 1fr; column-gap: 1rem; }
-  .raaka-site #crew-credits h3 { font-size: 1rem; }
-  .raaka-site #crew-credits p { font-size: .78rem; color: rgba(255,255,255,.72); }
-  .raaka-site #explore .grid > div { padding: 1.2rem; }
   .raaka-site footer { padding-bottom: 6rem; }
 
   .raaka-site .raaka-countdown-section { padding: 3.5rem .75rem; }
@@ -94,8 +89,6 @@ body { margin: 0; background: #050505; color: #f5f5f5; font-family: Arial, Helve
   .raaka-site .raaka-about, .raaka-site #cast, .raaka-site #crew, .raaka-site #creative-team, .raaka-site #vfx-studios, .raaka-site #announcements, .raaka-site #songs, .raaka-site #crew-credits, .raaka-site #explore { padding-top: 8rem; padding-bottom: 8rem; }
   .raaka-site #cast .grid, .raaka-site #crew .grid { gap: 1.5rem; }
   .raaka-site #creative-team .grid > div { min-height: 210px; display:flex; flex-direction:column; justify-content:center; }
-  .raaka-site #crew-credits p { transition: transform .2s ease, color .2s ease; }
-  .raaka-site #crew-credits p:hover { transform: translateX(4px); color:white; }
 }
 
 /* =========================================================
@@ -358,4 +351,48 @@ body { margin: 0; background: #050505; color: #f5f5f5; font-family: Arial, Helve
   .event-family {
     line-height: 2;
   }
+}
+
+/* =========================================================
+   v2 — DEVICE-FRIENDLY LAYER (all screens)
+   ========================================================= */
+img, video { max-width: 100%; }
+iframe { max-width: 100%; border: 0; }
+a, button, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid rgba(251,146,60,.9); outline-offset: 3px; border-radius: 6px; }
+.raaka-site p, .raaka-site h1, .raaka-site h2, .raaka-site h3 { overflow-wrap: anywhere; }
+
+/* fixed controls stay clear of notch / home-bar */
+.raaka-site .fixed.bottom-5, .raaka-site .fixed.bottom-7 { margin-bottom: env(safe-area-inset-bottom); }
+@supports (padding: max(0px)) {
+  .raaka-site footer { padding-bottom: max(6rem, calc(4rem + env(safe-area-inset-bottom))); }
+}
+
+/* very small phones (<= 360px) */
+@media (max-width: 360px) {
+  .raaka-site .raaka-hero h1 { font-size: clamp(3rem, 17vw, 4rem); }
+  .raaka-site .raaka-hero p { font-size: .82rem; }
+  .raaka-site h2 { font-size: 1.75rem; }
+  .raaka-site #cast, .raaka-site #crew, .raaka-site #explore, .raaka-site #crew-credits { padding-left: .9rem; padding-right: .9rem; }
+}
+
+/* phones in landscape — short viewports */
+@media (max-height: 520px) and (orientation: landscape) {
+  .raaka-site .raaka-hero { min-height: auto; padding-top: 5rem; padding-bottom: 3rem; }
+  .raaka-site .raaka-hero h1 { font-size: clamp(2.8rem, 9vw, 4.5rem); }
+  .raaka-site section { padding-top: 3.5rem !important; padding-bottom: 3.5rem !important; }
+}
+
+/* tablets (768–1023): tighter than desktop, roomier than phone */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .raaka-site .raaka-hero h1 { font-size: clamp(5rem, 11vw, 7rem); }
+  .raaka-site .raaka-about, .raaka-site #cast, .raaka-site #crew, .raaka-site #creative-team,
+  .raaka-site #vfx-studios, .raaka-site #announcements, .raaka-site #songs,
+  .raaka-site #crew-credits, .raaka-site #explore { padding-top: 6rem; padding-bottom: 6rem; }
+}
+
+/* large / ultra-wide screens */
+@media (min-width: 1536px) {
+  .raaka-site .raaka-hero > div:last-child { max-width: 90rem; }
+  .raaka-site #explore { max-width: 90rem; }
 }
