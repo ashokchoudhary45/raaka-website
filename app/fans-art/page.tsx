@@ -139,18 +139,22 @@ export default function FansArtPage() {
       // Fast fallback: load existing artwork directly from Cloudflare R2.
       // This keeps the public gallery working even when Supabase is paused.
       const response = await fetch("/api/fan-art/upload", { cache: "no-store" });
-      const result = await response.json();
+      const result = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        items?: Array<{
+          key: string;
+          publicUrl: string;
+          lastModified?: string;
+          size?: number;
+        }>;
+      };
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || "Failed to load fan art gallery.");
       }
 
-      const arts: FanArt[] = (result.items || []).map((item: {
-        key: string;
-        publicUrl: string;
-        lastModified?: string;
-        size?: number;
-      }, index: number) => ({
+      const arts: FanArt[] = (result.items ?? []).map((item, index: number) => ({
         id: item.key.split("").reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0) || index + 1,
         created_at: item.lastModified || new Date().toISOString(),
         fan_name: "RAAKA Fan",
