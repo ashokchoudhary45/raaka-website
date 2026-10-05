@@ -36,7 +36,7 @@ const milestones: Milestone[] = [
     number: "02",
     date: "07 JUNE 2025",
     year: "2025",
-    title: "WELCOME ON BOARD",
+    title: "WELCOME ON BOARD DEEPKIA PADUKONE",
     subtitle: "DEEPIKA PADUKONE",
     description:
       "Deepika Padukone officially joined the project, adding another major face to the ambitious cinematic world of RAAKA.",

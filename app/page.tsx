@@ -1969,8 +1969,8 @@ img,video,iframe{max-width:100%}
             </div>
           </div>
 
-          <a href="/fan-circle" onClick={() => setMenuOpen(false)} className="raaka-nav-link group flex items-center justify-between rounded-2xl px-4 py-3.5 transition">
-            <span className="text-sm font-medium">Fan Circle</span>
+          <a href="/daily-quiz" onClick={() => setMenuOpen(false)} className="raaka-nav-link group flex items-center justify-between rounded-2xl px-4 py-3.5 transition">
+            <span className="text-sm font-medium">Daily Quiz</span>
             <span className="raaka-nav-arrow text-white/25 transition">→</span>
           </a>
 
