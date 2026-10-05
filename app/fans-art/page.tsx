@@ -136,43 +136,40 @@ export default function FansArtPage() {
     setLoadingGallery(true);
 
     try {
-      const supabase = getSupabase();
+      // Fast fallback: load existing artwork directly from Cloudflare R2.
+      // This keeps the public gallery working even when Supabase is paused.
+      const response = await fetch("/api/fan-art/upload", { cache: "no-store" });
+      const result = await response.json();
 
-      const { data, error } = await supabase
-        .from("fan_art")
-        .select("*")
-        .eq("status", "approved")
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        const arts = data as FanArt[];
-        setFanArts(arts);
-
-        const { data: likes, error: likesError } = await supabase
-          .from("fan_art_likes")
-          .select("fan_art_id, visitor_id");
-
-        if (!likesError && likes) {
-          const counts: Record<number, number> = {};
-          const liked: Record<number, boolean> = {};
-          const visitorId = getVisitorId();
-
-          for (const like of likes as { fan_art_id: number; visitor_id: string }[]) {
-            counts[like.fan_art_id] = (counts[like.fan_art_id] || 0) + 1;
-            if (like.visitor_id === visitorId) {
-              liked[like.fan_art_id] = true;
-            }
-          }
-
-          setLikeCounts(counts);
-          setLikedArts(liked);
-        }
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to load fan art gallery.");
       }
+
+      const arts: FanArt[] = (result.items || []).map((item: {
+        key: string;
+        publicUrl: string;
+        lastModified?: string;
+        size?: number;
+      }, index: number) => ({
+        id: item.key.split("").reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0) || index + 1,
+        created_at: item.lastModified || new Date().toISOString(),
+        fan_name: "RAAKA Fan",
+        title: "RAAKA Fan Art",
+        image_url: item.publicUrl,
+        social_link: null,
+        status: "approved",
+        likes: 0,
+      }));
+
+      setFanArts(arts);
+      setLikeCounts({});
+      setLikedArts({});
     } catch (error) {
       console.error("Gallery error:", error);
+      setFanArts([]);
+    } finally {
+      setLoadingGallery(false);
     }
-
-    setLoadingGallery(false);
   }
 
   useEffect(() => {
@@ -324,7 +321,6 @@ export default function FansArtPage() {
     setLoading(true);
 
     try {
-      const supabase = getSupabase();
       const uploadData = new FormData();
       uploadData.append("file", file);
 
@@ -341,22 +337,9 @@ export default function FansArtPage() {
         );
       }
 
-      const imageUrl = uploadResult.publicUrl;
-
-      const { error: insertError } = await supabase
-        .from("fan_art")
-        .insert({
-          fan_name: fanName.trim(),
-          title: title.trim(),
-          image_url: imageUrl,
-          social_link: socialLink.trim() || null,
-          status: "pending",
-        });
-
-      if (insertError) {
-        console.error("Database error:", insertError);
-        throw insertError;
-      }
+      // R2 is now the source of truth for the quick gallery fix.
+      // No Supabase metadata insert is required here.
+      // The gallery reads the uploaded object directly from R2.
 
       setFanName("");
       setTitle("");
@@ -371,8 +354,9 @@ export default function FansArtPage() {
         fileInput.value = "";
       }
 
+      await loadFanArts();
       setMessage(
-        "Your fan art has been submitted! It will appear after approval."
+        "Your fan art has been uploaded and is now available in the gallery."
       );
     } catch (error) {
       console.error("Fan art submission error:", error);

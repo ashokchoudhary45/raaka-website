@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
@@ -15,6 +15,52 @@ const r2 = new S3Client({
     secretAccessKey: R2_SECRET_ACCESS_KEY || "",
   },
 });
+
+export async function GET() {
+  try {
+    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET_NAME || !R2_PUBLIC_URL) {
+      return NextResponse.json({ error: "R2 environment variables are missing." }, { status: 500 });
+    }
+
+    const objects: Array<{ Key?: string; LastModified?: Date; Size?: number }> = [];
+    let continuationToken: string | undefined;
+
+    do {
+      const result = await r2.send(
+        new ListObjectsV2Command({
+          Bucket: R2_BUCKET_NAME,
+          Prefix: "fan-art/",
+          ContinuationToken: continuationToken,
+        })
+      );
+
+      if (result.Contents) objects.push(...result.Contents);
+      continuationToken = result.IsTruncated ? result.NextContinuationToken : undefined;
+    } while (continuationToken);
+
+    const items = objects
+      .filter((item) => !!item.Key)
+      .sort((a, b) => (b.LastModified?.getTime() || 0) - (a.LastModified?.getTime() || 0))
+      .map((item) => ({
+        key: item.Key!,
+        publicUrl: `${R2_PUBLIC_URL!.replace(/\/$/, "")}/${item.Key!}`,
+        lastModified: item.LastModified?.toISOString(),
+        size: item.Size || 0,
+      }));
+
+    return NextResponse.json({ success: true, total: items.length, items }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    });
+  } catch (error: any) {
+    console.error("R2 gallery list error:", error);
+    return NextResponse.json(
+      { error: error?.message || error?.name || "Failed to load fan art from R2." },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request: Request) {
   try {
