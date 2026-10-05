@@ -94,14 +94,16 @@ export default function DailyQuizPage() {
    */
 
   useEffect(() => {
-    let id = localStorage.getItem("raaka_visitor_id");
-
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem("raaka_visitor_id", id);
+    try {
+      let id = window.localStorage.getItem("raaka_visitor_id");
+      if (!id) {
+        id = "raaka_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 12);
+        try { window.localStorage.setItem("raaka_visitor_id", id); } catch {}
+      }
+      setVisitorId(id);
+    } catch {
+      setVisitorId("raaka_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 12));
     }
-
-    setVisitorId(id);
   }, []);
 
   /*
@@ -111,16 +113,13 @@ export default function DailyQuizPage() {
    */
 
   useEffect(() => {
+    let mounted = true;
     async function initialize() {
-      await Promise.all([
-        loadDailyQuiz(),
-        loadLeaderboard(),
-      ]);
-
-      setScreen("intro");
+      await Promise.allSettled([loadDailyQuiz(), loadLeaderboard()]);
+      if (mounted) setScreen("intro");
     }
-
     initialize();
+    return () => { mounted = false; };
   }, []);
 
   /*
@@ -129,19 +128,21 @@ export default function DailyQuizPage() {
    * ------------------------------------------
    */
 
+  async function fetchJson(url: string, options?: RequestInit) {
+    const response = await fetch(url, { ...options, headers: { Accept: "application/json", ...(options?.headers || {}) } });
+    const text = await response.text();
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.toLowerCase().includes("application/json")) throw new Error(`Request failed (${response.status}).`);
+    let data: any;
+    try { data = JSON.parse(text); } catch { throw new Error("The server returned invalid JSON."); }
+    return { response, data };
+  }
+
   async function loadDailyQuiz() {
     try {
       setError("");
 
-      const response = await fetch(
-        "/api/quiz/daily",
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
-
-      const data: any = await response.json();
+      const { response, data } = await fetchJson("/api/quiz/daily", { method: "GET", cache: "no-store" });
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -179,15 +180,7 @@ export default function DailyQuizPage() {
 
   async function loadLeaderboard() {
     try {
-      const response = await fetch(
-        "/api/quiz/leaderboard",
-        {
-          method: "GET",
-          cache: "no-store",
-        }
-      );
-
-      const data: any = await response.json();
+      const { response, data } = await fetchJson("/api/quiz/leaderboard", { method: "GET", cache: "no-store" });
 
       if (data.success) {
         setLeaderboard(
@@ -451,28 +444,11 @@ export default function DailyQuizPage() {
         )
       );
 
-      const response = await fetch(
-        "/api/quiz/submit",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            visitorId,
-            fanName: name.trim(),
-            twitterUsername:
-              twitterUsername.trim(),
-            instagramUsername:
-              instagramUsername.trim(),
-            country: country.trim(),
-            answers: finalAnswers,
-            timeTaken,
-          }),
-        }
-      );
-
-      const data: any = await response.json();
+      const { response, data } = await fetchJson("/api/quiz/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitorId, fanName: name.trim(), twitterUsername: twitterUsername.trim(), instagramUsername: instagramUsername.trim(), country: country.trim(), answers: finalAnswers, timeTaken }),
+      });
 
       if (!response.ok) {
         if (data.alreadyCompleted) {
