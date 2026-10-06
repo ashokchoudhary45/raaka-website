@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
-const FIRE_AT = 1;
-const INFERNO_AT = 2;
+const FIRE_AT = 50;
+const INFERNO_AT = 100;
 const cv = (o: Record<string, string | number>) => o as unknown as CSSProperties;
 
 function getVisitorId() {
