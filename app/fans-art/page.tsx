@@ -113,15 +113,19 @@ export default function FansArtPage() {
       const arts = result.items ?? [];
       setFanArts(arts);
 
-      // Load existing likes for the R2-backed artwork IDs.
+      // Load likes only for the currently approved R2 artwork IDs.
+      // Old Supabase fan_art rows/IDs are intentionally ignored.
       try {
         const supabase = getSupabase();
-        const ids = arts.map((art) => art.id);
+        const ids = arts.map((art) => art.id).filter((id) => Number.isFinite(id));
+
         if (ids.length) {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from("fan_art_likes")
             .select("fan_art_id")
             .in("fan_art_id", ids);
+
+          if (error) throw error;
 
           const counts: Record<number, number> = {};
           for (const row of data ?? []) {
@@ -136,6 +140,9 @@ export default function FansArtPage() {
         console.error("Fan art likes load error:", likeError);
         setLikeCounts({});
       }
+
+      // Reuse this R2 gallery result for Fan Power; no second gallery request.
+      await loadFanPower(arts);
     } catch (error) {
       console.error("Gallery error:", error instanceof Error ? error.message : error);
       setFanArts([]);
@@ -146,40 +153,45 @@ export default function FansArtPage() {
 
   useEffect(() => {
     loadFanArts();
-    loadFanPower();
   }, []);
 
-  async function loadFanPower() {
+  async function loadFanPower(approvedArts: FanArt[] = []) {
     setLoadingPower(true);
 
     try {
       const supabase = getSupabase();
+      const ids = approvedArts
+        .map((art) => art.id)
+        .filter((id) => Number.isFinite(id));
 
-      const [{ count: likesCount }, { data: quizActivity }, galleryResponse] =
-        await Promise.all([
-          supabase
-            .from("fan_art_likes")
-            .select("id", { count: "exact", head: true }),
-          supabase
-            .from("fan_passport_activity")
-            .select("xp")
-            .ilike("activity_key", "%quiz%"),
-          fetch("/api/fan-art/gallery", { cache: "no-store" }),
-        ]);
+      // Count only likes belonging to currently approved R2 artwork IDs.
+      // Old Supabase fan_art IDs are intentionally excluded.
+      const [likesResult, quizResult] = await Promise.all([
+        ids.length
+          ? supabase
+              .from("fan_art_likes")
+              .select("fan_art_id")
+              .in("fan_art_id", ids)
+          : Promise.resolve({ data: [], error: null }),
+        supabase
+          .from("fan_passport_activity")
+          .select("xp")
+          .ilike("activity_key", "%quiz%"),
+      ]);
 
-      const galleryResult = galleryResponse.ok
-        ? ((await galleryResponse.json()) as { items?: FanArt[] })
-        : { items: [] };
-      const submissionsCount = galleryResult.items?.length ?? 0;
+      if (likesResult.error) throw likesResult.error;
+      if (quizResult.error) throw quizResult.error;
 
-      const likes = likesCount || 0;
-      const submissions = submissionsCount || 0;
+      const likes = likesResult.data?.length ?? 0;
+      const submissions = approvedArts.length;
       const quizXp =
-        quizActivity?.reduce((total, item) => total + (Number(item.xp) || 0), 0) || 0;
+        quizResult.data?.reduce(
+          (total, item) => total + (Number(item.xp) || 0),
+          0
+        ) || 0;
 
       // Community Power formula:
-      // 1 power per like + 5 per approved submission + 1 per quiz XP.
-      // 100,000 power points = 100% community power.
+      // 1 power per current R2 artwork like + 5 per approved submission + 1 per quiz XP.
       const score = likes + submissions * 5 + quizXp;
       const percent = Math.min(100, Math.round((score / 100000) * 100));
 
@@ -191,6 +203,11 @@ export default function FansArtPage() {
       });
     } catch (error) {
       console.error("Fan Power error:", error);
+      setFanPower((current) => ({
+        ...current,
+        likes: 0,
+        submissions: approvedArts.length,
+      }));
     } finally {
       setLoadingPower(false);
     }
