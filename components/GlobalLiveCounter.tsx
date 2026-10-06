@@ -131,15 +131,8 @@ export default function GlobalLiveCounter() {
 
   const isFire = tier >= 1;
   const isInferno = tier === 2;
-  // ring shows progress toward the next tier (full once Inferno)
-  const progress = tier === 0 ? Math.min(1, live / FIRE_AT) : tier === 1 ? Math.min(1, (live - FIRE_AT) / (INFERNO_AT - FIRE_AT)) : 1;
-  const hint =
-    tier === 0
-      ? `${FIRE_AT - live} more ${FIRE_AT - live === 1 ? "fan" : "fans"} to light the Fire`
-      : tier === 1
-        ? `${INFERNO_AT - live} more to unleash the Inferno`
-        : "The Inferno is burning. Thank you, fans.";
-
+  // Fire/Inferno thresholds remain internal for the visual effects.
+  // They are intentionally NOT shown in the click-open live card.
   const rates = [0.92, 1.08, 1, 0.96, 1.05];
 
   return (
@@ -199,7 +192,7 @@ export default function GlobalLiveCounter() {
         <button
           type="button"
           className="lv-pill"
-          style={cv({ "--lvp": progress })}
+          style={cv({ "--lvp": tier === 2 ? 1 : 0 })}
           aria-expanded={open}
           aria-label={`${live} fans live now. Show details`}
           onClick={() => setOpen((v) => !v)}
@@ -221,13 +214,6 @@ export default function GlobalLiveCounter() {
         <div className="lv-card" role="status" aria-live="polite">
           <p className="lv-k">LIVE ON RAAKA</p>
           <p className="lv-big"><b>{live}</b> fans exploring right now</p>
-          <div className="lv-meter">
-            <i style={{ width: `${Math.min(100, live)}%` }} />
-            <u className={live >= FIRE_AT ? "on" : ""} style={{ left: "50%" }} />
-            <u className={live >= INFERNO_AT ? "on" : ""} style={{ left: "100%" }} />
-          </div>
-          <div className="lv-ml"><span>0</span><span>Fire · {FIRE_AT}</span><span>Inferno · {INFERNO_AT}</span></div>
-          <p className="lv-hint">{hint}</p>
         </div>
       </div>
     </>
@@ -299,16 +285,16 @@ const CSS = `
 
 /* info card */
 .lv-card{position:absolute;left:0;bottom:calc(100% + 14px);z-index:6;width:min(290px,86vw);padding:1rem 1.1rem;border-radius:1.2rem;border:1px solid rgba(255,255,255,.12);background:rgba(8,5,5,.92);backdrop-filter:blur(20px);color:#fff;box-shadow:0 24px 60px rgba(0,0,0,.6);opacity:0;transform:translateY(10px) scale(.96);transform-origin:bottom left;pointer-events:none;transition:opacity .3s,transform .4s cubic-bezier(.2,.8,.2,1)}
-.lv[data-tier="1"] .lv-card,.lv[data-tier="2"] .lv-card{bottom:calc(100% + 66px);border-color:rgba(255,120,30,.4)}
+.lv[data-tier="1"] .lv-card,.lv[data-tier="2"] .lv-card{border-color:rgba(255,120,30,.4)}
 .lv[data-open="true"] .lv-card,.lv:hover .lv-card{opacity:1;transform:none;pointer-events:auto}
 .lv-k{margin:0;font-size:9px;font-weight:700;letter-spacing:.24em;color:var(--rc)}
 .lv-big{margin:.55rem 0 .9rem;font-size:12px;color:rgba(255,255,255,.65)}.lv-big b{font-size:26px;color:#fff;margin-right:.3rem;font-variant-numeric:tabular-nums}
-.lv-meter{position:relative;height:6px;border-radius:99px;background:rgba(255,255,255,.1)}
-.lv-meter i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#ff3b30,#ff9a2e,#ffd24a);box-shadow:0 0 14px rgba(255,120,30,.6);transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
-.lv-meter u{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:#150b0b;transition:all .6s}
-.lv-meter u.on{border-color:#ffe3a8;background:#ffb347;box-shadow:0 0 14px rgba(255,160,60,.9)}
-.lv-ml{display:flex;justify-content:space-between;margin-top:.55rem;font-size:9px;letter-spacing:.06em;color:rgba(255,255,255,.4)}
-.lv-hint{margin:.8rem 0 0;font-size:11px;line-height:1.5;color:rgba(255,255,255,.7)}
+
+
+
+
+
+
 
 @media (max-width:640px){
 .lv{left:1rem;bottom:1rem}
@@ -322,6 +308,6 @@ const CSS = `
 }
 @media (prefers-reduced-motion:reduce){
 .lv,.lv-pill,.lv-sheen i,.lv-dot i,.lv-scorch,.lv-video,.lv-em,.lv-em i,.lv-flame,.lv-flare i,.lv-toast{animation:none!important}
-.lv-flames{filter:none}.lv-em{display:none}.lv-strip,.lv-meter i{transition:none}
+.lv-flames{filter:none}.lv-em{display:none}.lv-strip{transition:none}
 }
 `;
