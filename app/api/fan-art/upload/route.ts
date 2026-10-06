@@ -1,5 +1,5 @@
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
-import { ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
@@ -16,145 +16,81 @@ const r2 = new S3Client({
   },
 });
 
-export async function GET() {
+function metaKey(imageKey: string) {
+  const basename = imageKey.replace(/^fan-art\//, "");
+  return `fan-art-meta/${basename}.json`;
+}
+
+export async function POST(request: Request) {
+  let uploadedKey: string | null = null;
+  let uploadedMetaKey: string | null = null;
+
   try {
     if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET_NAME || !R2_PUBLIC_URL) {
       return NextResponse.json({ error: "R2 environment variables are missing." }, { status: 500 });
     }
 
-    const objects: Array<{ Key?: string; LastModified?: Date; Size?: number }> = [];
-    let continuationToken: string | undefined;
-
-    do {
-      const result = await r2.send(
-        new ListObjectsV2Command({
-          Bucket: R2_BUCKET_NAME,
-          Prefix: "fan-art/",
-          ContinuationToken: continuationToken,
-        })
-      );
-
-      if (result.Contents) objects.push(...result.Contents);
-      continuationToken = result.IsTruncated ? result.NextContinuationToken : undefined;
-    } while (continuationToken);
-
-    const items = objects
-      .filter((item) => !!item.Key)
-      .sort((a, b) => (b.LastModified?.getTime() || 0) - (a.LastModified?.getTime() || 0))
-      .map((item) => ({
-        key: item.Key!,
-        publicUrl: `${R2_PUBLIC_URL!.replace(/\/$/, "")}/${item.Key!}`,
-        lastModified: item.LastModified?.toISOString(),
-        size: item.Size || 0,
-      }));
-
-    return NextResponse.json({ success: true, total: items.length, items }, {
-      headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-      },
-    });
-  } catch (error: any) {
-    console.error("R2 gallery list error:", error);
-    return NextResponse.json(
-      { error: error?.message || error?.name || "Failed to load fan art from R2." },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    if (
-      !R2_ACCOUNT_ID ||
-      !R2_ACCESS_KEY_ID ||
-      !R2_SECRET_ACCESS_KEY ||
-      !R2_BUCKET_NAME ||
-      !R2_PUBLIC_URL
-    ) {
-      return NextResponse.json(
-        {
-          error: "R2 environment variables are missing.",
-        },
-        { status: 500 }
-      );
-    }
-
     const formData = await request.formData();
     const file = formData.get("file");
+    const fanName = String(formData.get("fanName") || "").trim();
+    const title = String(formData.get("title") || "").trim();
+    const socialLink = String(formData.get("socialLink") || "").trim() || null;
 
     if (!(file instanceof File)) {
-      return NextResponse.json(
-        {
-          error: "No image file was provided.",
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No image file was provided." }, { status: 400 });
     }
+    if (!fanName) return NextResponse.json({ error: "Fan name is required." }, { status: 400 });
+    if (!title) return NextResponse.json({ error: "Artwork title is required." }, { status: 400 });
+    if (!file.type.startsWith("image/")) return NextResponse.json({ error: "Only image files are allowed." }, { status: 400 });
+    if (file.size > 10 * 1024 * 1024) return NextResponse.json({ error: "Image must be smaller than 10 MB." }, { status: 400 });
 
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
-        {
-          error: "Only image files are allowed.",
-        },
-        { status: 400 }
-      );
-    }
+    const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : file.type === "image/gif" ? "gif" : "jpg";
+    const id = Date.now();
+    const imageKey = `fan-art/${id}.${extension}`;
+    const imageUrl = `${R2_PUBLIC_URL.replace(/\/$/, "")}/${imageKey}`;
+    const createdAt = new Date().toISOString();
 
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        {
-          error: "Image must be smaller than 10 MB.",
-        },
-        { status: 400 }
-      );
-    }
+    await r2.send(new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: imageKey,
+      Body: Buffer.from(await file.arrayBuffer()),
+      ContentType: file.type,
+      CacheControl: "public, max-age=31536000, immutable",
+    }));
+    uploadedKey = imageKey;
 
-    const extension =
-      file.type === "image/png"
-        ? "png"
-        : file.type === "image/webp"
-          ? "webp"
-          : file.type === "image/gif"
-            ? "gif"
-            : "jpg";
+    const metadata = {
+      id,
+      r2Key: imageKey,
+      imageUrl,
+      fanName,
+      title,
+      socialLink,
+      status: "pending",
+      createdAt,
+    };
 
-    const randomPart = crypto.randomUUID();
+    uploadedMetaKey = metaKey(imageKey);
+    await r2.send(new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: uploadedMetaKey,
+      Body: JSON.stringify(metadata, null, 2),
+      ContentType: "application/json; charset=utf-8",
+      CacheControl: "no-store",
+    }));
 
-    const fileName = `fan-art/${Date.now()}-${randomPart}.${extension}`;
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    await r2.send(
-      new PutObjectCommand({
-        Bucket: R2_BUCKET_NAME,
-        Key: fileName,
-        Body: buffer,
-        ContentType: file.type,
-        CacheControl: "public, max-age=31536000, immutable",
-      })
-    );
-
-    const publicUrl =
-      `${R2_PUBLIC_URL.replace(/\/$/, "")}/${fileName}`;
-
-    return NextResponse.json({
-      success: true,
-      fileName,
-      publicUrl,
-    });
+    return NextResponse.json({ success: true, item: metadata });
   } catch (error: any) {
-    console.error("R2 upload error FULL:", error);
+    console.error("R2 fan art upload error:", error);
 
-    return NextResponse.json(
-      {
-        error:
-          error?.message ||
-          error?.Code ||
-          error?.name ||
-          "Unknown R2 error",
-      },
-      { status: 500 }
-    );
+    // Do not leave an orphaned image if metadata creation failed.
+    if (uploadedKey && R2_BUCKET_NAME) {
+      try { await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET_NAME, Key: uploadedKey })); } catch {}
+    }
+    if (uploadedMetaKey && R2_BUCKET_NAME) {
+      try { await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET_NAME, Key: uploadedMetaKey })); } catch {}
+    }
+
+    return NextResponse.json({ error: error?.message || "Failed to upload fan art to R2." }, { status: 500 });
   }
 }

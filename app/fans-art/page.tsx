@@ -136,40 +136,45 @@ export default function FansArtPage() {
     setLoadingGallery(true);
 
     try {
-      // Fast fallback: load existing artwork directly from Cloudflare R2.
-      // This keeps the public gallery working even when Supabase is paused.
-      const response = await fetch("/api/fan-art/upload", { cache: "no-store" });
+      const response = await fetch("/api/fan-art/gallery", { cache: "no-store" });
       const result = (await response.json()) as {
         success?: boolean;
         error?: string;
-        items?: Array<{
-          key: string;
-          publicUrl: string;
-          lastModified?: string;
-          size?: number;
-        }>;
+        items?: FanArt[];
       };
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || "Failed to load fan art gallery.");
       }
 
-      const arts: FanArt[] = (result.items ?? []).map((item, index: number) => ({
-        id: item.key.split("").reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0) || index + 1,
-        created_at: item.lastModified || new Date().toISOString(),
-        fan_name: "RAAKA Fan",
-        title: "RAAKA Fan Art",
-        image_url: item.publicUrl,
-        social_link: null,
-        status: "approved",
-        likes: 0,
-      }));
-
+      const arts = result.items ?? [];
       setFanArts(arts);
-      setLikeCounts({});
-      setLikedArts({});
+
+      // Load existing likes for the R2-backed artwork IDs.
+      try {
+        const supabase = getSupabase();
+        const ids = arts.map((art) => art.id);
+        if (ids.length) {
+          const { data } = await supabase
+            .from("fan_art_likes")
+            .select("fan_art_id")
+            .in("fan_art_id", ids);
+
+          const counts: Record<number, number> = {};
+          for (const row of data ?? []) {
+            const id = Number(row.fan_art_id);
+            counts[id] = (counts[id] || 0) + 1;
+          }
+          setLikeCounts(counts);
+        } else {
+          setLikeCounts({});
+        }
+      } catch (likeError) {
+        console.error("Fan art likes load error:", likeError);
+        setLikeCounts({});
+      }
     } catch (error) {
-      console.error("Gallery error:", error);
+      console.error("Gallery error:", error instanceof Error ? error.message : error);
       setFanArts([]);
     } finally {
       setLoadingGallery(false);
@@ -187,20 +192,22 @@ export default function FansArtPage() {
     try {
       const supabase = getSupabase();
 
-      const [{ count: likesCount }, { count: submissionsCount }, { data: quizActivity }] =
+      const [{ count: likesCount }, { data: quizActivity }, galleryResponse] =
         await Promise.all([
           supabase
             .from("fan_art_likes")
             .select("id", { count: "exact", head: true }),
           supabase
-            .from("fan_art")
-            .select("id", { count: "exact", head: true })
-            .eq("status", "approved"),
-          supabase
             .from("fan_passport_activity")
             .select("xp")
             .ilike("activity_key", "%quiz%"),
+          fetch("/api/fan-art/gallery", { cache: "no-store" }),
         ]);
+
+      const galleryResult = galleryResponse.ok
+        ? ((await galleryResponse.json()) as { items?: FanArt[] })
+        : { items: [] };
+      const submissionsCount = galleryResult.items?.length ?? 0;
 
       const likes = likesCount || 0;
       const submissions = submissionsCount || 0;
@@ -327,6 +334,9 @@ export default function FansArtPage() {
     try {
       const uploadData = new FormData();
       uploadData.append("file", file);
+      uploadData.append("fanName", fanName.trim());
+      uploadData.append("title", title.trim());
+      uploadData.append("socialLink", socialLink.trim());
 
       const uploadResponse = await fetch("/api/fan-art/upload", {
         method: "POST",
@@ -360,7 +370,7 @@ export default function FansArtPage() {
 
       await loadFanArts();
       setMessage(
-        "Your fan art has been uploaded and is now available in the gallery."
+        "Your fan art has been submitted! It will appear after admin approval."
       );
     } catch (error) {
       console.error("Fan art submission error:", error);

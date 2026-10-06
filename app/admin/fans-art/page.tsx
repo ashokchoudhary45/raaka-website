@@ -86,43 +86,134 @@ export default function AdminFansArtPage() {
   }
 
   async function loadFanArts() {
+    if (!session?.access_token) return;
+
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from("fan_art")
-      .select(
-        "id, created_at, fan_name, title, image_url, social_link, status"
-      )
-      .eq("status", filter)
-      .order("created_at", { ascending: false });
+    try {
+      const response = await fetch(
+        `/api/fan-art/admin?status=${encodeURIComponent(filter)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          cache: "no-store",
+        }
+      );
 
-    if (!error && data) {
-      setItems(data as FanArt[]);
+      const result = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        items?: FanArt[];
+      };
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to load submissions.");
+      }
+
+      setItems(result.items ?? []);
+    } catch (error) {
+      console.error("Admin gallery error:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to load submissions."
+      );
+      setItems([]);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    setLoading(false);
+  async function syncExistingR2Art() {
+    if (!session?.access_token) return;
+
+    setActionId(-1);
+
+    try {
+      const response = await fetch("/api/fan-art/admin", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "sync" }),
+      });
+
+      const result = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        r2Total?: number;
+        inserted?: number;
+        alreadyKnown?: number;
+      };
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to sync R2 fan art.");
+      }
+
+      alert(
+        `Sync complete. R2: ${result.r2Total ?? 0}, new pending items: ${
+          result.inserted ?? 0
+        }, already known: ${result.alreadyKnown ?? 0}.`
+      );
+
+      await loadFanArts();
+    } catch (error) {
+      console.error("R2 sync error:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to sync existing R2 fan art."
+      );
+    } finally {
+      setActionId(null);
+    }
   }
 
   async function updateStatus(
     id: number,
     status: "approved" | "rejected"
   ) {
+    if (!session?.access_token) return;
+
     setActionId(id);
 
-    const { error } = await supabase
-      .from("fan_art")
-      .update({ status })
-      .eq("id", id);
+    try {
+      const response = await fetch("/api/fan-art/admin", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: status === "approved" ? "approve" : "reject",
+          id,
+        }),
+      });
 
-    if (error) {
-    alert("Error: " + error.message);
-    } else {
+      const result = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+      };
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || `Failed to ${status} fan art.`);
+      }
+
       setItems((current) =>
         current.filter((item) => item.id !== id)
       );
+    } catch (error) {
+      console.error("Status update error:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : `Failed to ${status} fan art.`
+      );
+    } finally {
+      setActionId(null);
     }
-
-    setActionId(null);
   }
 
   if (loadingAuth) {
@@ -220,12 +311,22 @@ export default function AdminFansArtPage() {
             </p>
           </div>
 
-          <button
-            onClick={logout}
-            className="w-fit rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-zinc-300 transition hover:bg-white/10 hover:text-white"
-          >
-            Sign Out
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={syncExistingR2Art}
+              disabled={actionId === -1}
+              className="w-fit rounded-xl bg-amber-200 px-5 py-3 text-sm font-bold text-black transition hover:bg-amber-100 disabled:opacity-50"
+            >
+              {actionId === -1 ? "Syncing..." : "Sync Existing R2 Art"}
+            </button>
+
+            <button
+              onClick={logout}
+              className="w-fit rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-zinc-300 transition hover:bg-white/10 hover:text-white"
+            >
+              Sign Out
+            </button>
+          </div>
         </header>
 
         {/* FILTERS */}
