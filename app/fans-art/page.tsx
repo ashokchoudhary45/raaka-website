@@ -209,8 +209,10 @@ export default function FansArtPage() {
   }
 
   async function handleLike(artId: number) {
-    if (likedArts[artId]) return;
-
+    // Do not use the old localStorage flag as a hard block. A previous
+    // failed request could have left a stale flag and made the button look
+    // completely dead. The database unique constraint is the real duplicate
+    // protection.
     const persist = (ids: Record<number, boolean>) => {
       try {
         localStorage.setItem(
@@ -220,10 +222,6 @@ export default function FansArtPage() {
       } catch {}
     };
 
-    // Keep the like state stable immediately. We do NOT rollback the heart
-    // just because a duplicate/RLS/network response is returned after the
-    // click. The database remains the source of truth for the count after
-    // the next gallery load.
     const next = { ...likedArts, [artId]: true };
     setLikedArts(next);
     persist(next);
@@ -236,30 +234,58 @@ export default function FansArtPage() {
       const supabase = getSupabase();
       const visitorId = getVisitorId();
 
-      // Upsert makes repeated clicks/reloads safe when the table has the
-      // UNIQUE(fan_art_id, visitor_id) constraint. A duplicate is treated
-      // as an already-existing like instead of an error that removes the UI state.
-      const { error } = await supabase
-        .from("fan_art_likes")
-        .upsert(
-          {
-            fan_art_id: artId,
-            visitor_id: visitorId,
-          },
-          {
-            onConflict: "fan_art_id,visitor_id",
-            ignoreDuplicates: true,
-          }
-        );
+      // IMPORTANT: use INSERT, not UPSERT.
+      // UPSERT can require UPDATE/SELECT permissions under RLS. We only
+      // need an INSERT policy here. The unique index on
+      // (fan_art_id, visitor_id) handles duplicate likes safely.
+      const { error } = await supabase.from("fan_art_likes").insert({
+        fan_art_id: artId,
+        visitor_id: visitorId,
+      });
 
       if (error) {
+        const code = (error as { code?: string }).code;
+
+        if (code === "23505") {
+          // Already liked: keep the heart filled, but remove our optimistic
+          // +1 because the database did not create a second row.
+          setLikeCounts((current) => ({
+            ...current,
+            [artId]: Math.max(0, (current[artId] || 1) - 1),
+          }));
+          return;
+        }
+
         console.error("Fan art like save error:", error);
-        // Keep the heart selected. This prevents the annoying
-        // click -> heart -> immediately unliked behaviour.
+
+        // Only rollback when the insert genuinely failed.
+        setLikedArts((current) => {
+          const rest = { ...current };
+          delete rest[artId];
+          persist(rest);
+          return rest;
+        });
+        setLikeCounts((current) => ({
+          ...current,
+          [artId]: Math.max(0, (current[artId] || 1) - 1),
+        }));
+        return;
       }
+
+      console.log("Fan art like saved:", { artId, visitorId });
     } catch (error) {
       console.error("Like error:", error);
-      // Keep the local liked state instead of visually undoing the click.
+
+      setLikedArts((current) => {
+        const rest = { ...current };
+        delete rest[artId];
+        persist(rest);
+        return rest;
+      });
+      setLikeCounts((current) => ({
+        ...current,
+        [artId]: Math.max(0, (current[artId] || 1) - 1),
+      }));
     }
   }
 
