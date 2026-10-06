@@ -68,6 +68,7 @@ const NAV_LINKS: { href: string; label: string; isNew?: boolean }[] = [
   { href: "#cast", label: "Cast & Crew" },
   { href: "/posters", label: "Posters" },
   { href: "/videos", label: "Videos" },
+  { href: "/news", label: "News", isNew: true },
   { href: "/timeline", label: "Timeline", isNew: true },
 ];
 
