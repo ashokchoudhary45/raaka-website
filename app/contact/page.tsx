@@ -62,7 +62,7 @@ const COMMUNITY_CONTACTS: ContactItem[] = [
   {
     label: "Fan Community",
     value: "@DracoUnbothered",
-    name: "DracoUnbothered",
+    name: "Dev",
     href: "https://x.com/DracoUnbothered",
     image: "https://unavatar.io/x/DracoUnbothered",
     icon: "𝕏",
@@ -277,25 +277,57 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 md:py-28">
-        <div className="grid gap-12 lg:grid-cols-[.65fr_1.35fr]">
-          <div>
+      {/* =========================================================
+          02 / FAN COMMUNITY
+      ========================================================== */}
+      <section className="relative border-y border-white/[.07] bg-white/[.012]">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 md:grid-cols-2 md:py-24">
+          {/* LEFT — COMMUNITY CONTACTS */}
+          <div className="contact-reveal">
             <p className="text-[9px] font-semibold uppercase tracking-[.38em] text-orange-200/50">
               02 / Fan Community
             </p>
+
             <h2 className="mt-4 text-3xl font-medium tracking-[-.035em] sm:text-4xl">
               World of RAAKA
             </h2>
-            <p className="mt-5 max-w-sm text-sm leading-7 text-white/40">
+
+            <p className="mt-4 max-w-md text-sm leading-7 text-white/40">
               Follow the community channels for World of RAAKA and connect with
               the wider fan space.
             </p>
+
+            <div className="mt-8 space-y-3">
+              {COMMUNITY_CONTACTS.map((item, index) => (
+                <ContactCard key={item.href} item={item} index={index} />
+              ))}
+            </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {COMMUNITY_CONTACTS.map((item, index) => (
-              <ContactCard key={item.href} item={item} index={index} />
-            ))}
+          {/* RIGHT — PAGE CREATOR / DEV */}
+          <div className="contact-reveal rounded-[28px] border border-white/[.07] bg-[#080808]/70 p-7 backdrop-blur-sm md:p-9">
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="text-[9px] font-semibold uppercase tracking-[.38em] text-white/30">
+                  Page Creator
+                </p>
+
+                <h3 className="mt-3 text-2xl font-medium tracking-tight">
+                  Dev
+                </h3>
+              </div>
+
+              <span className="contact-pulse flex h-9 w-9 items-center justify-center rounded-full border border-orange-300/20 bg-orange-300/[.05] text-[11px] text-orange-200/70">
+                ✦
+              </span>
+            </div>
+
+            <div className="mt-10 h-px bg-gradient-to-r from-orange-300/25 via-white/[.08] to-transparent" />
+
+            <p className="mt-7 text-sm leading-7 text-white/40">
+              The community channels on this page are provided for communication,
+              updates and fan activities connected with the World of RAAKA community.
+            </p>
           </div>
         </div>
       </section>
