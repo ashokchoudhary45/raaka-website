@@ -113,19 +113,15 @@ export default function FansArtPage() {
       const arts = result.items ?? [];
       setFanArts(arts);
 
-      // Load likes only for the currently approved R2 artwork IDs.
-      // Old Supabase fan_art rows/IDs are intentionally ignored.
+      // Load existing likes for the R2-backed artwork IDs.
       try {
         const supabase = getSupabase();
-        const ids = arts.map((art) => art.id).filter((id) => Number.isFinite(id));
-
+        const ids = arts.map((art) => art.id);
         if (ids.length) {
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from("fan_art_likes")
             .select("fan_art_id")
             .in("fan_art_id", ids);
-
-          if (error) throw error;
 
           const counts: Record<number, number> = {};
           for (const row of data ?? []) {
@@ -140,9 +136,6 @@ export default function FansArtPage() {
         console.error("Fan art likes load error:", likeError);
         setLikeCounts({});
       }
-
-      // Reuse this R2 gallery result for Fan Power; no second gallery request.
-      await loadFanPower(arts);
     } catch (error) {
       console.error("Gallery error:", error instanceof Error ? error.message : error);
       setFanArts([]);
@@ -153,45 +146,40 @@ export default function FansArtPage() {
 
   useEffect(() => {
     loadFanArts();
+    loadFanPower();
   }, []);
 
-  async function loadFanPower(approvedArts: FanArt[] = []) {
+  async function loadFanPower() {
     setLoadingPower(true);
 
     try {
       const supabase = getSupabase();
-      const ids = approvedArts
-        .map((art) => art.id)
-        .filter((id) => Number.isFinite(id));
 
-      // Count only likes belonging to currently approved R2 artwork IDs.
-      // Old Supabase fan_art IDs are intentionally excluded.
-      const [likesResult, quizResult] = await Promise.all([
-        ids.length
-          ? supabase
-              .from("fan_art_likes")
-              .select("fan_art_id")
-              .in("fan_art_id", ids)
-          : Promise.resolve({ data: [], error: null }),
-        supabase
-          .from("fan_passport_activity")
-          .select("xp")
-          .ilike("activity_key", "%quiz%"),
-      ]);
+      const [{ count: likesCount }, { data: quizActivity }, galleryResponse] =
+        await Promise.all([
+          supabase
+            .from("fan_art_likes")
+            .select("id", { count: "exact", head: true }),
+          supabase
+            .from("fan_passport_activity")
+            .select("xp")
+            .ilike("activity_key", "%quiz%"),
+          fetch("/api/fan-art/gallery", { cache: "no-store" }),
+        ]);
 
-      if (likesResult.error) throw likesResult.error;
-      if (quizResult.error) throw quizResult.error;
+      const galleryResult = galleryResponse.ok
+        ? ((await galleryResponse.json()) as { items?: FanArt[] })
+        : { items: [] };
+      const submissionsCount = galleryResult.items?.length ?? 0;
 
-      const likes = likesResult.data?.length ?? 0;
-      const submissions = approvedArts.length;
+      const likes = likesCount || 0;
+      const submissions = submissionsCount || 0;
       const quizXp =
-        quizResult.data?.reduce(
-          (total, item) => total + (Number(item.xp) || 0),
-          0
-        ) || 0;
+        quizActivity?.reduce((total, item) => total + (Number(item.xp) || 0), 0) || 0;
 
       // Community Power formula:
-      // 1 power per current R2 artwork like + 5 per approved submission + 1 per quiz XP.
+      // 1 power per like + 5 per approved submission + 1 per quiz XP.
+      // 100,000 power points = 100% community power.
       const score = likes + submissions * 5 + quizXp;
       const percent = Math.min(100, Math.round((score / 100000) * 100));
 
@@ -203,11 +191,6 @@ export default function FansArtPage() {
       });
     } catch (error) {
       console.error("Fan Power error:", error);
-      setFanPower((current) => ({
-        ...current,
-        likes: 0,
-        submissions: approvedArts.length,
-      }));
     } finally {
       setLoadingPower(false);
     }
@@ -227,38 +210,59 @@ export default function FansArtPage() {
 
   async function handleLike(artId: number) {
     if (likedArts[artId]) return;
+
     const persist = (ids: Record<number, boolean>) => {
-      try { localStorage.setItem(LIKED_KEY, JSON.stringify(Object.keys(ids).map(Number))); } catch {}
+      try {
+        localStorage.setItem(
+          LIKED_KEY,
+          JSON.stringify(Object.keys(ids).map(Number))
+        );
+      } catch {}
     };
-    // optimistic update: instant feedback, rolled back if the request fails
+
+    // Keep the like state stable immediately. We do NOT rollback the heart
+    // just because a duplicate/RLS/network response is returned after the
+    // click. The database remains the source of truth for the count after
+    // the next gallery load.
     const next = { ...likedArts, [artId]: true };
     setLikedArts(next);
     persist(next);
-    setLikeCounts((current) => ({ ...current, [artId]: (current[artId] || 0) + 1 }));
-    const undo = () => {
-      setLikedArts((current) => { const rest = { ...current }; delete rest[artId]; persist(rest); return rest; });
-      setLikeCounts((current) => ({ ...current, [artId]: Math.max(0, (current[artId] || 1) - 1) }));
-    };
+    setLikeCounts((current) => ({
+      ...current,
+      [artId]: (current[artId] || 0) + 1,
+    }));
+
     try {
       const supabase = getSupabase();
       const visitorId = getVisitorId();
-      const { error } = await supabase.from("fan_art_likes").insert({
-        fan_art_id: artId,
-        visitor_id: visitorId,
-      });
+
+      // Upsert makes repeated clicks/reloads safe when the table has the
+      // UNIQUE(fan_art_id, visitor_id) constraint. A duplicate is treated
+      // as an already-existing like instead of an error that removes the UI state.
+      const { error } = await supabase
+        .from("fan_art_likes")
+        .upsert(
+          {
+            fan_art_id: artId,
+            visitor_id: visitorId,
+          },
+          {
+            onConflict: "fan_art_id,visitor_id",
+            ignoreDuplicates: true,
+          }
+        );
+
       if (error) {
-        if ((error as { code?: string }).code === "23505") {
-          // this visitor already liked it earlier: keep the heart filled, drop the extra +1
-          setLikeCounts((current) => ({ ...current, [artId]: Math.max(0, (current[artId] || 1) - 1) }));
-        } else {
-          undo();
-        }
+        console.error("Fan art like save error:", error);
+        // Keep the heart selected. This prevents the annoying
+        // click -> heart -> immediately unliked behaviour.
       }
     } catch (error) {
       console.error("Like error:", error);
-      undo();
+      // Keep the local liked state instead of visually undoing the click.
     }
   }
+
   const visibleFanArts = useMemo(() => {
     const query = search.trim().toLowerCase();
 
