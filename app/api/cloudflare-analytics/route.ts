@@ -579,76 +579,146 @@ export async function GET(request: Request) {
     };
 
     /*
-     * Run the GraphQL datasets independently.
-     *
-     * Cloudflare can reject an individual dimension/query even when the
-     * main HTTP analytics dataset is available. We therefore fail only
-     * when the core hourly query fails; optional breakdowns are allowed
-     * to return empty data instead of taking down the entire dashboard.
+     * PERFORMANCE:
+     * All Cloudflare GraphQL breakdowns are fetched in ONE GraphQL request.
+     * The old version made 8 separate GraphQL requests + 1 legacy request
+     * every time the dashboard refreshed. This keeps the same response shape
+     * while cutting the external analytics requests from 9 -> 2.
      */
+    const combinedQuery = `
+      query AnalyticsDashboard($zoneTag: string, $filter: filter) {
+        viewer {
+          zones(filter: { zoneTag: $zoneTag }) {
+            hourly: httpRequestsAdaptiveGroups(
+              limit: 1000
+              filter: $filter
+            ) {
+              count
+              sum { visits edgeResponseBytes }
+              dimensions { datetimeHour }
+            }
+
+            country: httpRequestsAdaptiveGroups(
+              limit: 250
+              filter: $filter
+            ) {
+              count
+              sum { visits edgeResponseBytes }
+              dimensions { clientCountryName }
+            }
+
+            hostname: httpRequestsAdaptiveGroups(
+              limit: 100
+              filter: $filter
+            ) {
+              count
+              sum { visits edgeResponseBytes }
+              dimensions { clientRequestHTTPHost }
+            }
+
+            path: httpRequestsAdaptiveGroups(
+              limit: 250
+              filter: $filter
+            ) {
+              count
+              sum { visits edgeResponseBytes }
+              dimensions { clientRequestPath }
+            }
+
+            device: httpRequestsAdaptiveGroups(
+              limit: 50
+              filter: $filter
+            ) {
+              count
+              sum { visits edgeResponseBytes }
+              dimensions { clientDeviceType }
+            }
+
+            referrer: httpRequestsAdaptiveGroups(
+              limit: 250
+              filter: $filter
+            ) {
+              count
+              sum { visits edgeResponseBytes }
+              dimensions { clientRefererHost }
+            }
+
+            userAgent: httpRequestsAdaptiveGroups(
+              limit: 250
+              filter: $filter
+            ) {
+              count
+              sum { visits edgeResponseBytes }
+              dimensions { userAgent }
+            }
+
+            colo: httpRequestsAdaptiveGroups(
+              limit: 100
+              filter: $filter
+            ) {
+              count
+              sum { visits edgeResponseBytes }
+              dimensions { coloCode }
+            }
+          }
+        }
+      }
+    `;
+
     const settled = await Promise.allSettled([
-      runGraphQL(token, baseQuery, variables),
-      runGraphQL(token, countryQuery, variables),
-      runGraphQL(token, hostnameQuery, variables),
-      runGraphQL(token, pathQuery, variables),
-      runGraphQL(token, deviceQuery, variables),
-      runGraphQL(token, referrerQuery, variables),
-      runGraphQL(token, userAgentQuery, variables),
-      runGraphQL(token, coloQuery, variables),
+      runGraphQL(token, combinedQuery, variables),
       runLegacyAnalytics(token, since, until),
     ]);
 
-    const queryNames = [
-      "hourly",
-      "country",
-      "hostname",
-      "path",
-      "device",
-      "referrer",
-      "userAgent",
-      "colo",
-      "legacy",
-    ];
-
     const warnings: string[] = [];
 
-    function getSettledResult<T>(index: number): T | null {
-      const item = settled[index];
+    const combinedResult =
+      settled[0].status === "fulfilled"
+        ? (settled[0].value as AnalyticsResult)
+        : null;
 
-      if (item.status === "fulfilled") {
-        return item.value as T;
-      }
+    if (!combinedResult) {
+      const reason =
+        settled[0].status === "rejected"
+          ? settled[0].reason instanceof Error
+            ? settled[0].reason.message
+            : String(settled[0].reason)
+          : "Cloudflare GraphQL analytics query failed.";
 
-      const message =
-        item.reason instanceof Error
-          ? item.reason.message
-          : String(item.reason);
-
-      warnings.push(`${queryNames[index]}: ${message}`);
-      console.error(
-        `Cloudflare Analytics ${queryNames[index]} query failed:`,
-        message
-      );
-
-      return null;
+      warnings.push(`graphql: ${reason}`);
+      console.error("Cloudflare Analytics GraphQL query failed:", reason);
     }
 
-    const hourlyResult = getSettledResult<AnalyticsResult>(0);
-    const countryResult = getSettledResult<AnalyticsResult>(1);
-    const hostnameResult = getSettledResult<AnalyticsResult>(2);
-    const pathResult = getSettledResult<AnalyticsResult>(3);
-    const deviceResult = getSettledResult<AnalyticsResult>(4);
-    const referrerResult = getSettledResult<AnalyticsResult>(5);
-    const userAgentResult = getSettledResult<AnalyticsResult>(6);
-    const coloResult = getSettledResult<AnalyticsResult>(7);
-    const legacyResult = getSettledResult<LegacyAnalytics>(8);
+    const legacyResult =
+      settled[1].status === "fulfilled"
+        ? (settled[1].value as LegacyAnalytics | null)
+        : null;
 
-    if (!hourlyResult) {
+    if (settled[1].status === "rejected") {
+      const reason =
+        settled[1].reason instanceof Error
+          ? settled[1].reason.message
+          : String(settled[1].reason);
+
+      warnings.push(`legacy: ${reason}`);
+      console.warn("Cloudflare legacy analytics query failed:", reason);
+    }
+
+    function getAliasedGroups(alias: string): AnalyticsGroup[] {
+      const zone = combinedResult?.data?.viewer?.zones?.[0] as
+        | (Record<string, unknown> & { httpRequestsAdaptiveGroups?: AnalyticsGroup[] })
+        | undefined;
+
+      const groups = zone?.[alias];
+      return Array.isArray(groups) ? (groups as AnalyticsGroup[]) : [];
+    }
+
+    if (!combinedResult) {
       return Response.json(
         {
           success: false,
           error:
-            warnings.find((item) => item.startsWith("hourly:")) ||
+            warnings.find((item) => item.startsWith("graphql:")) ||
             "Cloudflare core analytics query failed.",
           warnings,
         },
@@ -656,14 +726,14 @@ export async function GET(request: Request) {
       );
     }
 
-    const hourlyGroups = getGroups(hourlyResult);
-    const countryGroups = countryResult ? getGroups(countryResult) : [];
-    const hostnameGroups = hostnameResult ? getGroups(hostnameResult) : [];
-    const pathGroups = pathResult ? getGroups(pathResult) : [];
-    const deviceGroups = deviceResult ? getGroups(deviceResult) : [];
-    const referrerGroups = referrerResult ? getGroups(referrerResult) : [];
-    const userAgentGroups = userAgentResult ? getGroups(userAgentResult) : [];
-    const coloGroups = coloResult ? getGroups(coloResult) : [];
+    const hourlyGroups = combinedResult ? getAliasedGroups("hourly") : [];
+    const countryGroups = combinedResult ? getAliasedGroups("country") : [];
+    const hostnameGroups = combinedResult ? getAliasedGroups("hostname") : [];
+    const pathGroups = combinedResult ? getAliasedGroups("path") : [];
+    const deviceGroups = combinedResult ? getAliasedGroups("device") : [];
+    const referrerGroups = combinedResult ? getAliasedGroups("referrer") : [];
+    const userAgentGroups = combinedResult ? getAliasedGroups("userAgent") : [];
+    const coloGroups = combinedResult ? getAliasedGroups("colo") : [];
 
     const totalVisits = hourlyGroups.reduce(
       (total, item) => total + safeNumber(item.sum?.visits),

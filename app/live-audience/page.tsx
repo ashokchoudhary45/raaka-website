@@ -183,7 +183,7 @@ function AnimatedNumber({ value, loading }: { value: number; loading?: boolean }
     const start = performance.now();
     const base = from.current;
     const tick = (t: number) => {
-      const p = Math.min((t - start) / 1200, 1);
+      const p = Math.min((t - start) / 650, 1);
       const v = Math.round(base + (value - base) * (1 - Math.pow(1 - p, 3)));
       setN(v);
       from.current = v;
@@ -318,6 +318,23 @@ const LX_CSS = String.raw`
 .an-reveal.is-in{opacity:1;transform:none}
 .lx-hide-scroll{scrollbar-width:none}.lx-hide-scroll::-webkit-scrollbar{display:none}
 section[id]{scroll-margin-top:7.5rem}
+
+/* Mobile performance: preserve the dashboard look without keeping
+   expensive blur, glow and continuous animations running while scrolling. */
+@media (max-width:767px){
+  .lx-ambient{background:radial-gradient(700px 360px at 90% -10%,rgba(255,110,30,.08),transparent 62%)}
+  .lx-glowfloor{display:none}
+  .lx-side{-webkit-backdrop-filter:none;backdrop-filter:none}
+  .lx-card{transition:border-color .2s,box-shadow .2s}
+  .lx-card.is-lift:hover{transform:none;box-shadow:none}
+  .lx-radar{display:none}
+  .lx-dot::after{animation:none!important}
+  .lx-draw,.lx-area,.lx-meter{animation-duration:.35s}
+  .lx-progress::after{animation-duration:.8s}
+  .an-reveal{transition:opacity .35s ease,transform .35s ease}
+  .lx-map svg{touch-action:none}
+}
+
 @media (prefers-reduced-motion:reduce){.lx-glowfloor,.lx-radar i,.lx-dot::after,.lx-draw,.lx-area,.lx-meter,.lx-skel,.lx-progress::after{animation:none!important}.lx-draw{stroke-dashoffset:0}.an-reveal{opacity:1;transform:none;transition:none}}
 `;
 
@@ -383,6 +400,9 @@ export default function LiveAudiencePage() {
 
   const [active, setActive] = useState("overview");
   const [hydrated, setHydrated] = useState(false);
+  // The world map is one of the heaviest components on this page.
+  // Mount it only when the Audience section is actually reached.
+  const [mapReady, setMapReady] = useState(false);
   const reqId = useRef(0);
 
   // ---------- URL <-> filters (shareable links) ----------
@@ -460,11 +480,10 @@ export default function LiveAudiencePage() {
       if (country) params.set("country", country);
       if (device) params.set("device", device);
       if (path) params.set("path", path);
-      params.set("_t", String(Date.now()));
-
+      // The API itself keeps a short server-side cache. Let the browser
+      // reuse that response instead of forcing a network request every time.
       const response = await fetch(`/api/cloudflare-analytics?${params.toString()}`, {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-cache, no-store, max-age=0" },
+        cache: "default",
       });
       const result: CloudflareAnalyticsResponse = await response.json();
       if (id !== reqId.current) return;
@@ -487,7 +506,9 @@ export default function LiveAudiencePage() {
     }
   }, [preset, fromDate, toDate, country, device, path, source]);
 
-  useEffect(() => { fetchD1Analytics(); fetchLiveCount(); }, [fetchD1Analytics, fetchLiveCount]);
+  // The analytics response already contains the current live count.
+  // Avoid a second D1 request during the initial page load.
+  useEffect(() => { fetchD1Analytics(); }, [fetchD1Analytics]);
   useEffect(() => { if (hydrated) fetchCloudflareAnalytics(); }, [hydrated, fetchCloudflareAnalytics]);
   useEffect(() => {
     const t = setInterval(fetchLiveCount, 60_000);
@@ -505,6 +526,11 @@ export default function LiveAudiencePage() {
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, []);
+
+  // Mount the expensive map only when the user reaches Audience.
+  useEffect(() => {
+    if (active === "audience") setMapReady(true);
+  }, [active]);
 
   // ---------- derived ----------
   const dailyData = cloudflare?.daily || [];
@@ -576,7 +602,11 @@ export default function LiveAudiencePage() {
     if (v !== "custom") { const d = getPresetDates(v); setFromDate(d.from); setToDate(d.to); }
   };
   const clearFilters = () => { applyPreset("30days"); setCountry(""); setDevice(""); setPath(""); setSource("eyeball"); };
-  const refreshAll = () => { fetchD1Analytics(); fetchLiveCount(); fetchCloudflareAnalytics(); };
+  const refreshAll = () => {
+    fetchD1Analytics();
+    fetchLiveCount();
+    fetchCloudflareAnalytics();
+  };
   const toggleSort = (k: SortKey) => { if (sortKey === k) setSortDir((d) => (d === "desc" ? "asc" : "desc")); else { setSortKey(k); setSortDir("desc"); } };
 
   const dim = refreshing && !initialLoad ? "lx-dim" : "";
@@ -773,32 +803,41 @@ export default function LiveAudiencePage() {
               <div className={`mt-6 grid gap-4 xl:grid-cols-12 ${dim}`}>
                 <div className="lx-card overflow-hidden xl:col-span-8">
                   <div className="lx-map relative bg-[radial-gradient(ellipse_at_50%_40%,rgba(255,110,30,.08),rgba(0,0,0,.35)_72%)]">
-                    <ComposableMap projection="geoEqualEarth" width={980} height={500} projectionConfig={{ scale: 185, center: [0, 8] }}>
-                      <ZoomableGroup center={mapPosition} zoom={mapZoom} minZoom={1} maxZoom={8} onMoveEnd={({ coordinates, zoom }) => { setMapPosition(coordinates as [number, number]); setMapZoom(zoom ?? 1); }}>
-                        <Geographies geography={GEO_URL}>
-                          {({ geographies }) =>
-                            geographies.filter((g) => String(g.properties?.name || "") !== "Antarctica").map((geo) => {
-                              const rawName = String(geo.properties?.name || "");
-                              const stat = countryIndex.get(norm(rawName));
-                              return (
-                                <Geography
-                                  key={geo.rsmKey}
-                                  geography={geo}
-                                  onMouseEnter={() => setMapCountry(rawName)}
-                                  onMouseLeave={() => setMapCountry("")}
-                                  onClick={() => setMapCountry(rawName)}
-                                  style={{
-                                    default: { fill: heatFill(stat?.requests || 0, maxCountry), stroke: "rgba(255,255,255,0.14)", strokeWidth: 0.4, outline: "none", transition: "fill .3s" },
-                                    hover: { fill: "rgba(255,214,120,0.98)", stroke: "rgba(255,255,255,0.8)", strokeWidth: 0.7, outline: "none" },
-                                    pressed: { fill: "rgba(255,150,40,1)", outline: "none" },
-                                  } as any}
-                                />
-                              );
-                            })
-                          }
-                        </Geographies>
-                      </ZoomableGroup>
-                    </ComposableMap>
+                    {mapReady ? (
+                      <ComposableMap projection="geoEqualEarth" width={980} height={500} projectionConfig={{ scale: 185, center: [0, 8] }}>
+                        <ZoomableGroup center={mapPosition} zoom={mapZoom} minZoom={1} maxZoom={8} onMoveEnd={({ coordinates, zoom }) => { setMapPosition(coordinates as [number, number]); setMapZoom(zoom ?? 1); }}>
+                          <Geographies geography={GEO_URL}>
+                            {({ geographies }) =>
+                              geographies.filter((g) => String(g.properties?.name || "") !== "Antarctica").map((geo) => {
+                                const rawName = String(geo.properties?.name || "");
+                                const stat = countryIndex.get(norm(rawName));
+                                return (
+                                  <Geography
+                                    key={geo.rsmKey}
+                                    geography={geo}
+                                    onMouseEnter={() => setMapCountry(rawName)}
+                                    onMouseLeave={() => setMapCountry("")}
+                                    onClick={() => setMapCountry(rawName)}
+                                    style={{
+                                      default: { fill: heatFill(stat?.requests || 0, maxCountry), stroke: "rgba(255,255,255,0.14)", strokeWidth: 0.4, outline: "none", transition: "fill .3s" },
+                                      hover: { fill: "rgba(255,214,120,0.98)", stroke: "rgba(255,255,255,0.8)", strokeWidth: 0.7, outline: "none" },
+                                      pressed: { fill: "rgba(255,150,40,1)", outline: "none" },
+                                    } as any}
+                                  />
+                                );
+                              })
+                            }
+                          </Geographies>
+                        </ZoomableGroup>
+                      </ComposableMap>
+                    ) : (
+                      <div className="flex h-[320px] items-center justify-center bg-black/10 sm:h-[500px]">
+                        <div className="text-center">
+                          <p className="text-sm text-white/45">Audience map</p>
+                          <p className="mt-1 text-xs text-white/25">Loads when you reach this section</p>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="pointer-events-none absolute left-3 top-3 max-w-[75%] rounded-xl border border-white/12 bg-black/70 px-4 py-3 backdrop-blur-md">
                       {mapCountry ? (
