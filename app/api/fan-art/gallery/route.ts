@@ -236,7 +236,8 @@ export async function GET(request: Request) {
           /*
            * Don't cache approval/rejection changes.
            */
-          "Cache-Control": "no-store, max-age=0",
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120, max-age=15",
+          "CDN-Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
         },
       },
     );

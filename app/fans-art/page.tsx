@@ -129,6 +129,10 @@ export default function FansArtPage() {
 
       setFanArts(allArts);
 
+      // Reuse the gallery result for the artwork count instead of making
+      // another /api/fan-art/gallery request.
+      void loadFanPower(allArts.length);
+
       // Load existing likes for all R2-backed artwork IDs.
       try {
         const supabase = getSupabase();
@@ -166,17 +170,19 @@ export default function FansArtPage() {
     }
   }
   useEffect(() => {
+    // One gallery request only. Fan Power is calculated after the gallery
+    // data is available, so the same gallery API is never requested twice.
     loadFanArts();
-    loadFanPower();
   }, []);
 
-  async function loadFanPower() {
+  async function loadFanPower(submissionsCount: number) {
     setLoadingPower(true);
 
     try {
       const supabase = getSupabase();
 
-      const [{ count: likesCount }, { data: quizActivity }, galleryResponse] =
+      // Only fetch data that is not already available from the gallery call.
+      const [{ count: likesCount }, { data: quizActivity }] =
         await Promise.all([
           supabase
             .from("fan_art_likes")
@@ -185,31 +191,17 @@ export default function FansArtPage() {
             .from("fan_passport_activity")
             .select("xp")
             .ilike("activity_key", "%quiz%"),
-          fetch("/api/fan-art/gallery", { cache: "no-store" }),
         ]);
-
-      const galleryResult = galleryResponse.ok
-        ? ((await galleryResponse.json()) as { items?: FanArt[] })
-        : { items: [] };
-      const submissionsCount = galleryResult.items?.length ?? 0;
 
       const likes = likesCount || 0;
       const submissions = submissionsCount || 0;
       const quizXp =
         quizActivity?.reduce((total, item) => total + (Number(item.xp) || 0), 0) || 0;
 
-      // Community Power formula:
-      // 1 power per like + 5 per approved submission + 1 per quiz XP.
-      // 100,000 power points = 100% community power.
       const score = likes + submissions * 5 + quizXp;
       const percent = Math.min(100, Math.round((score / 100000) * 100));
 
-      setFanPower({
-        percent,
-        likes,
-        submissions,
-        quizXp,
-      });
+      setFanPower({ percent, likes, submissions, quizXp });
     } catch (error) {
       console.error("Fan Power error:", error);
     } finally {
@@ -1178,4 +1170,23 @@ button.lk:active{transform:scale(.9)}
 .rise,.fa-line>span,.hdr{animation:none!important}
 .fa-reveal{opacity:1;transform:none;transition:none}
 }
+
+/* mobile performance: keep the cinematic look, remove expensive continuous effects */
+@media (max-width: 767px){
+  .rays,.floor,.embers,.grain,.cglow,.ring-glow{display:none!important}
+  .orb{filter:blur(70px);animation:none!important}
+  .ring-rot{animation-duration:75s}
+  .ring3d{transform:rotateX(-3deg);will-change:transform}
+  .tile,.ri-box{transition:box-shadow .2s,border-color .2s}
+  .tile:hover,.ri:hover .ri-box{transform:none;box-shadow:none}
+  .tile::before{display:none}
+  .tile-shade{transition:none}
+  .cta::after{animation:none}
+  .hdr.is-s{backdrop-filter:blur(8px)}
+  .plate-bd{filter:blur(10px) brightness(.6)}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
 `;
