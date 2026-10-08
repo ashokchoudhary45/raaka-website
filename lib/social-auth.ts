@@ -25,7 +25,10 @@ function randomToken(bytes = 32) {
 
   crypto.getRandomValues(data);
 
-  return bytesToBase64(data);
+  return bytesToBase64(data)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
 async function sha256(value: string) {
@@ -236,14 +239,6 @@ export async function createVerificationToken(
 
   const token = randomToken(32);
   const tokenHash = await sha256(token);
-
-  // Temporary production diagnostic.
-  // Only the SHA-256 hash is logged; the raw verification
-  // token is never logged.
-  console.log(
-    "RAAKA VERIFY TOKEN HASH:",
-    tokenHash
-  );
 
   const expiresAt = new Date(
     Date.now() +

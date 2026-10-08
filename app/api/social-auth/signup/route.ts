@@ -178,22 +178,15 @@ export async function POST(request: Request) {
 
     const verification = await createVerificationToken(userId);
 
-    /*
-     * IMPORTANT:
-     * This is intentionally based on the incoming request.
-     *
-     * Local:
-     * http://localhost:3000/social/verify?token=...
-     *
-     * Production:
-     * https://worldofraaka.online/social/verify?token=...
-     */
+    // Always send users to the real production verification page.
+    // URL.searchParams handles token encoding safely.
     const verificationUrl = new URL(
-      `/social/verify?token=${encodeURIComponent(
-        verification.token
-      )}`,
-      request.url
-    ).toString();
+      "https://worldofraaka.online/social/verify"
+    );
+    verificationUrl.searchParams.set(
+      "token",
+      verification.token
+    );
 
     // ------------------------------------------
     // EMAIL CONFIG
@@ -294,7 +287,7 @@ export async function POST(request: Request) {
                 </p>
 
                 <a
-                  href="${verificationUrl}"
+                  href="${verificationUrl.toString()}"
                   style="
                     display:inline-block;
                     margin:20px 0;

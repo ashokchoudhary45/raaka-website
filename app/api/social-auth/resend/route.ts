@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getD1 } from "@/lib/d1";
 import {
   createVerificationToken,
-  hashToken,
 } from "@/lib/social-auth";
 
 function json(data: unknown, status = 200) {
@@ -68,25 +67,20 @@ export async function POST(request: Request) {
       });
     }
 
-    /*
-      Remove previous unused verification tokens.
-    */
-    await db
-      .prepare(
-        `DELETE FROM social_email_verifications
-         WHERE user_id = ?
-           AND used_at IS NULL`
-      )
-      .bind(user.user_id)
-      .run();
-
+    // Create a fresh token without invalidating an older email.
+    // This prevents a previously delivered verification email
+    // from becoming invalid just because the user requested resend.
     const verification = await createVerificationToken(
       user.user_id
     );
 
-    const verificationUrl =
-      `https://worldofraaka.online/social/verify?token=` +
-      encodeURIComponent(verification.token);
+    const verificationUrl = new URL(
+      "https://worldofraaka.online/social/verify"
+    );
+    verificationUrl.searchParams.set(
+      "token",
+      verification.token
+    );
 
     const resendApiKey = process.env.RESEND_API_KEY;
 
@@ -133,7 +127,7 @@ export async function POST(request: Request) {
                 </p>
 
                 <a
-                  href="${verificationUrl}"
+                  href="${verificationUrl.toString()}"
                   style="display:inline-block;margin:20px 0;padding:14px 24px;background:#fff;color:#000;text-decoration:none;border-radius:10px;font-weight:bold"
                 >
                   Verify Email

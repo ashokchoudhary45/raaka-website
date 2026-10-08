@@ -17,39 +17,10 @@ function json(data: unknown, status = 200) {
   });
 }
 
-/*
- * Keep a local SHA-256 fallback for compatibility with older
- * verification rows that may have been stored using a different
- * digest encoding than the current hashToken() helper.
- */
-async function sha256Hex(value: string) {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function sha256Base64Url(value: string) {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-
-  let binary = "";
-  for (const byte of new Uint8Array(digest)) {
-    binary += String.fromCharCode(byte);
-  }
-
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
-
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const token = url.searchParams.get("token")?.trim();
+    const token = url.searchParams.get("token");
 
     if (!token) {
       return json(
@@ -61,24 +32,10 @@ export async function GET(request: Request) {
       );
     }
 
-    /*
-     * Normal format used by the current auth helper.
-     * The two additional formats make verification compatible
-     * with tokens created by an older version of the auth code.
-     */
-    const [currentHash, hexHash, base64UrlHash] = await Promise.all([
-      hashToken(token),
-      sha256Hex(token),
-      sha256Base64Url(token),
-    ]);
-
-    const candidateHashes = Array.from(
-      new Set([currentHash, hexHash, base64UrlHash].filter(Boolean))
-    );
-
+    // IMPORTANT:
+    // The same hashToken() function is used when the token is stored.
+    const tokenHash = await hashToken(token);
     const db = getD1();
-
-    const placeholders = candidateHashes.map(() => "?").join(", ");
 
     const verification = await db
       .prepare(
@@ -88,15 +45,10 @@ export async function GET(request: Request) {
            expires_at,
            used_at
          FROM social_email_verifications
-         WHERE token_hash IN (${placeholders})
-         ORDER BY
-           CASE
-             WHEN token_hash = ? THEN 0
-             ELSE 1
-           END
+         WHERE token_hash = ?
          LIMIT 1`
       )
-      .bind(...candidateHashes, currentHash)
+      .bind(tokenHash)
       .first<{
         token_hash: string;
         user_id: string;
@@ -125,9 +77,14 @@ export async function GET(request: Request) {
       );
     }
 
-    const expiresAt = new Date(verification.expires_at).getTime();
+    const expiresAt = new Date(
+      verification.expires_at
+    ).getTime();
 
-    if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+    if (
+      !Number.isFinite(expiresAt) ||
+      expiresAt <= Date.now()
+    ) {
       return json(
         {
           success: false,
@@ -168,25 +125,25 @@ export async function GET(request: Request) {
     const now = new Date().toISOString();
 
     /*
-     * Mark the token used and the account verified together.
-     * If the account was already verified, we still create a
-     * fresh session so a valid verification link remains useful.
+     * Do NOT touch updated_at here.
+     * The verification flow only requires verified_at and used_at,
+     * so it works even when social_auth_users has no updated_at column.
      */
     await db.batch([
       db
         .prepare(
           `UPDATE social_auth_users
-           SET verified_at = COALESCE(verified_at, ?),
-               updated_at = ?
+           SET verified_at = COALESCE(verified_at, ?)
            WHERE user_id = ?`
         )
-        .bind(now, now, user.user_id),
+        .bind(now, user.user_id),
 
       db
         .prepare(
           `UPDATE social_email_verifications
            SET used_at = ?
-           WHERE token_hash = ?`
+           WHERE token_hash = ?
+             AND used_at IS NULL`
         )
         .bind(now, verification.token_hash),
     ]);
@@ -205,12 +162,16 @@ export async function GET(request: Request) {
 
     return response;
   } catch (error) {
-    console.error("Social email verification error:", error);
+    console.error(
+      "Social email verification error:",
+      error
+    );
 
     return json(
       {
         success: false,
-        error: "Something went wrong while verifying your email.",
+        error:
+          "Something went wrong while verifying your email.",
       },
       500
     );
