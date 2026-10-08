@@ -6,8 +6,44 @@ import {
   sessionCookie,
 } from "@/lib/social-auth";
 
+export const dynamic = "force-dynamic";
+
 function json(data: unknown, status = 200) {
-  return NextResponse.json(data, { status });
+  return NextResponse.json(data, {
+    status,
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
+  });
+}
+
+/*
+ * Keep a local SHA-256 fallback for compatibility with older
+ * verification rows that may have been stored using a different
+ * digest encoding than the current hashToken() helper.
+ */
+async function sha256Hex(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function sha256Base64Url(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+
+  let binary = "";
+  for (const byte of new Uint8Array(digest)) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
 export async function GET(request: Request) {
@@ -25,8 +61,24 @@ export async function GET(request: Request) {
       );
     }
 
-    const tokenHash = await hashToken(token);
+    /*
+     * Normal format used by the current auth helper.
+     * The two additional formats make verification compatible
+     * with tokens created by an older version of the auth code.
+     */
+    const [currentHash, hexHash, base64UrlHash] = await Promise.all([
+      hashToken(token),
+      sha256Hex(token),
+      sha256Base64Url(token),
+    ]);
+
+    const candidateHashes = Array.from(
+      new Set([currentHash, hexHash, base64UrlHash].filter(Boolean))
+    );
+
     const db = getD1();
+
+    const placeholders = candidateHashes.map(() => "?").join(", ");
 
     const verification = await db
       .prepare(
@@ -36,10 +88,15 @@ export async function GET(request: Request) {
            expires_at,
            used_at
          FROM social_email_verifications
-         WHERE token_hash = ?
+         WHERE token_hash IN (${placeholders})
+         ORDER BY
+           CASE
+             WHEN token_hash = ? THEN 0
+             ELSE 1
+           END
          LIMIT 1`
       )
-      .bind(tokenHash)
+      .bind(...candidateHashes, currentHash)
       .first<{
         token_hash: string;
         user_id: string;
@@ -51,7 +108,8 @@ export async function GET(request: Request) {
       return json(
         {
           success: false,
-          error: "Invalid verification link.",
+          error:
+            "This verification link is invalid or no longer available. Please request a new verification email.",
         },
         400
       );
@@ -67,10 +125,9 @@ export async function GET(request: Request) {
       );
     }
 
-    if (
-      new Date(verification.expires_at).getTime() <=
-      Date.now()
-    ) {
+    const expiresAt = new Date(verification.expires_at).getTime();
+
+    if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
       return json(
         {
           success: false,
@@ -110,11 +167,17 @@ export async function GET(request: Request) {
 
     const now = new Date().toISOString();
 
+    /*
+     * Mark the token used and the account verified together.
+     * If the account was already verified, we still create a
+     * fresh session so a valid verification link remains useful.
+     */
     await db.batch([
       db
         .prepare(
           `UPDATE social_auth_users
-           SET verified_at = ?, updated_at = ?
+           SET verified_at = COALESCE(verified_at, ?),
+               updated_at = ?
            WHERE user_id = ?`
         )
         .bind(now, now, user.user_id),
@@ -130,22 +193,17 @@ export async function GET(request: Request) {
 
     const session = await createSession(user.user_id);
 
-    return new NextResponse(
-      JSON.stringify({
-        success: true,
-        message: "Email verified successfully.",
-      }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Set-Cookie": sessionCookie(
-            session.token,
-            30 * 24 * 60 * 60
-          ),
-        },
-      }
+    const response = json({
+      success: true,
+      message: "Email verified successfully.",
+    });
+
+    response.headers.set(
+      "Set-Cookie",
+      sessionCookie(session.token, 30 * 24 * 60 * 60)
     );
+
+    return response;
   } catch (error) {
     console.error("Social email verification error:", error);
 
