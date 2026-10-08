@@ -31,7 +31,14 @@ type Meta = {
   createdAt: string;
 };
 
-async function listKeys(prefix: string) {
+/**
+ * Get ALL object keys from a prefix.
+ *
+ * Important:
+ * This uses pagination for the R2 LIST operation,
+ * but does NOT download every metadata JSON.
+ */
+async function listKeys(prefix: string): Promise<string[]> {
   const keys: string[] = [];
   let token: string | undefined;
 
@@ -41,7 +48,7 @@ async function listKeys(prefix: string) {
         Bucket: BUCKET,
         Prefix: prefix,
         ContinuationToken: token,
-      })
+      }),
     );
 
     for (const item of result.Contents || []) {
@@ -58,13 +65,16 @@ async function listKeys(prefix: string) {
   return keys;
 }
 
+/**
+ * Read one metadata JSON.
+ */
 async function readMeta(key: string): Promise<Meta | null> {
   try {
     const result = await r2.send(
       new GetObjectCommand({
         Bucket: BUCKET,
         Key: key,
-      })
+      }),
     );
 
     if (!result.Body) {
@@ -74,12 +84,25 @@ async function readMeta(key: string): Promise<Meta | null> {
     const text = await result.Body.transformToString();
 
     return JSON.parse(text) as Meta;
-  } catch {
+  } catch (error) {
+    console.error(`Failed to read fan-art metadata: ${key}`, error);
     return null;
   }
 }
 
-export async function GET() {
+/**
+ * Extract numeric ID from:
+ *
+ * fan-art-meta/1760000000000.jpg.json
+ */
+function getIdFromMetaKey(key: string): number {
+  const filename = key.split("/").pop() || "";
+  const match = filename.match(/^(\d+)/);
+
+  return match ? Number(match[1]) : 0;
+}
+
+export async function GET(request: Request) {
   try {
     if (
       !ACCOUNT ||
@@ -93,58 +116,82 @@ export async function GET() {
           success: false,
           error: "R2 environment variables are missing.",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    /*
-     * R2 is the source of truth.
-     *
-     * We read metadata JSON files from:
-     * fan-art-meta/
-     *
-     * Only:
-     * status === "approved"
-     *
-     * artworks are returned to the public gallery.
-     */
+    const url = new URL(request.url);
 
+    /*
+     * Keep every gallery request safely below
+     * Cloudflare Workers Free subrequest limits.
+     *
+     * 40 metadata GETs + 1 metadata LIST
+     * = maximum 41 R2 subrequests.
+     */
+    const requestedLimit = Number(
+      url.searchParams.get("limit") || "40",
+    );
+
+    const limit = Math.min(
+      Math.max(requestedLimit, 1),
+      40,
+    );
+
+    const page = Math.max(
+      Number(url.searchParams.get("page") || "1"),
+      1,
+    );
+
+    /*
+     * R2 remains the source of truth.
+     */
     const metadataKeys = await listKeys("fan-art-meta/");
 
-    const metadataFiles = metadataKeys.filter((key) =>
-      key.endsWith(".json")
-    );
+    const metadataFiles = metadataKeys
+      .filter((key) => key.endsWith(".json"))
+      .sort(
+        (a, b) =>
+          getIdFromMetaKey(b) -
+          getIdFromMetaKey(a),
+      );
 
-    const metadataResults = await Promise.all(
-      metadataFiles.map((key) => readMeta(key))
-    );
+    const totalMetadata = metadataFiles.length;
 
-    const approvedMetadata = metadataResults.filter(
-      (item): item is Meta =>
-        !!item && item.status === "approved"
+    /*
+     * Pagination happens BEFORE GetObject.
+     *
+     * So if there are 500 artworks,
+     * we don't download 500 metadata files.
+     *
+     * We only download the requested 40.
+     */
+    const start = (page - 1) * limit;
+
+    const pageKeys = metadataFiles.slice(
+      start,
+      start + limit,
     );
 
     /*
-     * Important:
-     * Also verify that the actual image still exists in R2.
-     *
-     * This prevents old/orphan metadata JSON files from
-     * appearing in the public gallery after their image
-     * has been deleted.
+     * Maximum 40 GetObject calls.
      */
-
-    const imageKeys = new Set(
-      (await listKeys("fan-art/")).filter(
-        (key) => !key.endsWith("/")
-      )
+    const metadataResults = await Promise.all(
+      pageKeys.map((key) => readMeta(key)),
     );
 
-    const items = approvedMetadata
-      .filter((item) => imageKeys.has(item.r2Key))
+    /*
+     * Only approved artworks are public.
+     */
+    const items = metadataResults
+      .filter(
+        (item): item is Meta =>
+          !!item && item.status === "approved",
+      )
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() -
-          new Date(a.createdAt).getTime()
+          new Date(a.createdAt).getTime(),
       )
       .map((item) => ({
         id: item.id,
@@ -164,24 +211,40 @@ export async function GET() {
         status: item.status,
       }));
 
+    const totalPages = Math.ceil(
+      totalMetadata / limit,
+    );
+
     return NextResponse.json(
       {
         success: true,
-        total: items.length,
+
+        total: totalMetadata,
+
+        page,
+
+        limit,
+
+        totalPages,
+
+        hasNextPage: page < totalPages,
+
         items,
       },
       {
         headers: {
           /*
-           * Do not keep old gallery results cached.
-           * R2 approval/rejection should reflect immediately.
+           * Don't cache approval/rejection changes.
            */
           "Cache-Control": "no-store, max-age=0",
         },
-      }
+      },
     );
   } catch (error: unknown) {
-    console.error("R2 fan art gallery error:", error);
+    console.error(
+      "R2 fan art gallery error:",
+      error,
+    );
 
     return NextResponse.json(
       {
@@ -191,7 +254,7 @@ export async function GET() {
             ? error.message
             : "Failed to load fan art gallery.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
