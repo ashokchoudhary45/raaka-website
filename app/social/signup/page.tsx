@@ -180,7 +180,12 @@ export default function SocialSignupPage() {
 
             {message && (
               <div className="mt-5 rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm leading-6 text-green-300">
-                {message}
+                <div>{message}</div>
+                <div className="mt-2 text-xs leading-5 text-green-200/70">
+                  Didn&apos;t receive the email? Please check your Spam or Junk
+                  folder, and also check Promotions/Updates if your email
+                  provider has those tabs.
+                </div>
               </div>
             )}
 
