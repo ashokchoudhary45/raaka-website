@@ -143,6 +143,7 @@ function postShape(row: any) {
     liked: Boolean(row.liked),
     bookmarked: Boolean(row.bookmarked),
     following: Boolean(row.following),
+    reposted: Boolean(row.reposted),
 
     author: {
       visitorId: row.visitor_id,
@@ -505,7 +506,11 @@ export async function GET(request: Request) {
                p.verification_label,
                CASE WHEN l.visitor_id IS NOT NULL THEN 1 ELSE 0 END AS liked,
                CASE WHEN b.visitor_id IS NOT NULL THEN 1 ELSE 0 END AS bookmarked,
-               CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END AS following
+               CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END AS following,
+               CASE WHEN EXISTS (
+                 SELECT 1 FROM social_reposts r
+                 WHERE r.post_id = s.id AND r.visitor_id = ?
+               ) THEN 1 ELSE 0 END AS reposted
              FROM social_posts s
              JOIN social_profiles p ON p.visitor_id = s.visitor_id
              LEFT JOIN social_likes l
@@ -518,7 +523,7 @@ export async function GET(request: Request) {
              ORDER BY s.id DESC
              LIMIT 100`
           )
-          .bind(userId, userId, userId, target.visitor_id)
+          .bind(userId, userId, userId, userId, target.visitor_id)
           .all<any>();
 
         return Response.json({
@@ -558,6 +563,47 @@ export async function GET(request: Request) {
       }));
 
       return Response.json({ success: true, users });
+    }
+
+    /*
+     * BOOKMARKS
+     * Current user's saved posts only.
+     */
+    if (action === "bookmarks") {
+      const rows = await db
+        .prepare(
+          `SELECT
+             s.*,
+             p.handle,
+             p.display_name,
+             p.verified,
+             p.verification_type,
+             p.verification_label,
+             CASE WHEN l.visitor_id IS NOT NULL THEN 1 ELSE 0 END AS liked,
+             1 AS bookmarked,
+             CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END AS following,
+             CASE WHEN EXISTS (
+               SELECT 1 FROM social_reposts r
+               WHERE r.post_id = s.id AND r.visitor_id = ?
+             ) THEN 1 ELSE 0 END AS reposted
+           FROM social_bookmarks b
+           JOIN social_posts s ON s.id = b.post_id
+           JOIN social_profiles p ON p.visitor_id = s.visitor_id
+           LEFT JOIN social_likes l
+             ON l.post_id = s.id AND l.visitor_id = ?
+           LEFT JOIN social_follows f
+             ON f.following_id = s.visitor_id AND f.follower_id = ?
+           WHERE b.visitor_id = ?
+           ORDER BY b.created_at DESC, s.id DESC
+           LIMIT 200`
+        )
+        .bind(userId, userId, userId, userId)
+        .all<any>();
+
+      return Response.json({
+        success: true,
+        posts: rows.results.map(postShape),
+      });
     }
 
     /*
@@ -631,6 +677,7 @@ export async function GET(request: Request) {
         userId,
         userId,
         userId,
+        userId,
       ];
 
       if (cursor > 0) {
@@ -659,7 +706,12 @@ export async function GET(request: Request) {
                WHEN b.visitor_id IS NOT NULL
                THEN 1
                ELSE 0
-             END AS bookmarked
+             END AS bookmarked,
+
+             CASE WHEN EXISTS (
+               SELECT 1 FROM social_reposts r
+               WHERE r.post_id = s.id AND r.visitor_id = ?
+             ) THEN 1 ELSE 0 END AS reposted
 
            FROM social_posts s
 
@@ -715,6 +767,7 @@ export async function GET(request: Request) {
       userId,
       userId,
       userId,
+      userId,
     ];
 
     if (cursor > 0) {
@@ -748,6 +801,11 @@ export async function GET(request: Request) {
              THEN 1
              ELSE 0
            END AS bookmarked,
+
+           CASE WHEN EXISTS (
+             SELECT 1 FROM social_reposts r
+             WHERE r.post_id = s.id AND r.visitor_id = ?
+           ) THEN 1 ELSE 0 END AS reposted,
 
            (
              CASE
@@ -1661,104 +1719,119 @@ export async function POST(
     }
 
     /*
-     * REPOST
+     * REPOST / UN-REPOST
+     * Reposts are relationships, never timeline posts.
      */
     if (action === "repost") {
-      const postId =
-        Number(body.postId);
+      const postId = Number(body.postId);
 
       if (!postId) {
         return Response.json(
-          {
-            success: false,
-            error:
-              "Invalid post.",
-          },
+          { success: false, error: "Invalid post." },
           { status: 400 }
         );
       }
 
-      const original =
-        await db
-          .prepare(
-            `SELECT
-               visitor_id,
-               body
-             FROM social_posts
-             WHERE id = ?
-             LIMIT 1`
-          )
-          .bind(postId)
-          .first<any>();
+      const original = await db
+        .prepare(
+          `SELECT id, visitor_id, reposts_count
+           FROM social_posts
+           WHERE id = ?
+           LIMIT 1`
+        )
+        .bind(postId)
+        .first<any>();
 
       if (!original) {
         return Response.json(
-          {
-            success: false,
-            error:
-              "Post not found.",
-          },
+          { success: false, error: "Post not found." },
           { status: 404 }
         );
       }
 
-      const already =
-        await db
-          .prepare(
-            `SELECT id
-             FROM social_posts
-             WHERE visitor_id = ?
-               AND repost_of_id = ?
-             LIMIT 1`
-          )
-          .bind(
-            userId,
-            postId
-          )
-          .first();
+      const existing = await db
+        .prepare(
+          `SELECT 1
+           FROM social_reposts
+           WHERE visitor_id = ? AND post_id = ?
+           LIMIT 1`
+        )
+        .bind(userId, postId)
+        .first();
 
-      if (already) {
-        return Response.json(
-          {
-            success: false,
-            error:
-              "Already reposted.",
-          },
-          { status: 409 }
-        );
+      if (existing) {
+        const deleted = await db
+          .prepare(
+            `DELETE FROM social_reposts
+             WHERE visitor_id = ? AND post_id = ?`
+          )
+          .bind(userId, postId)
+          .run();
+
+        if (Number(deleted.meta?.changes || 0) === 1) {
+          await db
+            .prepare(
+              `UPDATE social_posts
+               SET reposts_count = MAX(0, reposts_count - 1)
+               WHERE id = ?`
+            )
+            .bind(postId)
+            .run();
+
+          await db
+            .prepare(
+              `DELETE FROM social_notifications
+               WHERE recipient_id = ?
+                 AND actor_id = ?
+                 AND type = 'repost'
+                 AND post_id = ?`
+            )
+            .bind(original.visitor_id, userId, postId)
+            .run();
+        }
+
+        const current = await db
+          .prepare(`SELECT reposts_count FROM social_posts WHERE id = ? LIMIT 1`)
+          .bind(postId)
+          .first<any>();
+
+        return Response.json({
+          success: true,
+          reposted: false,
+          reposts: Number(current?.reposts_count || 0),
+        });
+      }
+
+      // INSERT OR IGNORE is the database-level duplicate guard.
+      const inserted = await db
+        .prepare(
+          `INSERT OR IGNORE INTO social_reposts
+           (visitor_id, post_id)
+           VALUES (?, ?)`
+        )
+        .bind(userId, postId)
+        .run();
+
+      if (Number(inserted.meta?.changes || 0) !== 1) {
+        const current = await db
+          .prepare(`SELECT reposts_count FROM social_posts WHERE id = ? LIMIT 1`)
+          .bind(postId)
+          .first<any>();
+
+        return Response.json({
+          success: true,
+          reposted: true,
+          reposts: Number(current?.reposts_count || 0),
+        });
       }
 
       await db
         .prepare(
-          `INSERT INTO social_posts
-           (visitor_id, body, repost_of_id)
-           VALUES (?, ?, ?)`
-        )
-        .bind(
-          userId,
-          original.body,
-          postId
-        )
-        .run();
-
-      await db
-        .prepare(
           `UPDATE social_posts
-           SET reposts_count =
-             reposts_count + 1
+           SET reposts_count = reposts_count + 1
            WHERE id = ?`
         )
         .bind(postId)
-        .run();
-
-      await db
-        .prepare(
-          `UPDATE social_profiles
-           SET posts_count =
-             posts_count + 1
-           WHERE visitor_id = ?`
-        )
-        .bind(userId)
         .run();
 
       await createNotification(
@@ -1771,6 +1844,8 @@ export async function POST(
 
       return Response.json({
         success: true,
+        reposted: true,
+        reposts: Number(original.reposts_count || 0) + 1,
       });
     }
 

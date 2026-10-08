@@ -36,6 +36,7 @@ type Post = {
   liked: boolean;
   bookmarked: boolean;
   following: boolean;
+  reposted: boolean;
   author: {
     visitorId: string;
     handle: string;
@@ -72,6 +73,8 @@ type ApiResponse = {
   liked?: boolean;
   following?: boolean;
   bookmarked?: boolean;
+  reposted?: boolean;
+  reposts?: number;
 
   users?: Profile[];
   nextCursor?: number;
@@ -225,8 +228,14 @@ export default function RaakaSocialPage() {
   const [searchTab, setSearchTab] = useState<"people" | "posts" | "top" | "latest">("people");
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [selectedProfileLoading, setSelectedProfileLoading] = useState(false);
+  const [profileListMode, setProfileListMode] = useState<"followers" | "following" | null>(null);
+  const [profileListUsers, setProfileListUsers] = useState<Profile[]>([]);
+  const [profileListLoading, setProfileListLoading] = useState(false);
+  const [profileListError, setProfileListError] = useState("");
+  const [bookmarkPosts, setBookmarkPosts] = useState<Post[]>([]);
+  const [bookmarksLoading, setBookmarksLoading] = useState(false);
 
-  const [view, setView] = useState<"home" | "profile" | "settings">("home");
+  const [view, setView] = useState<"home" | "profile" | "settings" | "bookmarks">("home");
   const [editingProfile, setEditingProfile] = useState(false);
   const [editName, setEditName] = useState("");
   const [editHandle, setEditHandle] = useState("");
@@ -337,6 +346,21 @@ export default function RaakaSocialPage() {
   }, []);
 
   useEffect(() => {
+    if (!profileListMode) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setProfileListMode(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [profileListMode]);
+
+  useEffect(() => {
     if (!mobileMenuOpen) return;
 
     const previousOverflow = document.body.style.overflow;
@@ -430,11 +454,17 @@ export default function RaakaSocialPage() {
 
       if (!append && me.success) {
         setProfile(me.profile ?? null);
-        setSelectedProfile((current) =>
-          current && current.visitorId !== me.profile?.visitorId
-            ? current
-            : (me.profile ?? null)
-        );
+        const deepProfile =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("profile")
+            : null;
+        if (!deepProfile) {
+          setSelectedProfile((current) =>
+            current && current.visitorId !== me.profile?.visitorId
+              ? current
+              : (me.profile ?? null)
+          );
+        }
       }
     } catch {
       setMessage("Could not load RAAKA Social");
@@ -487,19 +517,21 @@ export default function RaakaSocialPage() {
     });
 
     if (result.success) {
-      setPosts((items) =>
-        items.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                liked: result.liked ?? p.liked,
-                likes: Math.max(
-                  0,
-                  p.likes + (result.liked ? 1 : -1)
-                ),
-              }
-            : p
-        )
+      const nextLiked = result.liked ?? false;
+      const updatePost = (p: Post) =>
+        p.id === postId
+          ? {
+              ...p,
+              liked: nextLiked,
+              likes: Math.max(0, p.likes + (nextLiked ? 1 : -1)),
+            }
+          : p;
+
+      setPosts((items) => items.map(updatePost));
+      setSelectedProfilePosts((items) => items.map(updatePost));
+      setBookmarkPosts((items) => items.map(updatePost));
+      setSearchResults((current) =>
+        current ? { ...current, posts: current.posts.map(updatePost) } : current
       );
     }
     setPending(key, false);
@@ -541,29 +573,85 @@ export default function RaakaSocialPage() {
           : current
       );
 
-      setSelectedProfile((current) =>
-        current && current.visitorId === targetId
-          ? { ...current, isFollowing: nextFollowing }
+      const delta = nextFollowing ? 1 : -1;
+
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              following:
+                current.visitorId === visitorId
+                  ? Math.max(0, current.following + delta)
+                  : current.following,
+              followers:
+                current.visitorId === targetId
+                  ? Math.max(0, current.followers + delta)
+                  : current.followers,
+            }
           : current
+      );
+
+      setSelectedProfile((current) =>
+        current
+          ? {
+              ...current,
+              isFollowing:
+                current.visitorId === targetId
+                  ? nextFollowing
+                  : current.isFollowing,
+              following:
+                current.visitorId === visitorId
+                  ? Math.max(0, current.following + delta)
+                  : current.following,
+              followers:
+                current.visitorId === targetId
+                  ? Math.max(0, current.followers + delta)
+                  : current.followers,
+            }
+          : current
+      );
+
+      setProfileListUsers((users) =>
+        users.map((user) =>
+          user.visitorId === targetId
+            ? { ...user, isFollowing: nextFollowing }
+            : user
+        )
       );
     }
     setPending(key, false);
   };
 
   const repost = async (postId: number) => {
-    const result = await api("POST", {
-      action: "repost",
-      postId,
-    });
+    const key = `repost:${postId}`;
+    if (actionPending[key]) return;
+    setPending(key, true);
 
-    setMessage(
-      result.success
-        ? "Reposted"
-        : result.error || "Already reposted"
-    );
+    try {
+      const result = await api("POST", { action: "repost", postId });
 
-    if (result.success) {
-      await load();
+      if (result.success) {
+        const nextReposted = result.reposted ?? false;
+        const nextReposts = Math.max(0, Number(result.reposts ?? 0));
+        const updatePost = (post: Post) =>
+          post.id === postId
+            ? { ...post, reposted: nextReposted, reposts: nextReposts }
+            : post;
+
+        setPosts((items) => items.map(updatePost));
+        setSelectedProfilePosts((items) => items.map(updatePost));
+        setBookmarkPosts((items) => items.map(updatePost));
+        setSearchResults((current) =>
+          current ? { ...current, posts: current.posts.map(updatePost) } : current
+        );
+        setMessage(nextReposted ? "Reposted" : "Repost removed");
+      } else {
+        setMessage(result.error || "Could not update repost");
+      }
+    } catch {
+      setMessage("Could not update repost");
+    } finally {
+      setPending(key, false);
     }
   };
 
@@ -571,25 +659,63 @@ export default function RaakaSocialPage() {
     const key = `bookmark:${postId}`;
     if (actionPending[key]) return;
     setPending(key, true);
-    const result = await api("POST", {
-      action: "bookmark",
-      postId,
-    });
 
-    if (result.success) {
-      setPosts((items) =>
-        items.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                bookmarked:
-                  result.bookmarked ?? p.bookmarked,
-              }
-            : p
-        )
-      );
+    try {
+      const result = await api("POST", { action: "bookmark", postId });
+
+      if (result.success) {
+        const nextBookmarked = result.bookmarked ?? false;
+        const updatePost = (post: Post) =>
+          post.id === postId ? { ...post, bookmarked: nextBookmarked } : post;
+
+        setPosts((items) => items.map(updatePost));
+        setSelectedProfilePosts((items) => items.map(updatePost));
+        setSearchResults((current) =>
+          current ? { ...current, posts: current.posts.map(updatePost) } : current
+        );
+        setBookmarkPosts((items) => {
+          if (!nextBookmarked) return items.filter((post) => post.id !== postId);
+          if (items.some((post) => post.id === postId)) return items.map(updatePost);
+
+          const source =
+            posts.find((post) => post.id === postId) ??
+            selectedProfilePosts.find((post) => post.id === postId) ??
+            searchResults?.posts.find((post) => post.id === postId);
+          return source ? [{ ...source, bookmarked: true }, ...items] : items;
+        });
+
+        setMessage(nextBookmarked ? "Saved to Bookmarks" : "Removed from Bookmarks");
+      } else {
+        setMessage(result.error || "Could not update bookmark");
+      }
+    } catch {
+      setMessage("Could not update bookmark");
+    } finally {
+      setPending(key, false);
     }
-    setPending(key, false);
+  };
+
+  const loadBookmarks = async () => {
+    setBookmarksLoading(true);
+    try {
+      const result = await api("GET", { action: "bookmarks" });
+      if (result.success) {
+        setBookmarkPosts(result.posts ?? []);
+      } else {
+        setMessage(result.error || "Could not load Bookmarks");
+      }
+    } catch {
+      setMessage("Could not load Bookmarks");
+    } finally {
+      setBookmarksLoading(false);
+    }
+  };
+
+  const openBookmarks = async () => {
+    setMobileMenuOpen(false);
+    setView("bookmarks");
+    setEditingProfile(false);
+    await loadBookmarks();
   };
 
   const sharePost = async (postId: number) => {
@@ -657,41 +783,63 @@ export default function RaakaSocialPage() {
   };
 
   const openProfile = async (handle?: string) => {
+    const requestedHandle = (handle || profile?.handle || "").trim();
+    if (!requestedHandle) return;
+
     setView("profile");
     setEditingProfile(false);
-
-    if (!handle || handle.toLowerCase() === profile?.handle?.toLowerCase()) {
-      setSelectedProfile(profile);
-      if (profile) {
-        const postsResult = await api("GET", { action: "user-posts", handle: profile.handle });
-        setSelectedProfilePosts(postsResult.success ? (postsResult.posts ?? []) : []);
-      }
-      return;
-    }
-
+    setProfileListMode(null);
+    setProfileListUsers([]);
+    setProfileListError("");
     setSelectedProfileLoading(true);
-    try {
-      const result = await api("GET", {
-        action: "profile",
-        handle,
-      });
+    setSelectedProfile(null);
 
-      if (result.success && result.profile) {
-        setSelectedProfile(result.profile);
-        const postsResult = await api("GET", {
-          action: "user-posts",
-          handle: result.profile.handle,
-        });
-        setSelectedProfilePosts(postsResult.success ? (postsResult.posts ?? []) : []);
-      } else {
-        setSelectedProfile(null);
+    window.history.replaceState(
+      null,
+      "",
+      `/social?profile=${encodeURIComponent(requestedHandle)}`
+    );
+
+    try {
+      const result = await api("GET", { action: "profile", handle: requestedHandle });
+      if (!result.success || !result.profile) {
         setMessage(result.error || "Could not load profile");
+        return;
       }
+
+      const target = result.profile;
+      setSelectedProfile(target);
+      const postsResult = await api("GET", { action: "user-posts", handle: target.handle });
+      setSelectedProfilePosts(postsResult.success ? postsResult.posts ?? [] : []);
     } catch {
       setSelectedProfile(null);
+      setSelectedProfilePosts([]);
       setMessage("Could not load profile");
     } finally {
       setSelectedProfileLoading(false);
+    }
+  };
+
+  const openProfileList = async (mode: "followers" | "following") => {
+    const target = selectedProfile;
+    if (!target) return;
+
+    setProfileListMode(mode);
+    setProfileListUsers([]);
+    setProfileListError("");
+    setProfileListLoading(true);
+
+    try {
+      const result = await api("GET", { action: mode, handle: target.handle });
+      if (result.success) {
+        setProfileListUsers(result.users ?? []);
+      } else {
+        setProfileListError(result.error || `Could not load ${mode}`);
+      }
+    } catch {
+      setProfileListError(`Could not load ${mode}`);
+    } finally {
+      setProfileListLoading(false);
     }
   };
 
@@ -701,9 +849,10 @@ export default function RaakaSocialPage() {
   };
 
   const startEditingProfile = () => {
-    setEditName(profile?.displayName || "");
-    setEditHandle(profile?.handle || "");
-    setEditBio(profile?.bio || "");
+    const owner = selectedProfile?.visitorId === visitorId ? selectedProfile : profile;
+    setEditName(owner?.displayName || "");
+    setEditHandle(owner?.handle || "");
+    setEditBio(owner?.bio || "");
     setEditingProfile(true);
   };
 
@@ -722,6 +871,16 @@ export default function RaakaSocialPage() {
 
       if (result.success && result.profile) {
         setProfile(result.profile);
+        setSelectedProfile((current) =>
+          current?.visitorId === result.profile?.visitorId
+            ? result.profile
+            : current
+        );
+        window.history.replaceState(
+          null,
+          "",
+          `/social?profile=${encodeURIComponent(result.profile.handle)}`
+        );
         setEditingProfile(false);
         setMessage("Profile updated");
       } else {
@@ -737,6 +896,10 @@ export default function RaakaSocialPage() {
   const goHome = () => {
     setView("home");
     setEditingProfile(false);
+    setProfileListMode(null);
+    if (window.location.search.includes("profile=")) {
+      window.history.replaceState(null, "", "/social");
+    }
   };
 
   const doSearch = async (mode: "people" | "posts" | "top" | "latest" = searchTab) => {
@@ -778,6 +941,13 @@ export default function RaakaSocialPage() {
     const timer = window.setTimeout(() => void doSearch(searchTab), 250);
     return () => window.clearTimeout(timer);
   }, [searchTab]); 
+
+  useEffect(() => {
+    if (!authenticated || !visitorId) return;
+    const handle = new URLSearchParams(window.location.search).get("profile");
+    if (!handle) return;
+    void openProfile(handle);
+  }, [authenticated, visitorId]);
 
   const loadNotifications = async () => {
     setNotificationsLoading(true);
@@ -930,7 +1100,7 @@ export default function RaakaSocialPage() {
                 <button onClick={() => { setMobileMenuOpen(false); openProfile(); }} className="flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold hover:bg-white/5">
                   <MenuIcon type="profile" /><span>Profile</span>
                 </button>
-                <button onClick={() => { setMobileMenuOpen(false); setMessage("Bookmarks section is coming soon."); }} className="flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold hover:bg-white/5">
+                <button onClick={() => void openBookmarks()} className="flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold hover:bg-white/5">
                   <MenuIcon type="bookmarks" /><span>Bookmarks</span>
                 </button>
                 <button onClick={() => { setMobileMenuOpen(false); setMessage("Community Notes are coming soon."); }} className="flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold hover:bg-white/5">
@@ -981,7 +1151,7 @@ export default function RaakaSocialPage() {
             <button onClick={() => setView("home")} className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-white/70 transition hover:bg-white/5 hover:text-white">
               <span>🔔</span><span>Notifications</span>
             </button>
-            <button onClick={() => setView("home")} className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-white/70 transition hover:bg-white/5 hover:text-white">
+            <button onClick={() => void openBookmarks()} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "bookmarks" ? "bg-white/10 text-white" : "text-white/70"}`}>
               <span>🔖</span><span>Bookmarks</span>
             </button>
             <button onClick={() => void openProfile()} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "profile" ? "bg-white/10 text-white" : "text-white/70"}`}>
@@ -1025,74 +1195,149 @@ export default function RaakaSocialPage() {
               <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050505]/90 px-5 py-5 backdrop-blur-xl">
                 <div className="flex items-center gap-3">
                   <button onClick={goHome} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60 hover:text-white">←</button>
-                  <div>
+                  <div className="min-w-0">
                     <div className="text-xl font-black">Profile</div>
-                    <div className="text-xs text-white/35">@{profile?.handle}</div>
+                    <div className="truncate text-xs text-white/35">@{selectedProfile?.handle || ""}</div>
                   </div>
                 </div>
               </header>
 
-              <div className="border-b border-white/10 p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 text-3xl font-black">
-                    {profileInitial}
-                  </div>
-                  {!editingProfile && (
-                    <button onClick={startEditingProfile} className="rounded-full border border-white/15 px-5 py-2 text-xs font-bold hover:bg-white/5">Edit profile</button>
-                  )}
-                </div>
-
-                {editingProfile ? (
-                  <div className="mt-6 space-y-3">
-                    <input value={editName} onChange={(e) => setEditName(e.target.value.slice(0, 40))} placeholder="Display name" className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
-                    <input value={editHandle} onChange={(e) => setEditHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20))} placeholder="Handle" className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
-                    <textarea value={editBio} onChange={(e) => setEditBio(e.target.value.slice(0, 160))} placeholder="Bio" rows={3} className="w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
-                    <div className="flex gap-2">
-                      <button onClick={saveProfile} disabled={savingProfile} className="rounded-full bg-white px-5 py-2 text-xs font-black text-black disabled:opacity-40">{savingProfile ? "Saving…" : "Save changes"}</button>
-                      <button onClick={() => setEditingProfile(false)} className="rounded-full border border-white/10 px-5 py-2 text-xs font-bold text-white/60">Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="mt-5 flex items-center gap-2 text-2xl font-black">
-                      <span>{profile?.displayName}</span>
-                      <VerificationBadge
-                        type={profile?.verificationType}
-                        label={profile?.verificationLabel}
-                      />
-                    </div>
-                    <div className="mt-1 text-sm text-white/35">@{profile?.handle}</div>
-                    {profile?.bio && <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-white/70">{profile.bio}</p>}
-                  </>
-                )}
-
-                <div className="mt-6 flex gap-6 text-sm">
-                  <div><span className="font-black">{profile?.posts ?? 0}</span> <span className="text-white/35">Posts</span></div>
-                  <div><span className="font-black">{profile?.followers ?? 0}</span> <span className="text-white/35">Followers</span></div>
-                  <div><span className="font-black">{profile?.following ?? 0}</span> <span className="text-white/35">Following</span></div>
-                </div>
-                {message && <div className="mt-4 text-xs text-red-300">{message}</div>}
-              </div>
-
-              <div className="border-b border-white/10">
-                {selectedProfileLoading ? (
-                  <div className="p-10 text-center text-sm text-white/30">Loading profile…</div>
-                ) : selectedProfilePosts.length ? (
-                  selectedProfilePosts.map((post) => (
-                    <article key={post.id} className="border-b border-white/10 px-5 py-5 last:border-b-0">
-                      <div className="text-sm font-bold">
-                        {post.author.displayName}
-                        <span className="ml-2 font-normal text-white/35">@{post.author.handle} · {timeAgo(post.createdAt)}</span>
+              {selectedProfileLoading && !selectedProfile ? (
+                <div className="p-10 text-center text-sm text-white/30">Loading profile…</div>
+              ) : selectedProfile ? (
+                <>
+                  <div className="border-b border-white/10 p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 text-3xl font-black">
+                        {(selectedProfile.displayName || "R").slice(0, 1).toUpperCase()}
                       </div>
-                      <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-6 text-white/90">{post.body}</p>
-                      <div className="mt-3 text-xs text-white/35">{post.likes} likes · {post.replies} replies · {post.reposts} reposts</div>
-                    </article>
-                  ))
-                ) : (
-                  <div className="p-10 text-center text-sm text-white/30">No posts from this profile yet.</div>
-                )}
-              </div>
+
+                      {selectedProfile.visitorId === visitorId ? (
+                        !editingProfile && (
+                          <button onClick={startEditingProfile} className="rounded-full border border-white/15 px-5 py-2 text-xs font-bold hover:bg-white/5">Edit profile</button>
+                        )
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => follow(selectedProfile.visitorId)}
+                          disabled={Boolean(actionPending[`follow:${selectedProfile.visitorId}`])}
+                          className={`rounded-full px-5 py-2 text-xs font-black disabled:opacity-50 ${selectedProfile.isFollowing ? "border border-white/15 text-white/70" : "bg-white text-black"}`}
+                        >
+                          {selectedProfile.isFollowing ? "Following" : "Follow"}
+                        </button>
+                      )}
+                    </div>
+
+                    {editingProfile && selectedProfile.visitorId === visitorId ? (
+                      <div className="mt-6 space-y-3">
+                        <input value={editName} onChange={(e) => setEditName(e.target.value.slice(0, 40))} placeholder="Display name" className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
+                        <input value={editHandle} onChange={(e) => setEditHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20))} placeholder="Handle" className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
+                        <textarea value={editBio} onChange={(e) => setEditBio(e.target.value.slice(0, 160))} placeholder="Bio" rows={3} className="w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
+                        <div className="flex gap-2">
+                          <button onClick={saveProfile} disabled={savingProfile} className="rounded-full bg-white px-5 py-2 text-xs font-black text-black disabled:opacity-40">{savingProfile ? "Saving…" : "Save changes"}</button>
+                          <button onClick={() => setEditingProfile(false)} className="rounded-full border border-white/10 px-5 py-2 text-xs font-bold text-white/60">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mt-5 flex items-center gap-2 text-2xl font-black">
+                          <span>{selectedProfile.displayName}</span>
+                          <VerificationBadge type={selectedProfile.verificationType} label={selectedProfile.verificationLabel} />
+                        </div>
+                        <div className="mt-1 text-sm text-white/35">@{selectedProfile.handle}</div>
+                        {selectedProfile.bio && <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-white/70">{selectedProfile.bio}</p>}
+                      </>
+                    )}
+
+                    <div className="mt-6 flex gap-6 text-sm">
+                      <div><span className="font-black">{selectedProfile.posts}</span> <span className="text-white/35">Posts</span></div>
+                      <button type="button" onClick={() => void openProfileList("followers")} className="text-left hover:text-white">
+                        <span className="font-black">{selectedProfile.followers}</span> <span className="text-white/35">Followers</span>
+                      </button>
+                      <button type="button" onClick={() => void openProfileList("following")} className="text-left hover:text-white">
+                        <span className="font-black">{selectedProfile.following}</span> <span className="text-white/35">Following</span>
+                      </button>
+                    </div>
+                    {message && <div className="mt-4 text-xs text-red-300">{message}</div>}
+                  </div>
+
+                  <div className="border-b border-white/10">
+                    {selectedProfileLoading ? (
+                      <div className="p-10 text-center text-sm text-white/30">Loading posts…</div>
+                    ) : selectedProfilePosts.length ? (
+                      selectedProfilePosts.map((post) => (
+                        <article key={post.id} className="border-b border-white/10 px-5 py-5 last:border-b-0">
+                          <button type="button" onClick={() => void openProfile(post.author.handle)} className="text-left text-sm font-bold hover:underline">
+                            {post.author.displayName}
+                            <span className="ml-2 font-normal text-white/35">@{post.author.handle} · {timeAgo(post.createdAt)}</span>
+                          </button>
+                          <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-6 text-white/90">{post.body}</p>
+                          <div className="mt-3 text-xs text-white/35">{post.likes} likes · {post.replies} replies · {post.reposts} reposts</div>
+                        </article>
+                      ))
+                    ) : (
+                      <div className="p-10 text-center text-sm text-white/30">No posts from this profile yet.</div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="p-10 text-center text-sm text-white/30">Profile not found.</div>
+              )}
             </div>
+
+          ) : view === "bookmarks" ? (
+            <div className="min-h-screen">
+              <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050505]/90 px-5 py-5 backdrop-blur-xl">
+                <div className="flex items-center gap-3">
+                  <button onClick={goHome} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60 hover:text-white">←</button>
+                  <div>
+                    <div className="text-xl font-black">Bookmarks</div>
+                    <div className="text-xs text-white/35">Posts you saved</div>
+                  </div>
+                </div>
+              </header>
+
+              {bookmarksLoading ? (
+                <div className="p-10 text-center text-sm text-white/30">Loading Bookmarks…</div>
+              ) : bookmarkPosts.length ? (
+                <div>
+                  {bookmarkPosts.map((post) => (
+                    <article key={post.id} className="border-b border-white/10 px-5 py-5 transition hover:bg-white/[.018]">
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => void openProfile(post.author.handle)}
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 font-bold"
+                          aria-label={`Open @${post.author.handle} profile`}
+                        >
+                          {post.author.displayName.slice(0, 1).toUpperCase()}
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <button type="button" onClick={() => void openProfile(post.author.handle)} className="text-left text-sm font-bold hover:underline">
+                            {post.author.displayName}
+                            <span className="ml-2 font-normal text-white/35">@{post.author.handle} · {timeAgo(post.createdAt)}</span>
+                          </button>
+                          <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-6 text-white/90">{post.body}</p>
+                          <div className="mt-3 flex items-center gap-4 text-xs text-white/35">
+                            <span>{post.likes} likes</span>
+                            <span>{post.replies} replies</span>
+                            <span>{post.reposts} reposts</span>
+                            <button type="button" onClick={() => void bookmark(post.id)} disabled={Boolean(actionPending[`bookmark:${post.id}`])} className="ml-auto text-amber-400 disabled:opacity-40">Remove bookmark</button>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-12 text-center">
+                  <div className="text-3xl">🔖</div>
+                  <div className="mt-3 font-bold">No bookmarks yet</div>
+                  <div className="mt-1 text-sm text-white/35">Save a post and it will appear here.</div>
+                </div>
+              )}
+            </div>
+
           ) : view === "settings" ? (
             <div className="min-h-screen">
               <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050505]/95 px-5 py-4 backdrop-blur-xl">
@@ -1518,27 +1763,38 @@ export default function RaakaSocialPage() {
               >
                 <div className="flex gap-3">
 
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 font-bold">
-                    {post.author.displayName
-                      .slice(0, 1)
-                      .toUpperCase()}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void openProfile(post.author.handle)}
+                    aria-label={`Open @${post.author.handle} profile`}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 font-bold transition hover:bg-white/15"
+                  >
+                    {post.author.displayName.slice(0, 1).toUpperCase()}
+                  </button>
 
                   <div className="min-w-0 flex-1">
 
                     <div className="flex items-center gap-2 text-sm">
 
-                      <span className="flex min-w-0 items-center gap-1.5 font-bold">
+                      <button
+                        type="button"
+                        onClick={() => void openProfile(post.author.handle)}
+                        className="flex min-w-0 items-center gap-1.5 text-left font-bold hover:underline"
+                      >
                         <span className="truncate">{post.author.displayName}</span>
                         <VerificationBadge
                           type={post.author.verificationType}
                           label={post.author.verificationLabel}
                         />
-                      </span>
+                      </button>
 
-                      <span className="text-white/35">
+                      <button
+                        type="button"
+                        onClick={() => void openProfile(post.author.handle)}
+                        className="truncate text-white/35 hover:text-white/60"
+                      >
                         @{post.author.handle}
-                      </span>
+                      </button>
 
                       <span className="text-white/20">
                         · {timeAgo(post.createdAt)}
@@ -1581,9 +1837,11 @@ export default function RaakaSocialPage() {
 
                         <button
                           type="button"
-                          onClick={() => repost(post.id)}
-                          aria-label="Repost"
-                          className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full text-white/40 transition hover:bg-green-500/10 hover:text-green-400"
+                          onClick={() => void repost(post.id)}
+                          disabled={Boolean(actionPending[`repost:${post.id}`])}
+                          aria-label={post.reposted ? "Remove repost" : "Repost"}
+                          aria-pressed={post.reposted}
+                          className={`flex h-10 w-full items-center justify-center gap-1.5 rounded-full transition disabled:opacity-40 ${post.reposted ? "text-green-400" : "text-white/40 hover:bg-green-500/10 hover:text-green-400"}`}
                         >
                           <ActionIcon type="repost" />
                           <span className="text-[13px] tabular-nums">{post.reposts}</span>
@@ -1605,7 +1863,8 @@ export default function RaakaSocialPage() {
 
                         <button
                           type="button"
-                          onClick={() => bookmark(post.id)}
+                          onClick={() => void bookmark(post.id)}
+                          disabled={Boolean(actionPending[`bookmark:${post.id}`])}
                           aria-label={post.bookmarked ? "Remove bookmark" : "Bookmark"}
                           className={`flex h-10 w-full items-center justify-center rounded-full transition ${
                             post.bookmarked
@@ -1904,6 +2163,65 @@ export default function RaakaSocialPage() {
         </aside>
 
       </div>
+
+      {profileListMode && selectedProfile && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${profileListMode === "followers" ? "Followers" : "Following"} of @${selectedProfile.handle}`}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setProfileListMode(null);
+          }}
+        >
+          <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0b0b0b] shadow-2xl shadow-black/60">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <div>
+                <div className="font-black">{profileListMode === "followers" ? "Followers" : "Following"}</div>
+                <div className="text-xs text-white/35">@{selectedProfile.handle}</div>
+              </div>
+              <button type="button" onClick={() => setProfileListMode(null)} className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-white/50 hover:bg-white/10 hover:text-white" aria-label="Close">×</button>
+            </div>
+
+            <div className="overflow-y-auto p-2">
+              {profileListLoading ? (
+                <div className="p-8 text-center text-sm text-white/35">Loading…</div>
+              ) : profileListError ? (
+                <div className="p-8 text-center text-sm text-red-300">{profileListError}</div>
+              ) : profileListUsers.length ? (
+                profileListUsers.map((user) => (
+                  <div key={user.visitorId} className="flex items-center gap-3 rounded-2xl p-3 hover:bg-white/[.04]">
+                    <button type="button" onClick={() => { setProfileListMode(null); void openProfile(user.handle); }} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 font-black">{user.displayName.slice(0, 1).toUpperCase()}</div>
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-1.5 font-bold">
+                          <span className="truncate">{user.displayName}</span>
+                          <VerificationBadge type={user.verificationType} label={user.verificationLabel} />
+                        </div>
+                        <div className="truncate text-xs text-white/35">@{user.handle}</div>
+                      </div>
+                    </button>
+                    {user.visitorId !== visitorId && (
+                      <button
+                        type="button"
+                        onClick={() => void follow(user.visitorId)}
+                        disabled={Boolean(actionPending[`follow:${user.visitorId}`])}
+                        className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black disabled:opacity-40 ${user.isFollowing ? "border border-white/15 text-white/70" : "bg-white text-black"}`}
+                      >
+                        {user.isFollowing ? "Following" : "Follow"}
+                      </button>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="p-8 text-center text-sm text-white/35">
+                  No {profileListMode} yet.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
