@@ -467,7 +467,7 @@ export async function GET(request: Request) {
      * FOLLOWERS / FOLLOWING / USER POSTS
      * These actions are scoped to a profile selected by handle.
      */
-    if (action === "followers" || action === "following" || action === "user-posts") {
+    if (action === "followers" || (action === "following" && url.searchParams.has("handle")) || action === "user-posts") {
       const handle = cleanHandle(url.searchParams.get("handle") || "");
 
       if (!handle) {
