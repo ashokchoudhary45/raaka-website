@@ -873,7 +873,7 @@ export default function RaakaSocialPage() {
         setProfile(result.profile);
         setSelectedProfile((current) =>
           current?.visitorId === result.profile?.visitorId
-            ? result.profile
+            ? (result.profile ?? null)
             : current
         );
         window.history.replaceState(
