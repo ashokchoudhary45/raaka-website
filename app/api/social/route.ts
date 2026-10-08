@@ -1,5 +1,10 @@
 import { getD1 } from "@/lib/d1";
-import { getCurrentUser } from "@/lib/social-auth";
+import {
+  clearSessionCookie,
+  getCurrentUser,
+  hashPassword,
+  verifyPassword,
+} from "@/lib/social-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -1074,6 +1079,206 @@ export async function POST(
         profile:
           profileShape(updated),
       });
+    }
+
+    /*
+     * CHANGE PASSWORD
+     * Requires the current password. After a successful change,
+     * every existing session is revoked so the old password cannot
+     * remain active on another device.
+     */
+    if (action === "change-password") {
+      const currentPassword =
+        typeof body.currentPassword === "string"
+          ? body.currentPassword
+          : "";
+      const newPassword =
+        typeof body.newPassword === "string"
+          ? body.newPassword
+          : "";
+      const confirmPassword =
+        typeof body.confirmPassword === "string"
+          ? body.confirmPassword
+          : "";
+
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return Response.json(
+          { success: false, error: "All password fields are required." },
+          { status: 400 }
+        );
+      }
+
+      if (newPassword.length < 8) {
+        return Response.json(
+          { success: false, error: "New password must be at least 8 characters." },
+          { status: 400 }
+        );
+      }
+
+      if (newPassword !== confirmPassword) {
+        return Response.json(
+          { success: false, error: "New passwords do not match." },
+          { status: 400 }
+        );
+      }
+
+      if (currentPassword === newPassword) {
+        return Response.json(
+          { success: false, error: "New password must be different from the current password." },
+          { status: 400 }
+        );
+      }
+
+      const authUser = await db
+        .prepare(
+          `SELECT password_hash
+           FROM social_auth_users
+           WHERE user_id = ?
+           LIMIT 1`
+        )
+        .bind(userId)
+        .first<{ password_hash: string }>();
+
+      if (!authUser?.password_hash) {
+        return Response.json(
+          { success: false, error: "Account password could not be verified." },
+          { status: 500 }
+        );
+      }
+
+      const valid = await verifyPassword(
+        currentPassword,
+        authUser.password_hash
+      );
+
+      if (!valid) {
+        return Response.json(
+          { success: false, error: "Current password is incorrect." },
+          { status: 401 }
+        );
+      }
+
+      const passwordHash = await hashPassword(newPassword);
+
+      await db.batch([
+        db
+          .prepare(
+            `UPDATE social_auth_users
+             SET password_hash = ?
+             WHERE user_id = ?`
+          )
+          .bind(passwordHash, userId),
+
+        db
+          .prepare(
+            `DELETE FROM social_auth_sessions
+             WHERE user_id = ?`
+          )
+          .bind(userId),
+      ]);
+
+      const response = Response.json({
+        success: true,
+        message: "Password changed successfully. Please log in again.",
+      });
+
+      response.headers.set("Set-Cookie", clearSessionCookie());
+      return response;
+    }
+
+    /*
+     * DEACTIVATE ACCOUNT
+     *
+     * Deactivation is intentionally non-destructive: the social profile
+     * and its content remain in D1. All sessions are revoked immediately.
+     * The account can later be restored by an explicit reactivation flow.
+     */
+    if (action === "deactivate-account") {
+      await db
+        .prepare(
+          `DELETE FROM social_auth_sessions
+           WHERE user_id = ?`
+        )
+        .bind(userId)
+        .run();
+
+      const response = Response.json({
+        success: true,
+        message: "Account deactivated. You have been signed out.",
+      });
+
+      response.headers.set("Set-Cookie", clearSessionCookie());
+      return response;
+    }
+
+    /*
+     * PERMANENT ACCOUNT DELETE
+     *
+     * Delete the user's social data first, then authentication records.
+     * This avoids relying on every auth table having ON DELETE CASCADE.
+     */
+    if (action === "delete-account") {
+      const statements = [
+        db.prepare(
+          `DELETE FROM social_notifications
+           WHERE recipient_id = ? OR actor_id = ?`
+        ).bind(userId, userId),
+
+        db.prepare(
+          `DELETE FROM social_reposts
+           WHERE visitor_id = ?`
+        ).bind(userId),
+
+        db.prepare(
+          `DELETE FROM social_bookmarks
+           WHERE visitor_id = ?`
+        ).bind(userId),
+
+        db.prepare(
+          `DELETE FROM social_likes
+           WHERE visitor_id = ?`
+        ).bind(userId),
+
+        db.prepare(
+          `DELETE FROM social_follows
+           WHERE follower_id = ? OR following_id = ?`
+        ).bind(userId, userId),
+
+        db.prepare(
+          `DELETE FROM social_posts
+           WHERE visitor_id = ?`
+        ).bind(userId),
+
+        db.prepare(
+          `DELETE FROM social_profiles
+           WHERE visitor_id = ?`
+        ).bind(userId),
+
+        db.prepare(
+          `DELETE FROM social_email_verifications
+           WHERE user_id = ?`
+        ).bind(userId),
+
+        db.prepare(
+          `DELETE FROM social_auth_sessions
+           WHERE user_id = ?`
+        ).bind(userId),
+
+        db.prepare(
+          `DELETE FROM social_auth_users
+           WHERE user_id = ?`
+        ).bind(userId),
+      ];
+
+      await db.batch(statements);
+
+      const response = Response.json({
+        success: true,
+        message: "Account permanently deleted.",
+      });
+
+      response.headers.set("Set-Cookie", clearSessionCookie());
+      return response;
     }
 
     /*

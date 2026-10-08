@@ -257,6 +257,13 @@ export default function RaakaSocialPage() {
   const [reduceAnimations, setReduceAnimations] = useState(false);
   const [dataSaver, setDataSaver] = useState(false);
   const [fontSize, setFontSize] = useState<"small" | "default" | "large">("default");
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [accountAction, setAccountAction] = useState<"deactivate" | "delete" | null>(null);
+  const [accountActionPending, setAccountActionPending] = useState(false);
 
   useEffect(() => {
     try {
@@ -850,10 +857,20 @@ export default function RaakaSocialPage() {
 
   const startEditingProfile = () => {
     const owner = selectedProfile?.visitorId === visitorId ? selectedProfile : profile;
-    setEditName(owner?.displayName || "");
-    setEditHandle(owner?.handle || "");
-    setEditBio(owner?.bio || "");
+    if (!owner || owner.visitorId !== visitorId) return;
+
+    setSelectedProfile(profile ?? owner);
+    setEditName(owner.displayName || "");
+    setEditHandle(owner.handle || "");
+    setEditBio(owner.bio || "");
     setEditingProfile(true);
+    setView("profile");
+    setProfileListMode(null);
+    window.history.replaceState(
+      null,
+      "",
+      `/social?profile=${encodeURIComponent(owner.handle)}`
+    );
   };
 
   const saveProfile = async () => {
@@ -890,6 +907,97 @@ export default function RaakaSocialPage() {
       setMessage("Could not update profile");
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (passwordSaving) return;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setMessage("Fill in all password fields.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setMessage("New password must be at least 8 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setMessage("New passwords do not match.");
+      return;
+    }
+
+    setPasswordSaving(true);
+    setMessage("");
+
+    try {
+      const result = await api("POST", {
+        action: "change-password",
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+
+      if (result.success) {
+        setPasswordModalOpen(false);
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setMessage("Password changed. Please log in again.");
+        setAuthenticated(false);
+        setVisitorId("");
+        setProfile(null);
+        setPosts([]);
+        setSelectedProfile(null);
+      } else {
+        setMessage(result.error || "Could not change password.");
+      }
+    } catch {
+      setMessage("Could not change password.");
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+  const runAccountAction = async () => {
+    if (!accountAction || accountActionPending) return;
+
+    setAccountActionPending(true);
+    setMessage("");
+
+    try {
+      const result = await api("POST", {
+        action:
+          accountAction === "delete"
+            ? "delete-account"
+            : "deactivate-account",
+      });
+
+      if (result.success) {
+        const wasDeleted = accountAction === "delete";
+        setAccountAction(null);
+        setMessage(
+          wasDeleted
+            ? "Account permanently deleted."
+            : "Account deactivated. You have been signed out."
+        );
+        setAuthenticated(false);
+        setVisitorId("");
+        setProfile(null);
+        setPosts([]);
+        setSelectedProfile(null);
+        setBookmarkPosts([]);
+        setSearchResults(null);
+        setView("home");
+        setSettingsSection("home");
+      } else {
+        setMessage(result.error || "Could not update account.");
+      }
+    } catch {
+      setMessage("Could not update account.");
+    } finally {
+      setAccountActionPending(false);
     }
   };
 
@@ -1397,12 +1505,12 @@ export default function RaakaSocialPage() {
                     </div>
                   </div>
                   <button onClick={startEditingProfile} className="mt-4 flex w-full items-center justify-between rounded-2xl border border-white/10 px-4 py-4 text-left font-bold hover:bg-white/5"><span>Edit profile</span><span className="text-white/30">→</span></button>
-                  <button onClick={() => setMessage("Password change is handled through the account recovery flow.")} className="mt-2 flex w-full items-center justify-between rounded-2xl border border-white/10 px-4 py-4 text-left font-bold hover:bg-white/5"><span>Change password</span><span className="text-white/30">→</span></button>
+                  <button onClick={() => { setMessage(""); setPasswordModalOpen(true); }} className="mt-2 flex w-full items-center justify-between rounded-2xl border border-white/10 px-4 py-4 text-left font-bold hover:bg-white/5"><span>Change password</span><span className="text-white/30">→</span></button>
                   <div className="mt-6 rounded-3xl border border-red-500/15 bg-red-500/[.03] p-5">
                     <div className="font-bold text-red-300">Account deactivation</div>
-                    <p className="mt-2 text-sm leading-6 text-white/40">Deactivation and permanent deletion are account-level actions. They should be confirmed before being executed.</p>
-                    <button onClick={() => setMessage("Account deactivation is not enabled yet.")} className="mt-4 rounded-full border border-red-500/20 px-5 py-2 text-xs font-bold text-red-300 hover:bg-red-500/10">Deactivate account</button>
-                    <button onClick={() => setMessage("Permanent account deletion is not enabled yet.")} className="ml-2 mt-4 rounded-full bg-red-500 px-5 py-2 text-xs font-black text-white">Delete account</button>
+                    <p className="mt-2 text-sm leading-6 text-white/40">Temporarily deactivate your RAAKA Social account. Your profile and posts are kept, but all active sessions are signed out.</p>
+                    <button onClick={() => setAccountAction("deactivate")} className="mt-4 rounded-full border border-red-500/20 px-5 py-2 text-xs font-bold text-red-300 hover:bg-red-500/10">Deactivate account</button>
+                    <button onClick={() => setAccountAction("delete")} className="ml-2 mt-4 rounded-full bg-red-500 px-5 py-2 text-xs font-black text-white">Delete account</button>
                   </div>
                   {message && <div className="mt-4 text-xs text-red-300">{message}</div>}
                 </div>
@@ -1414,8 +1522,22 @@ export default function RaakaSocialPage() {
                     ["Email verification", "Your RAAKA Social email is verified."],
                     ["Log out of all devices", "End every active session except the current one."],
                   ].map(([title, desc], i) => (
-                    <button key={title} onClick={() => setMessage(i === 2 ? "Your account email is verified." : `${title} is ready for the security settings flow.`)} className="w-full rounded-2xl border border-white/10 px-5 py-4 text-left hover:bg-white/[.04]">
-                      <div className="font-bold">{title}</div><div className="mt-1 text-sm leading-6 text-white/40">{desc}</div>
+                    <button
+                      key={title}
+                      onClick={() => {
+                        if (i === 0) {
+                          setMessage("");
+                          setPasswordModalOpen(true);
+                        } else if (i === 2) {
+                          setMessage("Your account email is verified.");
+                        } else {
+                          setMessage(`${title} is not available yet.`);
+                        }
+                      }}
+                      className="w-full rounded-2xl border border-white/10 px-5 py-4 text-left hover:bg-white/[.04]"
+                    >
+                      <div className="font-bold">{title}</div>
+                      <div className="mt-1 text-sm leading-6 text-white/40">{desc}</div>
                     </button>
                   ))}
                   {message && <div className="text-xs text-red-300">{message}</div>}
@@ -2218,6 +2340,76 @@ export default function RaakaSocialPage() {
                   No {profileListMode} yet.
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {passwordModalOpen && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0b0b0b] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-xl font-black">Change password</div>
+                <p className="mt-1 text-sm leading-6 text-white/40">Use your current password to set a new one.</p>
+              </div>
+              <button onClick={() => !passwordSaving && setPasswordModalOpen(false)} className="text-xl text-white/40 hover:text-white" aria-label="Close">×</button>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Current password"
+                autoComplete="current-password"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none focus:border-white/25"
+              />
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password"
+                autoComplete="new-password"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none focus:border-white/25"
+              />
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                autoComplete="new-password"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none focus:border-white/25"
+              />
+            </div>
+
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => setPasswordModalOpen(false)} disabled={passwordSaving} className="rounded-full border border-white/10 px-5 py-2.5 text-xs font-bold text-white/60 disabled:opacity-40">Cancel</button>
+              <button onClick={() => void changePassword()} disabled={passwordSaving} className="rounded-full bg-white px-5 py-2.5 text-xs font-black text-black disabled:opacity-40">
+                {passwordSaving ? "Changing…" : "Change password"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {accountAction && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-red-500/15 bg-[#0b0b0b] p-6 shadow-2xl">
+            <div className="text-xl font-black">
+              {accountAction === "delete" ? "Delete account?" : "Deactivate account?"}
+            </div>
+            <p className="mt-3 text-sm leading-6 text-white/50">
+              {accountAction === "delete"
+                ? "This permanently removes your RAAKA Social account, profile, posts, follows, likes, bookmarks and sessions. This action cannot be undone."
+                : "This signs you out of all active sessions while keeping your profile and posts. You can use a future reactivation flow to restore access."}
+            </p>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={() => !accountActionPending && setAccountAction(null)} disabled={accountActionPending} className="rounded-full border border-white/10 px-5 py-2.5 text-xs font-bold text-white/60 disabled:opacity-40">Cancel</button>
+              <button onClick={() => void runAccountAction()} disabled={accountActionPending} className={`rounded-full px-5 py-2.5 text-xs font-black text-white disabled:opacity-40 ${accountAction === "delete" ? "bg-red-500" : "border border-red-500/30 bg-red-500/10 text-red-300"}`}>
+                {accountActionPending ? "Please wait…" : accountAction === "delete" ? "Delete permanently" : "Deactivate"}
+              </button>
             </div>
           </div>
         </div>
