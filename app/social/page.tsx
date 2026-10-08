@@ -1762,7 +1762,7 @@ export default function RaakaSocialPage() {
               />
 
               <button
-                onClick={doSearch}
+                onClick={() => void doSearch()}
                 className="rounded-xl bg-white/10 px-3 text-xs"
               >
                 Search
