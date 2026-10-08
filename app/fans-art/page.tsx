@@ -99,24 +99,41 @@ export default function FansArtPage() {
     setLoadingGallery(true);
 
     try {
-      const response = await fetch("/api/fan-art/gallery", { cache: "no-store" });
-      const result = (await response.json()) as {
-        success?: boolean;
-        error?: string;
-        items?: FanArt[];
-      };
+      const allArts: FanArt[] = [];
+      let page = 1;
+      let hasNextPage = true;
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || "Failed to load fan art gallery.");
+      while (hasNextPage) {
+        const response = await fetch(
+          `/api/fan-art/gallery?page=${page}&limit=40`,
+          { cache: "no-store" }
+        );
+
+        const result = (await response.json()) as {
+          success?: boolean;
+          error?: string;
+          items?: FanArt[];
+          hasNextPage?: boolean;
+        };
+
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.error || "Failed to load fan art gallery."
+          );
+        }
+
+        allArts.push(...(result.items ?? []));
+        hasNextPage = result.hasNextPage === true;
+        page += 1;
       }
 
-      const arts = result.items ?? [];
-      setFanArts(arts);
+      setFanArts(allArts);
 
-      // Load existing likes for the R2-backed artwork IDs.
+      // Load existing likes for all R2-backed artwork IDs.
       try {
         const supabase = getSupabase();
-        const ids = arts.map((art) => art.id);
+        const ids = allArts.map((art) => art.id);
+
         if (ids.length) {
           const { data } = await supabase
             .from("fan_art_likes")
@@ -124,10 +141,12 @@ export default function FansArtPage() {
             .in("fan_art_id", ids);
 
           const counts: Record<number, number> = {};
+
           for (const row of data ?? []) {
             const id = Number(row.fan_art_id);
             counts[id] = (counts[id] || 0) + 1;
           }
+
           setLikeCounts(counts);
         } else {
           setLikeCounts({});
@@ -137,13 +156,15 @@ export default function FansArtPage() {
         setLikeCounts({});
       }
     } catch (error) {
-      console.error("Gallery error:", error instanceof Error ? error.message : error);
+      console.error(
+        "Gallery error:",
+        error instanceof Error ? error.message : error
+      );
       setFanArts([]);
     } finally {
       setLoadingGallery(false);
     }
   }
-
   useEffect(() => {
     loadFanArts();
     loadFanPower();
