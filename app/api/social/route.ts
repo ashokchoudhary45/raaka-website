@@ -240,6 +240,10 @@ export async function GET(request: Request) {
       const q = (url.searchParams.get("q") || "")
         .trim()
         .slice(0, 40);
+      const requestedMode = (url.searchParams.get("mode") || "people").toLowerCase();
+      const mode = ["people", "posts", "top", "latest"].includes(requestedMode)
+        ? requestedMode
+        : "people";
 
       if (!q) {
         return Response.json({
@@ -293,6 +297,11 @@ export async function GET(request: Request) {
           like
         )
         .all<any>();
+
+      const orderBy =
+        mode === "latest"
+          ? "s.id DESC"
+          : "search_score DESC, s.id DESC";
 
       const posts = await db
         .prepare(
@@ -355,19 +364,25 @@ export async function GET(request: Request) {
            JOIN social_profiles p
              ON p.visitor_id = s.visitor_id
            WHERE s.body LIKE ? COLLATE NOCASE
-           ORDER BY
-             search_score DESC,
-             s.id DESC
+           ORDER BY ${orderBy}
            LIMIT 20`
         )
         .bind(exact, like, like)
         .all<any>();
 
-      return Response.json({
-        success: true,
-        users: users.results.map(profileShape),
-        posts: posts.results.map(postShape),
-      });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          users: users.results.map(profileShape),
+          posts: posts.results.map(postShape),
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "public, max-age=10, s-maxage=10, stale-while-revalidate=30",
+          },
+        }
+      );
     }
 
     // Everything below this point requires a verified logged-in user.
@@ -378,9 +393,11 @@ export async function GET(request: Request) {
     }
 
     const userId = auth.user.userId;
-    const cursor = Number(
-      url.searchParams.get("cursor") || "0"
-    );
+    const rawCursor = Number(url.searchParams.get("cursor") || "0");
+    const cursor =
+      Number.isSafeInteger(rawCursor) && rawCursor > 0
+        ? rawCursor
+        : 0;
 
     await ensureProfile(db, userId);
 
@@ -866,11 +883,25 @@ export async function POST(
 
     const db = getD1();
 
-    const body =
-      (await request.json()) as any;
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return Response.json(
+        { success: false, error: "Invalid JSON request." },
+        { status: 400 }
+      );
+    }
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return Response.json(
+        { success: false, error: "Invalid request body." },
+        { status: 400 }
+      );
+    }
 
     const action =
-      String(body.action || "");
+      String(body.action || "").slice(0, 40);
 
     /*
      * Never trust visitorId from browser.

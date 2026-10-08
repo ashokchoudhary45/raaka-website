@@ -74,6 +74,22 @@ type ApiResponse = {
   bookmarked?: boolean;
 
   users?: Profile[];
+  nextCursor?: number;
+  notifications?: NotificationItem[];
+};
+
+type NotificationItem = {
+  id: number;
+  type: string;
+  postId: number | null;
+  createdAt: string;
+  actor: {
+    handle: string;
+    displayName: string;
+    verified?: boolean;
+    verificationType?: "blue" | "gold" | "grey" | "none";
+    verificationLabel?: string | null;
+  };
 };
 
 function MenuIcon({ type }: { type: "profile" | "premium" | "communities" | "bookmarks" | "notes" | "lists" | "spaces" | "creator" | "settings" | "theme" }) {
@@ -180,6 +196,14 @@ export default function RaakaSocialPage() {
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [nextCursor, setNextCursor] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [actionPending, setActionPending] = useState<Record<string, boolean>>({});
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [selectedProfilePosts, setSelectedProfilePosts] = useState<Post[]>([]);
 
   const [text, setText] = useState("");
   const [replying, setReplying] = useState<number | null>(null);
@@ -239,6 +263,27 @@ export default function RaakaSocialPage() {
 
   const updateLocalSetting = (key: string, value: string) => {
     try { localStorage.setItem(key, value); } catch {}
+  };
+
+  useEffect(() => {
+    document.documentElement.dataset.raakaReducedMotion = reduceAnimations ? "1" : "0";
+    document.documentElement.dataset.raakaDataSaver = dataSaver ? "1" : "0";
+    document.documentElement.dataset.raakaFontSize = fontSize;
+    return () => {
+      delete document.documentElement.dataset.raakaReducedMotion;
+      delete document.documentElement.dataset.raakaDataSaver;
+      delete document.documentElement.dataset.raakaFontSize;
+    };
+  }, [reduceAnimations, dataSaver, fontSize]);
+
+  useEffect(() => {
+    if (!message) return;
+    const timer = window.setTimeout(() => setMessage(""), 3200);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
+  const setPending = (key: string, value: boolean) => {
+    setActionPending((current) => ({ ...current, [key]: value }));
   };
 
   const resetSettingsHome = () => setSettingsSection("home");
@@ -322,43 +367,68 @@ export default function RaakaSocialPage() {
 
       const response = await fetch(`/api/social?${params}`, {
         cache: "no-store",
+        headers: { Accept: "application/json" },
       });
 
-      return (await response.json()) as ApiResponse;
+      const contentType = response.headers.get("content-type") || "";
+      const result = contentType.includes("application/json")
+        ? ((await response.json()) as ApiResponse)
+        : { success: false, error: `Request failed (${response.status})` };
+
+      if (!response.ok && !result.error) {
+        result.error = `Request failed (${response.status})`;
+      }
+      return result;
     }
 
     const response = await fetch("/api/social", {
       method,
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify(payload),
     });
 
-    return (await response.json()) as ApiResponse;
+    const contentType = response.headers.get("content-type") || "";
+    const result = contentType.includes("application/json")
+      ? ((await response.json()) as ApiResponse)
+      : { success: false, error: `Request failed (${response.status})` };
+
+    if (!response.ok && !result.error) {
+      result.error = `Request failed (${response.status})`;
+    }
+    return result;
   };
 
-  const load = async () => {
-    if (!visitorId || !authenticated) return;
+  const load = async (append = false, cursor = 0) => {
+    if (!visitorId || !authenticated || (append && !nextCursor)) return;
 
-    setLoading(true);
+    if (append) setLoadingMore(true);
+    else setLoading(true);
 
     try {
       const [feed, me] = await Promise.all([
         api("GET", {
           action: tab,
+          ...(cursor > 0 ? { cursor } : {}),
         }),
-
-        api("GET", {
-          action: "profile",
-        }),
+        append ? Promise.resolve<ApiResponse>({ success: true }) : api("GET", { action: "profile" }),
       ]);
 
       if (feed.success) {
-        setPosts(feed.posts ?? []);
+        const incoming = feed.posts ?? [];
+        setPosts((current) => {
+          if (!append) return incoming;
+          const seen = new Set(current.map((post) => post.id));
+          return [...current, ...incoming.filter((post) => !seen.has(post.id))];
+        });
+        setNextCursor(feed.nextCursor ?? 0);
+      } else if (!append) {
+        setMessage(feed.error || "Could not load RAAKA Social");
       }
 
-      if (me.success) {
+      if (!append && me.success) {
         setProfile(me.profile ?? null);
         setSelectedProfile((current) =>
           current && current.visitorId !== me.profile?.visitorId
@@ -369,12 +439,15 @@ export default function RaakaSocialPage() {
     } catch {
       setMessage("Could not load RAAKA Social");
     } finally {
-      setLoading(false);
+      if (append) setLoadingMore(false);
+      else setLoading(false);
     }
   };
 
   useEffect(() => {
-    load();
+    setNextCursor(0);
+    setPosts([]);
+    void load(false, 0);
   }, [visitorId, authenticated, tab]);
 
   const createPost = async () => {
@@ -405,6 +478,9 @@ export default function RaakaSocialPage() {
   };
 
   const like = async (postId: number) => {
+    const key = `like:${postId}`;
+    if (actionPending[key]) return;
+    setPending(key, true);
     const result = await api("POST", {
       action: "like",
       postId,
@@ -426,9 +502,13 @@ export default function RaakaSocialPage() {
         )
       );
     }
+    setPending(key, false);
   };
 
   const follow = async (targetId: string) => {
+    const key = `follow:${targetId}`;
+    if (actionPending[key]) return;
+    setPending(key, true);
     const result = await api("POST", {
       action: "follow",
       targetId,
@@ -467,6 +547,7 @@ export default function RaakaSocialPage() {
           : current
       );
     }
+    setPending(key, false);
   };
 
   const repost = async (postId: number) => {
@@ -487,6 +568,9 @@ export default function RaakaSocialPage() {
   };
 
   const bookmark = async (postId: number) => {
+    const key = `bookmark:${postId}`;
+    if (actionPending[key]) return;
+    setPending(key, true);
     const result = await api("POST", {
       action: "bookmark",
       postId,
@@ -505,6 +589,7 @@ export default function RaakaSocialPage() {
         )
       );
     }
+    setPending(key, false);
   };
 
   const sharePost = async (postId: number) => {
@@ -577,6 +662,10 @@ export default function RaakaSocialPage() {
 
     if (!handle || handle.toLowerCase() === profile?.handle?.toLowerCase()) {
       setSelectedProfile(profile);
+      if (profile) {
+        const postsResult = await api("GET", { action: "user-posts", handle: profile.handle });
+        setSelectedProfilePosts(postsResult.success ? (postsResult.posts ?? []) : []);
+      }
       return;
     }
 
@@ -589,6 +678,11 @@ export default function RaakaSocialPage() {
 
       if (result.success && result.profile) {
         setSelectedProfile(result.profile);
+        const postsResult = await api("GET", {
+          action: "user-posts",
+          handle: result.profile.handle,
+        });
+        setSelectedProfilePosts(postsResult.success ? (postsResult.posts ?? []) : []);
       } else {
         setSelectedProfile(null);
         setMessage(result.error || "Could not load profile");
@@ -645,25 +739,65 @@ export default function RaakaSocialPage() {
     setEditingProfile(false);
   };
 
-  const doSearch = async () => {
-    if (!search.trim()) {
+  const doSearch = async (mode: "people" | "posts" | "top" | "latest" = searchTab) => {
+    const query = search.trim();
+    if (!query) {
       setSearchResults(null);
+      setSearchError("");
       return;
     }
 
-    setSearchTab("people");
-
-    const result = await api("GET", {
-      action: "search",
-      q: search,
-    });
-
-    if (result.success) {
-      setSearchResults({
-        users: result.users ?? [],
-        posts: result.posts ?? [],
+    setSearchLoading(true);
+    setSearchError("");
+    try {
+      const result = await api("GET", {
+        action: "search",
+        q: query,
+        mode,
       });
+
+      if (result.success) {
+        setSearchResults({
+          users: result.users ?? [],
+          posts: result.posts ?? [],
+        });
+      } else {
+        setSearchError(result.error || "Search failed");
+        setSearchResults(null);
+      }
+    } catch {
+      setSearchError("Could not search right now.");
+      setSearchResults(null);
+    } finally {
+      setSearchLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (!searchResults || !search.trim()) return;
+    const timer = window.setTimeout(() => void doSearch(searchTab), 250);
+    return () => window.clearTimeout(timer);
+  }, [searchTab]); 
+
+  const loadNotifications = async () => {
+    setNotificationsLoading(true);
+    try {
+      const result = await api("GET", { action: "notifications" });
+      if (result.success) {
+        setNotifications(result.notifications ?? []);
+      } else {
+        setMessage(result.error || "Could not load notifications");
+      }
+    } catch {
+      setMessage("Could not load notifications");
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
+
+  const openNotifications = async () => {
+    setView("home");
+    await loadNotifications();
   };
 
   const logout = async () => {
@@ -940,10 +1074,23 @@ export default function RaakaSocialPage() {
                 {message && <div className="mt-4 text-xs text-red-300">{message}</div>}
               </div>
 
-              <div className="p-10 text-center text-sm text-white/30">
-                {selectedProfileLoading
-                  ? "Loading profile…"
-                  : "Posts from this profile will appear here as the profile timeline is expanded."}
+              <div className="border-b border-white/10">
+                {selectedProfileLoading ? (
+                  <div className="p-10 text-center text-sm text-white/30">Loading profile…</div>
+                ) : selectedProfilePosts.length ? (
+                  selectedProfilePosts.map((post) => (
+                    <article key={post.id} className="border-b border-white/10 px-5 py-5 last:border-b-0">
+                      <div className="text-sm font-bold">
+                        {post.author.displayName}
+                        <span className="ml-2 font-normal text-white/35">@{post.author.handle} · {timeAgo(post.createdAt)}</span>
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-6 text-white/90">{post.body}</p>
+                      <div className="mt-3 text-xs text-white/35">{post.likes} likes · {post.replies} replies · {post.reposts} reposts</div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="p-10 text-center text-sm text-white/30">No posts from this profile yet.</div>
+                )}
               </div>
             </div>
           ) : view === "settings" ? (
@@ -1144,9 +1291,13 @@ export default function RaakaSocialPage() {
             <div className="border-b border-white/10 px-4 pb-4 xl:hidden">
               <div className="mt-4 overflow-hidden rounded-3xl border border-white/10 bg-white/[.03]">
                 <div className="border-b border-white/10 px-4 pt-4">
-                  <div className="text-xs font-bold uppercase tracking-[.2em] text-white/40">
-                    Search results
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-bold uppercase tracking-[.2em] text-white/40">
+                      Search results
+                    </div>
+                    {searchLoading && <span className="text-[10px] text-white/30">Searching…</span>}
                   </div>
+                  {searchError && <div className="mt-2 text-xs text-red-300">{searchError}</div>}
 
                   <div className="mt-3 grid grid-cols-4">
                     {[
@@ -1227,21 +1378,7 @@ export default function RaakaSocialPage() {
                     )
                   ) : searchResults.posts.length ? (
                     <div className="space-y-1">
-                      {[...searchResults.posts]
-                        .sort((a, b) => {
-                          if (searchTab === "top") {
-                            return (
-                              b.likes + b.replies * 2 + b.reposts * 3 -
-                              (a.likes + a.replies * 2 + a.reposts * 3)
-                            );
-                          }
-
-                          return (
-                            new Date(b.createdAt.replace(" ", "T") + "Z").getTime() -
-                            new Date(a.createdAt.replace(" ", "T") + "Z").getTime()
-                          );
-                        })
-                        .map((post) => (
+                      {searchResults.posts.map((post) => (
                           <button
                             key={post.id}
                             type="button"
@@ -1276,6 +1413,32 @@ export default function RaakaSocialPage() {
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {notifications.length > 0 && (
+            <div className="border-b border-white/10 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-xs font-bold uppercase tracking-[.2em] text-white/40">Notifications</div>
+                <button type="button" onClick={() => setNotifications([])} className="text-[11px] text-white/30 hover:text-white">Clear</button>
+              </div>
+              <div className="space-y-1">
+                {notifications.slice(0, 8).map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => n.postId ? window.history.pushState({}, "", `/social?post=${n.postId}`) : void openProfile(n.actor.handle)}
+                    className="flex w-full items-center gap-3 rounded-2xl p-3 text-left hover:bg-white/[.04]"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-xs font-black text-red-300">{n.actor.displayName.slice(0,1).toUpperCase()}</div>
+                    <div className="min-w-0 text-sm">
+                      <span className="font-bold">{n.actor.displayName}</span>
+                      <span className="text-white/50"> {n.type === "follow" ? "followed you" : n.type === "like" ? "liked your post" : n.type === "reply" ? "replied to your post" : "reposted your post"}.</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {notificationsLoading && <div className="mt-2 text-xs text-white/30">Refreshing…</div>}
             </div>
           )}
 
@@ -1558,6 +1721,19 @@ export default function RaakaSocialPage() {
               ))
           )}
 
+          {nextCursor > 0 && (
+            <div className="border-b border-white/10 p-4">
+              <button
+                type="button"
+                disabled={loadingMore}
+                onClick={() => void load(true, nextCursor)}
+                className="w-full rounded-2xl border border-white/10 px-4 py-3 text-xs font-bold text-white/70 transition hover:bg-white/[.05] disabled:opacity-40"
+              >
+                {loadingMore ? "Loading more…" : "Load more posts"}
+              </button>
+            </div>
+          )}
+
             </>
           )}
         
@@ -1677,20 +1853,7 @@ export default function RaakaSocialPage() {
                   )
                 ) : searchResults.posts.length ? (
                   <div className="space-y-1">
-                    {[...searchResults.posts]
-                      .sort((a, b) => {
-                        if (searchTab === "top") {
-                          return (
-                            b.likes + b.replies * 2 + b.reposts * 3 -
-                            (a.likes + a.replies * 2 + a.reposts * 3)
-                          );
-                        }
-                        return (
-                          new Date(b.createdAt.replace(" ", "T") + "Z").getTime() -
-                          new Date(a.createdAt.replace(" ", "T") + "Z").getTime()
-                        );
-                      })
-                      .map((post) => (
+                    {searchResults.posts.map((post) => (
                         <button
                           key={post.id}
                           type="button"
