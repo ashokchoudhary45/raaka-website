@@ -612,6 +612,56 @@ export async function GET(request: Request) {
     }
 
     /*
+     * SINGLE POST
+     * Used when opening a notification linked to a post.
+     */
+    if (action === "post") {
+      const postId = Number(url.searchParams.get("postId") || "0");
+      if (!Number.isSafeInteger(postId) || postId < 1) {
+        return Response.json(
+          { success: false, error: "Invalid post." },
+          { status: 400 },
+        );
+      }
+
+      const row = await db
+        .prepare(
+          `SELECT
+             s.*,
+             p.handle,
+             p.display_name,
+             p.verified,
+             p.verification_type,
+             p.verification_label,
+             CASE WHEN l.visitor_id IS NOT NULL THEN 1 ELSE 0 END AS liked,
+             CASE WHEN b.visitor_id IS NOT NULL THEN 1 ELSE 0 END AS bookmarked,
+             CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END AS following,
+             CASE WHEN EXISTS (
+               SELECT 1 FROM social_reposts r
+               WHERE r.post_id = s.id AND r.visitor_id = ?
+             ) THEN 1 ELSE 0 END AS reposted
+           FROM social_posts s
+           JOIN social_profiles p ON p.visitor_id = s.visitor_id
+           LEFT JOIN social_likes l ON l.post_id = s.id AND l.visitor_id = ?
+           LEFT JOIN social_bookmarks b ON b.post_id = s.id AND b.visitor_id = ?
+           LEFT JOIN social_follows f ON f.following_id = s.visitor_id AND f.follower_id = ?
+           WHERE s.id = ?
+           LIMIT 1`,
+        )
+        .bind(userId, userId, userId, userId, postId)
+        .first<any>();
+
+      if (!row) {
+        return Response.json(
+          { success: false, error: "This post is no longer available." },
+          { status: 404 },
+        );
+      }
+
+      return Response.json({ success: true, post: postShape(row) });
+    }
+
+    /*
      * NOTIFICATIONS
      */
     if (action === "notifications") {
@@ -965,6 +1015,15 @@ export async function POST(
 
     const action =
       String(body.action || "").slice(0, 40);
+
+    if (action === "clear-notifications") {
+      await db
+        .prepare("DELETE FROM social_notifications WHERE recipient_id = ?")
+        .bind(userId)
+        .run();
+
+      return Response.json({ success: true });
+    }
 
     /*
      * Never trust visitorId from browser.

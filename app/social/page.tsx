@@ -68,6 +68,7 @@ type ApiResponse = {
   error?: string;
 
   posts?: Post[];
+  post?: Post;
   profile?: Profile | null;
 
   liked?: boolean;
@@ -426,6 +427,8 @@ export default function RaakaSocialPage() {
   const [searchError, setSearchError] = useState("");
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [postsBeforeNotification, setPostsBeforeNotification] = useState<Post[] | null>(null);
+  const [cursorBeforeNotification, setCursorBeforeNotification] = useState(0);
   const [selectedProfilePosts, setSelectedProfilePosts] = useState<Post[]>([]);
 
   const [text, setText] = useState("");
@@ -456,7 +459,7 @@ export default function RaakaSocialPage() {
   const [bookmarkPosts, setBookmarkPosts] = useState<Post[]>([]);
   const [bookmarksLoading, setBookmarksLoading] = useState(false);
 
-  const [view, setView] = useState<"home" | "profile" | "settings" | "bookmarks">("home");
+  const [view, setView] = useState<"home" | "profile" | "settings" | "bookmarks" | "notifications">("home");
   const [editingProfile, setEditingProfile] = useState(false);
   const [editName, setEditName] = useState("");
   const [editHandle, setEditHandle] = useState("");
@@ -1223,10 +1226,16 @@ export default function RaakaSocialPage() {
   };
 
   const goHome = () => {
+    if (postsBeforeNotification) {
+      setPosts(postsBeforeNotification);
+      setNextCursor(cursorBeforeNotification);
+      setPostsBeforeNotification(null);
+      setCursorBeforeNotification(0);
+    }
     setView("home");
     setEditingProfile(false);
     setProfileListMode(null);
-    if (window.location.search.includes("profile=")) {
+    if (window.location.search.includes("profile=") || window.location.search.includes("post=")) {
       window.history.replaceState(null, "", "/social");
     }
   };
@@ -1295,8 +1304,55 @@ export default function RaakaSocialPage() {
   };
 
   const openNotifications = async () => {
-    setView("home");
+    setMobileMenuOpen(false);
+    setView("notifications");
+    setEditingProfile(false);
     await loadNotifications();
+  };
+
+  const clearNotifications = async () => {
+    if (!notifications.length) return;
+    const result = await api("POST", { action: "clear-notifications" });
+    if (result.success) {
+      setNotifications([]);
+      setMessage("Notifications cleared.");
+    } else {
+      setMessage(result.error || "Could not clear notifications.");
+    }
+  };
+
+  const openNotification = async (notification: NotificationItem) => {
+    setMobileMenuOpen(false);
+    if (!notification.postId) {
+      await openProfile(notification.actor.handle);
+      return;
+    }
+
+    setNotificationsLoading(true);
+    try {
+      const result = await api("GET", {
+        action: "post",
+        postId: notification.postId,
+      });
+      if (!result.success || !result.post) {
+        setMessage(result.error || "This post is no longer available.");
+        return;
+      }
+
+      if (!postsBeforeNotification) {
+        setPostsBeforeNotification(posts);
+        setCursorBeforeNotification(nextCursor);
+      }
+      setPosts([result.post]);
+      setNextCursor(0);
+      setView("home");
+      setEditingProfile(false);
+      window.history.pushState({}, "", `/social?post=${notification.postId}`);
+    } catch {
+      setMessage("Could not open this post right now.");
+    } finally {
+      setNotificationsLoading(false);
+    }
   };
 
   const logout = async () => {
@@ -1441,6 +1497,9 @@ export default function RaakaSocialPage() {
                 <button onClick={() => { setMobileMenuOpen(false); openProfile(); }} className="rk-nav flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold">
                   <MenuIcon type="profile" /><span>Profile</span>
                 </button>
+                <button onClick={() => void openNotifications()} className={`rk-nav flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold ${view === "notifications" ? "rk-nav-active" : ""}`}>
+                  <NavIcon type="bell" /><span>Notifications</span>
+                </button>
                 <button onClick={() => void openBookmarks()} className="rk-nav flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold">
                   <MenuIcon type="bookmarks" /><span>Bookmarks</span>
                 </button>
@@ -1491,7 +1550,7 @@ export default function RaakaSocialPage() {
             <button onClick={() => { setView("home"); setTimeout(() => document.getElementById("social-search")?.focus(), 0); }} className="rk-nav flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left">
               <span className="rk-ni"><NavIcon type="explore" /></span><span className="font-semibold">Explore</span>
             </button>
-            <button onClick={() => setView("home")} className="rk-nav flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left">
+            <button onClick={() => void openNotifications()} className={`rk-nav flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left ${view === "notifications" ? "rk-nav-active" : ""}`}>
               <span className="rk-ni"><NavIcon type="bell" /></span><span className="font-semibold">Notifications</span>
             </button>
             <button onClick={() => void openBookmarks()} className={`rk-nav flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left ${view === "bookmarks" ? "rk-nav-active" : ""}`}>
@@ -1624,6 +1683,87 @@ export default function RaakaSocialPage() {
                 </>
               ) : (
                 <div className="p-10 text-center text-sm text-white/30">Profile not found.</div>
+              )}
+            </div>
+
+          ) : view === "notifications" ? (
+            <div className="min-h-screen">
+              <header className="rk-header sticky top-0 z-20 px-5 py-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <button onClick={goHome} className="rk-iconbtn rounded-xl px-3 py-2 text-xs" aria-label="Back to home">←</button>
+                    <div className="min-w-0">
+                      <div className="rk-display text-[17px]">Notifications</div>
+                      <div className="text-xs text-white/35">Likes, replies, reposts and new followers</div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void loadNotifications()}
+                    disabled={notificationsLoading}
+                    className="rk-ghost rounded-full px-4 py-2 text-xs font-bold disabled:opacity-40"
+                  >
+                    {notificationsLoading ? "Loading…" : "Refresh"}
+                  </button>
+                </div>
+                {notifications.length > 0 && (
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-xs text-white/35">{notifications.length} recent notification{notifications.length === 1 ? "" : "s"}</span>
+                    <button
+                      type="button"
+                      onClick={() => void clearNotifications()}
+                      disabled={notificationsLoading}
+                      className="text-xs font-bold text-red-300 hover:text-red-200 disabled:opacity-40"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                )}
+              </header>
+
+              {notificationsLoading && notifications.length === 0 ? (
+                <div className="p-10 text-center text-sm text-white/40" role="status">Loading notifications…</div>
+              ) : notifications.length > 0 ? (
+                <div className="divide-y divide-white/[.07]">
+                  {notifications.map((notification) => (
+                    <button
+                      key={notification.id}
+                      type="button"
+                      onClick={() => void openNotification(notification)}
+                      className="flex w-full items-start gap-3 px-5 py-5 text-left transition hover:bg-white/[.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-400"
+                    >
+                      <span className="rk-avatar-soft flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-black">
+                        {notification.type === "like" ? "♥" : notification.type === "reply" ? "↩" : notification.type === "repost" ? "⟳" : "＋"}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
+                          <span className="font-bold text-white">{notification.actor.displayName}</span>
+                          <VerificationBadge type={notification.actor.verificationType} label={notification.actor.verificationLabel} />
+                          <span className="text-white/60">
+                            {notification.type === "follow"
+                              ? "followed you"
+                              : notification.type === "like"
+                                ? "liked your post"
+                                : notification.type === "reply"
+                                  ? "replied to your post"
+                                  : notification.type === "repost"
+                                    ? "reposted your post"
+                                    : "interacted with you"}
+                          </span>
+                        </span>
+                        <span className="mt-1 block text-xs text-white/30">@{notification.actor.handle} · {timeAgo(notification.createdAt)}</span>
+                        {notification.postId && <span className="mt-2 block text-xs font-semibold text-orange-300">Open post →</span>}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-12 text-center">
+                  <div className="rk-float text-4xl">🔔</div>
+                  <div className="mt-3 font-bold">You’re all caught up</div>
+                  <div className="mt-1 text-sm leading-6 text-white/35">When someone follows you or interacts with your posts, notifications will appear here.</div>
+                  <button type="button" onClick={() => void loadNotifications()} className="rk-btn-primary mt-5 rounded-full px-5 py-2.5 text-xs font-black">Check again</button>
+                </div>
               )}
             </div>
 
@@ -2001,32 +2141,6 @@ export default function RaakaSocialPage() {
                   )}
                 </div>
               </div>
-            </div>
-          )}
-
-          {notifications.length > 0 && (
-            <div className="border-b border-white/[.07] p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="text-xs font-bold tracking-wide text-white/40">Notifications</div>
-                <button type="button" onClick={() => setNotifications([])} className="text-[11px] text-white/30 hover:text-white">Clear</button>
-              </div>
-              <div className="space-y-1">
-                {notifications.slice(0, 8).map((n) => (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => n.postId ? window.history.pushState({}, "", `/social?post=${n.postId}`) : void openProfile(n.actor.handle)}
-                    className="flex w-full items-center gap-3 rounded-2xl p-3 text-left hover:bg-white/[.04]"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-xs font-black text-red-300">{n.actor.displayName.slice(0,1).toUpperCase()}</div>
-                    <div className="min-w-0 text-sm">
-                      <span className="font-bold">{n.actor.displayName}</span>
-                      <span className="text-white/50"> {n.type === "follow" ? "followed you" : n.type === "like" ? "liked your post" : n.type === "reply" ? "replied to your post" : "reposted your post"}.</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              {notificationsLoading && <div className="mt-2 text-xs text-white/30">Refreshing…</div>}
             </div>
           )}
 
