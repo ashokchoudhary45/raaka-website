@@ -3,7 +3,7 @@
 // Force Cloudflare/OpenNext to serve this route dynamically instead of treating
 // the client-only Social page as a static route.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 function timeAgo(value: string) {
   const seconds = Math.max(
@@ -191,6 +191,226 @@ function VerificationBadge({
   );
 }
 
+const RAAKA_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
+@property --rk-a{syntax:'<angle>';inherits:false;initial-value:0deg}
+
+.rk-root{
+  --rk-bg:#0b0708;--rk-line:rgba(255,255,255,.075);
+  --rk-e1:#ff3b55;--rk-e2:#ff7a3d;--rk-e3:#ffb454;
+  --rk-ember:linear-gradient(120deg,#ff3b55,#ff7a3d 60%,#ffb454);
+  --rk-spring:cubic-bezier(.34,1.56,.64,1);--rk-out:cubic-bezier(.16,1,.3,1);
+  position:relative;isolation:isolate;min-height:100vh;
+  background:var(--rk-bg);color:#f6eee9;
+  font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,-apple-system,'Segoe UI',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.rk-root::before{content:"";position:fixed;inset:-25%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(42% 38% at 18% 12%,rgba(255,59,85,.20),transparent 70%),
+    radial-gradient(38% 34% at 86% 30%,rgba(255,122,61,.14),transparent 70%),
+    radial-gradient(46% 40% at 55% 100%,rgba(190,30,80,.16),transparent 70%);
+  animation:rk-drift 26s ease-in-out infinite alternate;will-change:transform}
+.rk-root::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.rk-root ::selection{background:rgba(255,90,70,.45);color:#fff}
+.rk-root *{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+.rk-root :is(button,a):focus-visible{outline:2px solid #ff9441;outline-offset:2px}
+
+.rk-display{font-family:'Unbounded','Plus Jakarta Sans',system-ui,sans-serif;font-weight:700;letter-spacing:-.02em}
+.rk-wordmark{background:linear-gradient(100deg,#fff 0%,#ffd7c2 25%,#ff7a3d 50%,#ff3b55 75%,#fff 100%);background-size:200% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:rk-sheen 7s linear infinite}
+.rk-logo-mark{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-family:'Unbounded',sans-serif;font-weight:900;font-size:26px;color:#fff;
+  background:var(--rk-ember);box-shadow:0 14px 40px -10px rgba(255,70,70,.8),inset 0 1px 0 rgba(255,255,255,.4);animation:rk-float 4s ease-in-out infinite}
+.rk-logo-sm{width:38px;height:38px;border-radius:12px;font-size:17px;animation:none;flex-shrink:0}
+
+/* glass surfaces */
+.rk-header{position:sticky;background:linear-gradient(180deg,rgba(11,7,8,.9),rgba(11,7,8,.74));
+  backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid var(--rk-line)}
+.rk-header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,90,70,.55),transparent);opacity:.55}
+.rk-feed{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.006))}
+.rk-card{background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.02));border:1px solid var(--rk-line);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 18px 40px -24px rgba(0,0,0,.8);transition:border-color .3s}
+.rk-card:focus-within{border-color:rgba(255,122,61,.4)}
+.rk-row{background:rgba(255,255,255,.02);transition:border-color .3s,background .3s,transform .3s var(--rk-out)}
+.rk-row:hover{border-color:rgba(255,122,61,.3);background:rgba(255,255,255,.045)}
+
+.rk-glowborder{position:relative}
+.rk-glowborder::before,.rk-auth::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+  background:conic-gradient(from var(--rk-a),transparent 0 55%,#ff3b55,#ffb454,transparent);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:rk-angle 6s linear infinite}
+.rk-fancard{background:linear-gradient(150deg,rgba(255,59,85,.16),rgba(255,122,61,.04) 60%,transparent);transition:transform .4s var(--rk-out),box-shadow .4s}
+.rk-fancard:hover{transform:translateY(-3px);box-shadow:0 22px 44px -22px rgba(255,70,70,.55)}
+
+/* posts */
+.rk-post{position:relative;transition:background .3s;animation:rk-rise .7s var(--rk-out) backwards;animation-delay:var(--rk-d,0ms)}
+.rk-post::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:2px;border-radius:2px;background:var(--rk-ember);
+  transform:scaleY(0);transition:transform .4s var(--rk-out)}
+.rk-post:hover{background:linear-gradient(90deg,rgba(255,80,70,.05),transparent 70%)}
+.rk-post:hover::before{transform:scaleY(1)}
+
+.rk-avatar-grad{background:linear-gradient(135deg,#ff3b55,#ff9441);color:#fff;
+  box-shadow:0 0 0 2px #0b0708,0 0 0 3.5px rgba(255,122,61,.55),0 8px 22px -6px rgba(255,59,85,.6);transition:transform .4s var(--rk-spring),box-shadow .4s}
+.rk-avatar-grad:hover{transform:scale(1.06) rotate(-3deg)}
+.rk-avatar-soft{background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.1);
+  transition:transform .35s var(--rk-spring),border-color .3s,box-shadow .3s}
+.rk-avatar-soft:hover{transform:scale(1.07);border-color:rgba(255,122,61,.6);box-shadow:0 0 18px -4px rgba(255,90,60,.55)}
+
+/* buttons */
+.rk-btn-primary{position:relative;overflow:hidden;background:var(--rk-ember);color:#fff;
+  box-shadow:0 8px 24px -8px rgba(255,70,70,.65),inset 0 1px 0 rgba(255,255,255,.35);
+  transition:transform .25s var(--rk-spring),box-shadow .3s,filter .3s}
+.rk-btn-primary::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s var(--rk-out)}
+.rk-btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 30px -8px rgba(255,70,70,.8),inset 0 1px 0 rgba(255,255,255,.4)}
+.rk-btn-primary:hover:not(:disabled)::after{transform:translateX(120%)}
+.rk-btn-primary:active:not(:disabled){transform:scale(.96)}
+.rk-ghost{border:1px solid var(--rk-line);background:rgba(255,255,255,.025);color:rgba(255,255,255,.75);
+  transition:border-color .3s,background .3s,color .3s,transform .25s var(--rk-spring)}
+.rk-ghost:hover:not(:disabled){border-color:rgba(255,122,61,.45);background:rgba(255,90,60,.08);color:#fff}
+.rk-ghost:active:not(:disabled){transform:scale(.97)}
+.rk-iconbtn{border:1px solid var(--rk-line);color:rgba(255,255,255,.65);transition:transform .25s var(--rk-spring),background .25s,color .25s}
+.rk-iconbtn:hover{background:rgba(255,255,255,.08);color:#fff;transform:translateX(-2px)}
+
+.rk-input{background:rgba(255,255,255,.04);border:1px solid var(--rk-line);color:#fff;transition:border-color .25s,box-shadow .25s,background .25s}
+.rk-input:focus{border-color:rgba(255,122,61,.6);background:rgba(255,255,255,.06);box-shadow:0 0 0 4px rgba(255,90,60,.12)}
+.rk-input::placeholder{color:rgba(255,255,255,.28)}
+
+/* nav */
+.rk-nav{position:relative;color:rgba(255,255,255,.62);transition:color .25s,background .25s,transform .3s var(--rk-out);animation:rk-slide .7s var(--rk-out) backwards}
+.rk-nav:hover{color:#fff;background:rgba(255,255,255,.05);transform:translateX(3px)}
+.rk-nav .rk-ni{display:inline-flex;transition:transform .35s var(--rk-spring)}
+.rk-nav:hover .rk-ni{transform:scale(1.15) rotate(-6deg)}
+.rk-nav-active{color:#fff;background:linear-gradient(90deg,rgba(255,70,70,.17),rgba(255,70,70,.02))}
+.rk-nav-active::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:3px;border-radius:3px;background:var(--rk-ember);box-shadow:0 0 12px rgba(255,90,70,.9)}
+.rk-nav-active .rk-ni{color:var(--rk-e2)}
+.rk-navlist>:nth-child(1){animation-delay:.05s}.rk-navlist>:nth-child(2){animation-delay:.1s}.rk-navlist>:nth-child(3){animation-delay:.15s}
+.rk-navlist>:nth-child(4){animation-delay:.2s}.rk-navlist>:nth-child(5){animation-delay:.25s}.rk-navlist>:nth-child(6){animation-delay:.3s}
+
+/* tabs */
+.rk-tabs{background:rgba(255,255,255,.04);border:1px solid var(--rk-line)}
+.rk-tab-pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:10px;
+  background:linear-gradient(135deg,rgba(255,90,70,.26),rgba(255,150,70,.12));border:1px solid rgba(255,122,61,.35);
+  box-shadow:0 6px 20px -8px rgba(255,70,70,.7);transition:transform .45s var(--rk-spring)}
+.rk-tab{position:relative;z-index:1;transition:color .3s}
+
+/* composer */
+.rk-composer{position:relative;background:linear-gradient(180deg,rgba(255,90,70,.05),transparent 70%)}
+.rk-composer::after{content:"";position:absolute;left:20px;right:20px;bottom:-1px;height:2px;border-radius:2px;background:var(--rk-ember);
+  transform:scaleX(0);transform-origin:left;transition:transform .6s var(--rk-out);pointer-events:none}
+.rk-composer:focus-within::after{transform:scaleX(1)}
+.rk-composer:focus-within .rk-avatar-grad{box-shadow:0 0 0 2px #0b0708,0 0 0 3.5px rgba(255,122,61,.9),0 8px 28px -4px rgba(255,59,85,.8)}
+.rk-ring{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;transition:background .2s}
+.rk-ring::before{content:"";width:16px;height:16px;border-radius:50%;background:#140b0d}
+
+/* actions */
+.rk-act{position:relative;transition:color .25s,background .25s,transform .25s var(--rk-spring)}
+.rk-act:active{transform:scale(.88)}
+.rk-act svg{transition:transform .3s var(--rk-spring)}
+.rk-act:hover svg{transform:scale(1.15)}
+.rk-like-on svg{fill:currentColor}
+.rk-like-on.rk-pulse svg{animation:rk-heart .6s var(--rk-spring)}
+.rk-like-on.rk-pulse::after{content:"";position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;
+  border:2px solid #ff4d6d;pointer-events:none;animation:rk-ring .6s var(--rk-out) forwards}
+.rk-rp-on.rk-pulse svg{animation:rk-spin .6s var(--rk-out)}
+.rk-bm-on svg{fill:currentColor}
+.rk-bm-on.rk-pulse svg{animation:rk-bounce .5s var(--rk-spring)}
+
+/* switches */
+.rk-switch-off{background:rgba(255,255,255,.14);transition:background .35s,box-shadow .35s}
+.rk-switch-on{background:var(--rk-ember);box-shadow:0 0 18px -2px rgba(255,90,70,.7);transition:background .35s,box-shadow .35s}
+.rk-knob{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4);transition:all .4s var(--rk-spring)}
+
+/* overlays */
+.rk-overlay{animation:rk-fade .25s ease both}
+.rk-modal{background:linear-gradient(160deg,#1a0f12,#0e0809 60%);border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 40px 80px -20px rgba(0,0,0,.9),0 0 60px -20px rgba(255,70,70,.35);animation:rk-modal .45s var(--rk-spring) both}
+.rk-pop{background:rgba(24,14,16,.96);border:1px solid rgba(255,255,255,.09);box-shadow:0 24px 50px -16px rgba(0,0,0,.85);
+  backdrop-filter:blur(14px);transform-origin:top right;animation:rk-pop .28s var(--rk-out) both}
+.rk-drawer{background:linear-gradient(180deg,#140b0d,#0b0708);animation:rk-drawer .45s var(--rk-out) both}
+.rk-toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:200;display:flex;align-items:center;gap:10px;
+  padding:12px 18px;border-radius:999px;font-size:13px;font-weight:600;max-width:calc(100vw - 32px);
+  background:rgba(28,16,18,.94);border:1px solid rgba(255,122,61,.38);box-shadow:0 20px 50px -14px rgba(0,0,0,.9),0 0 30px -10px rgba(255,70,70,.5);
+  backdrop-filter:blur(14px);animation:rk-toast 3.2s var(--rk-out) both}
+.rk-toast i{width:8px;height:8px;border-radius:50%;background:var(--rk-ember);box-shadow:0 0 10px #ff5a3c;flex-shrink:0}
+
+/* loading + empty */
+.rk-skel{background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);
+  background-size:200% 100%;animation:rk-shimmer 1.4s linear infinite;border-radius:8px}
+.rk-orbit{width:64px;height:64px;border-radius:50%;filter:drop-shadow(0 0 14px rgba(255,90,70,.6));
+  background:conic-gradient(from 0deg,transparent 0 25%,#ff3b55,#ffb454);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));animation:rk-spinlin 1.1s linear infinite}
+.rk-float{display:inline-block;animation:rk-float 3.6s ease-in-out infinite}
+
+/* auth */
+.rk-auth{position:relative;border-radius:28px;animation:rk-modal .9s var(--rk-out) both}
+.rk-auth-glow{position:absolute;inset:-40px;z-index:-1;pointer-events:none;background:radial-gradient(closest-side,rgba(255,70,70,.28),transparent);
+  filter:blur(30px);animation:rk-breathe 5s ease-in-out infinite alternate}
+.rk-auth-card{position:relative;border-radius:28px;background:linear-gradient(160deg,rgba(28,16,18,.92),rgba(14,8,9,.92));
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.06)}
+
+/* profile cover */
+.rk-profile-head{overflow:hidden}
+.rk-profile-head::before{content:"";position:absolute;left:0;right:0;top:0;height:96px;pointer-events:none;
+  background:radial-gradient(60% 120% at 15% 0%,rgba(255,59,85,.55),transparent 70%),radial-gradient(50% 120% at 85% 20%,rgba(255,148,65,.45),transparent 70%),linear-gradient(135deg,#2a0e14,#14090b);
+  background-size:140% 140%;animation:rk-mesh 12s ease-in-out infinite alternate}
+.rk-profile-head>*{position:relative}
+
+@keyframes rk-drift{to{transform:translate3d(3%,-2%,0) scale(1.1)}}
+@keyframes rk-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes rk-slide{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@keyframes rk-fade{from{opacity:0}to{opacity:1}}
+@keyframes rk-modal{from{opacity:0;transform:translateY(24px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes rk-pop{from{opacity:0;transform:scale(.9) translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes rk-drawer{from{transform:translateX(-100%)}to{transform:none}}
+@keyframes rk-toast{0%{opacity:0;transform:translate(-50%,20px) scale(.96)}8%,88%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,10px)}}
+@keyframes rk-shimmer{to{background-position:-200% 0}}
+@keyframes rk-sheen{to{background-position:-200% 0}}
+@keyframes rk-heart{0%{transform:scale(.4)}45%{transform:scale(1.35)}70%{transform:scale(.92)}100%{transform:scale(1)}}
+@keyframes rk-ring{from{opacity:.9;transform:scale(.3)}to{opacity:0;transform:scale(1.5)}}
+@keyframes rk-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes rk-spinlin{to{transform:rotate(360deg)}}
+@keyframes rk-bounce{0%{transform:translateY(0)}35%{transform:translateY(-6px) scale(1.15)}70%{transform:translateY(1px)}100%{transform:none}}
+@keyframes rk-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes rk-breathe{from{opacity:.55;transform:scale(.96)}to{opacity:1;transform:scale(1.05)}}
+@keyframes rk-mesh{to{background-position:100% 50%}}
+@keyframes rk-angle{to{--rk-a:360deg}}
+
+@media (prefers-reduced-motion:reduce){
+  .rk-root *:not(.rk-toast),.rk-root::before{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+html[data-raaka-reduced-motion="1"] .rk-root *:not(.rk-toast),html[data-raaka-reduced-motion="1"] .rk-root::before{
+  animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+`;
+
+function RaakaStyles() {
+  return <style dangerouslySetInnerHTML={{ __html: RAAKA_CSS }} />;
+}
+
+function NavIcon({ type }: { type: "home" | "explore" | "bell" | "bookmark" | "profile" | "settings" }) {
+  const common = {
+    width: 22,
+    height: 22,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+
+  if (type === "home") return <svg {...common}><path d="M4 11.2 12 4l8 7.2V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-8.8Z" /></svg>;
+  if (type === "explore") return <svg {...common}><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></svg>;
+  if (type === "bell") return <svg {...common}><path d="M6 17v-6a6 6 0 0 1 12 0v6l1.5 2h-15L6 17Z" /><path d="M10 21a2 2 0 0 0 4 0" /></svg>;
+  if (type === "bookmark") return <svg {...common}><path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h7A2.5 2.5 0 0 1 18 4.5V21l-6-3.5L6 21V4.5Z" /></svg>;
+  if (type === "profile") return <svg {...common}><circle cx="12" cy="8" r="3.2" /><path d="M5.5 20c.8-4 3-6 6.5-6s5.7 2 6.5 6" /></svg>;
+  return <svg {...common}><path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2" /><circle cx="8" cy="17" r="2" /></svg>;
+}
+
 export default function RaakaSocialPage() {
   const [visitorId, setVisitorId] = useState("");
   const [authChecked, setAuthChecked] = useState(false);
@@ -213,6 +433,7 @@ export default function RaakaSocialPage() {
   const [replyText, setReplyText] = useState("");
   const [moreMenu, setMoreMenu] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [pulse, setPulse] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
@@ -1101,9 +1322,12 @@ export default function RaakaSocialPage() {
 
   if (!authChecked) {
     return (
-      <main className="min-h-screen bg-[#050505] text-white">
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-sm text-white/40">
+      <main className="rk-root">
+        <RaakaStyles />
+        <div className="relative z-[1] flex min-h-screen flex-col items-center justify-center gap-6">
+          <div className="rk-orbit" aria-hidden="true" />
+          <div className="rk-display rk-wordmark text-2xl">RAAKA</div>
+          <div className="text-sm text-white/40" role="status">
             Checking RAAKA Social account…
           </div>
         </div>
@@ -1113,42 +1337,50 @@ export default function RaakaSocialPage() {
 
   if (!authenticated) {
     return (
-      <main className="min-h-screen bg-[#050505] px-5 text-white">
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[.03] p-8 text-center">
-            <div className="text-xs font-bold uppercase tracking-[.4em] text-red-400">
-              WORLD OF RAAKA
-            </div>
+      <main className="rk-root px-5">
+        <RaakaStyles />
+        <div className="relative z-[1] flex min-h-screen items-center justify-center py-10">
+          <div className="rk-auth w-full max-w-md">
+            <div className="rk-auth-glow" aria-hidden="true" />
+            <div className="rk-auth-card p-8 text-center sm:p-10">
+              <div className="rk-logo-mark mx-auto" aria-hidden="true">R</div>
 
-            <h1 className="mt-5 text-4xl font-black">
-              RAAKA Social
-            </h1>
+              <h1 className="rk-display rk-wordmark mt-6 text-3xl sm:text-4xl">
+                RAAKA Social
+              </h1>
 
-            <p className="mt-4 text-sm leading-6 text-white/40">
-              Login with your verified RAAKA Social account to join the community.
-            </p>
+              <div className="mt-2 text-xs tracking-[.3em] text-white/35">
+                WORLD OF RAAKA
+              </div>
 
-            <div className="mt-7 space-y-3">
-              <a
-                href="/social/login"
-                className="block rounded-xl bg-white px-4 py-3 text-sm font-black text-black"
-              >
-                Log in
-              </a>
+              <p className="mt-5 text-sm font-semibold text-white/60">Talk. Follow. React.</p>
 
-              <a
-                href="/social/signup"
-                className="block rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-white"
-              >
-                Create account
-              </a>
+              <p className="mx-auto mt-3 max-w-[34ch] text-sm leading-6 text-white/40">
+                Login with your verified RAAKA Social account to join the community.
+              </p>
 
-              <a
-                href="/social/resend"
-                className="block rounded-xl border border-white/10 px-4 py-3 text-xs text-white/50"
-              >
-                Resend verification email
-              </a>
+              <div className="mt-8 space-y-3">
+                <a
+                  href="/social/login"
+                  className="rk-btn-primary block rounded-xl px-4 py-3.5 text-sm font-black"
+                >
+                  Log in
+                </a>
+
+                <a
+                  href="/social/signup"
+                  className="rk-ghost block rounded-xl px-4 py-3.5 text-sm font-bold text-white"
+                >
+                  Create account
+                </a>
+
+                <a
+                  href="/social/resend"
+                  className="block rounded-xl px-4 py-2.5 text-xs text-white/45 transition hover:text-white"
+                >
+                  Resend verification email
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -1157,25 +1389,26 @@ export default function RaakaSocialPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1180px]">
+    <main className="rk-root">
+      <RaakaStyles />
+      <div className="relative z-[1] mx-auto flex min-h-screen w-full max-w-[1180px]">
 
         {mobileMenuOpen && (
           <div className="fixed inset-0 z-[100] lg:hidden">
             <button
               aria-label="Close menu"
               onClick={() => setMobileMenuOpen(false)}
-              className="absolute inset-0 bg-black/70 backdrop-blur-[2px]"
+              className="rk-overlay absolute inset-0 bg-black/70 backdrop-blur-[3px]"
             />
 
-            <aside className="relative h-full w-[min(86vw,330px)] overflow-y-auto border-r border-white/10 bg-[#050505] px-5 pb-8 pt-5 shadow-2xl">
-              <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-5">
+            <aside className="rk-drawer relative h-full w-[min(86vw,330px)] overflow-y-auto border-r border-white/[.07] px-5 pb-8 pt-5 shadow-2xl">
+              <div className="flex items-start justify-between gap-4 border-b border-white/[.07] pb-5">
                 <button
                   onClick={() => { setMobileMenuOpen(false); openProfile(); }}
                   className="min-w-0 flex-1 text-left"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 text-xl font-black">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full rk-avatar-grad text-xl font-black">
                       {profileInitial}
                     </div>
                     <div className="min-w-0">
@@ -1197,40 +1430,40 @@ export default function RaakaSocialPage() {
 
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 text-xl text-white/70 hover:bg-white/10"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[.07] text-xl text-white/70 hover:bg-white/10"
                   aria-label="Close menu"
                 >
                   ×
                 </button>
               </div>
 
-              <nav className="mt-4 space-y-1">
-                <button onClick={() => { setMobileMenuOpen(false); openProfile(); }} className="flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold hover:bg-white/5">
+              <nav className="rk-navlist mt-4 space-y-1">
+                <button onClick={() => { setMobileMenuOpen(false); openProfile(); }} className="rk-nav flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold">
                   <MenuIcon type="profile" /><span>Profile</span>
                 </button>
-                <button onClick={() => void openBookmarks()} className="flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold hover:bg-white/5">
+                <button onClick={() => void openBookmarks()} className="rk-nav flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold">
                   <MenuIcon type="bookmarks" /><span>Bookmarks</span>
                 </button>
-                <button onClick={() => { setMobileMenuOpen(false); setMessage("Community Notes are coming soon."); }} className="flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold hover:bg-white/5">
+                <button onClick={() => { setMobileMenuOpen(false); setMessage("Community Notes are coming soon."); }} className="rk-nav flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold">
                   <MenuIcon type="notes" /><span>Community Notes</span>
                 </button>
-                <button onClick={() => { setMobileMenuOpen(false); setMessage("Lists are coming soon."); }} className="flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold hover:bg-white/5">
+                <button onClick={() => { setMobileMenuOpen(false); setMessage("Lists are coming soon."); }} className="rk-nav flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold">
                   <MenuIcon type="lists" /><span>Lists</span>
                 </button>
               </nav>
 
-              <div className="my-4 border-t border-white/10" />
+              <div className="my-4 border-t border-white/[.07]" />
 
-              <nav className="space-y-1">
-                <button onClick={() => { setMobileMenuOpen(false); openSettings(); }} className="flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold hover:bg-white/5">
+              <nav className="rk-navlist space-y-1">
+                <button onClick={() => { setMobileMenuOpen(false); openSettings(); }} className="rk-nav flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold">
                   <MenuIcon type="settings" /><span>Settings &amp; Privacy</span>
                 </button>
-                <button onClick={() => { setMobileMenuOpen(false); setMessage("RAAKA Social is already using dark mode."); }} className="flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold hover:bg-white/5">
+                <button onClick={() => { setMobileMenuOpen(false); setMessage("RAAKA Social is already using dark mode."); }} className="rk-nav flex w-full items-center gap-5 rounded-2xl px-2 py-3.5 text-left text-[17px] font-bold">
                   <MenuIcon type="theme" /><span>Display</span>
                 </button>
               </nav>
 
-              <div className="my-4 border-t border-white/10" />
+              <div className="my-4 border-t border-white/[.07]" />
 
               <button
                 onClick={() => { setMobileMenuOpen(false); void logout(); }}
@@ -1243,35 +1476,37 @@ export default function RaakaSocialPage() {
           </div>
         )}
 
-        <aside className="hidden w-[245px] border-r border-white/10 px-5 py-8 lg:block">
-          <div className="text-2xl font-black tracking-tight">
-            RAAKA
-            <span className="text-red-500"> Social</span>
+        <aside className="sticky top-0 hidden h-screen w-[245px] shrink-0 self-start overflow-y-auto border-r border-white/[.07] px-5 py-8 lg:block">
+          <div className="flex items-center gap-3">
+            <span className="rk-logo-mark rk-logo-sm" aria-hidden="true">R</span>
+            <div className="rk-display rk-wordmark text-[17px] leading-tight">
+              RAAKA<br />Social
+            </div>
           </div>
 
-          <div className="mt-10 space-y-2 text-sm">
-            <button onClick={goHome} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "home" ? "bg-white/10 text-white" : "text-white/70"}`}>
-              <span>⌂</span><span>Home</span>
+          <div className="rk-navlist mt-10 space-y-2 text-sm">
+            <button onClick={goHome} className={`rk-nav flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left ${view === "home" ? "rk-nav-active" : ""}`}>
+              <span className="rk-ni"><NavIcon type="home" /></span><span className="font-semibold">Home</span>
             </button>
-            <button onClick={() => { setView("home"); setTimeout(() => document.getElementById("social-search")?.focus(), 0); }} className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-white/70 transition hover:bg-white/5 hover:text-white">
-              <span>⌕</span><span>Explore</span>
+            <button onClick={() => { setView("home"); setTimeout(() => document.getElementById("social-search")?.focus(), 0); }} className="rk-nav flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left">
+              <span className="rk-ni"><NavIcon type="explore" /></span><span className="font-semibold">Explore</span>
             </button>
-            <button onClick={() => setView("home")} className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-white/70 transition hover:bg-white/5 hover:text-white">
-              <span>🔔</span><span>Notifications</span>
+            <button onClick={() => setView("home")} className="rk-nav flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left">
+              <span className="rk-ni"><NavIcon type="bell" /></span><span className="font-semibold">Notifications</span>
             </button>
-            <button onClick={() => void openBookmarks()} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "bookmarks" ? "bg-white/10 text-white" : "text-white/70"}`}>
-              <span>🔖</span><span>Bookmarks</span>
+            <button onClick={() => void openBookmarks()} className={`rk-nav flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left ${view === "bookmarks" ? "rk-nav-active" : ""}`}>
+              <span className="rk-ni"><NavIcon type="bookmark" /></span><span className="font-semibold">Bookmarks</span>
             </button>
-            <button onClick={() => void openProfile()} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "profile" ? "bg-white/10 text-white" : "text-white/70"}`}>
-              <span>♙</span><span>Profile</span>
+            <button onClick={() => void openProfile()} className={`rk-nav flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left ${view === "profile" ? "rk-nav-active" : ""}`}>
+              <span className="rk-ni"><NavIcon type="profile" /></span><span className="font-semibold">Profile</span>
             </button>
-            <button onClick={openSettings} className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left transition hover:bg-white/5 hover:text-white ${view === "settings" ? "bg-white/10 text-white" : "text-white/70"}`}>
-              <span>⚙</span><span>Settings</span>
+            <button onClick={openSettings} className={`rk-nav flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left ${view === "settings" ? "rk-nav-active" : ""}`}>
+              <span className="rk-ni"><NavIcon type="settings" /></span><span className="font-semibold">Settings</span>
             </button>
           </div>
 
-          <button onClick={() => void openProfile()} className="mt-8 w-full rounded-3xl border border-red-500/20 bg-gradient-to-br from-red-500/10 to-transparent p-5 text-left transition hover:border-red-500/40">
-            <div className="text-xs uppercase tracking-[.25em] text-red-400">
+          <button onClick={() => void openProfile()} className="rk-fancard rk-glowborder mt-8 w-full rounded-3xl p-5 text-left">
+            <div className="text-xs font-semibold tracking-wide text-red-300">
               RAAKA FAN
             </div>
 
@@ -1290,21 +1525,21 @@ export default function RaakaSocialPage() {
 
           <button
             onClick={logout}
-            className="mt-4 w-full rounded-2xl border border-white/10 px-4 py-3 text-left text-xs font-bold text-white/50 transition hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-300"
+            className="mt-4 w-full rounded-2xl border border-white/[.07] px-4 py-3 text-left text-xs font-bold text-white/50 transition hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-300"
           >
             Log out
           </button>
         </aside>
 
-        <section className="w-full max-w-[680px] border-r border-white/10">
+        <section className="rk-feed w-full max-w-[680px] border-r border-white/[.07]">
 
           {view === "profile" ? (
             <div className="min-h-screen">
-              <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050505]/90 px-5 py-5 backdrop-blur-xl">
+              <header className="rk-header sticky top-0 z-20 px-5 py-5">
                 <div className="flex items-center gap-3">
-                  <button onClick={goHome} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60 hover:text-white">←</button>
+                  <button onClick={goHome} className="rk-iconbtn rounded-xl px-3 py-2 text-xs">←</button>
                   <div className="min-w-0">
-                    <div className="text-xl font-black">Profile</div>
+                    <div className="rk-display text-[17px]">Profile</div>
                     <div className="truncate text-xs text-white/35">@{selectedProfile?.handle || ""}</div>
                   </div>
                 </div>
@@ -1314,22 +1549,22 @@ export default function RaakaSocialPage() {
                 <div className="p-10 text-center text-sm text-white/30">Loading profile…</div>
               ) : selectedProfile ? (
                 <>
-                  <div className="border-b border-white/10 p-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 text-3xl font-black">
+                  <div className="rk-profile-head relative border-b border-white/[.07] p-6 pt-16">
+                    <div className="flex items-end justify-between gap-4">
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full rk-avatar-grad text-3xl font-black">
                         {(selectedProfile.displayName || "R").slice(0, 1).toUpperCase()}
                       </div>
 
                       {selectedProfile.visitorId === visitorId ? (
                         !editingProfile && (
-                          <button onClick={startEditingProfile} className="rounded-full border border-white/15 px-5 py-2 text-xs font-bold hover:bg-white/5">Edit profile</button>
+                          <button onClick={startEditingProfile} className="rk-ghost rounded-full px-5 py-2 text-xs font-bold">Edit profile</button>
                         )
                       ) : (
                         <button
                           type="button"
                           onClick={() => follow(selectedProfile.visitorId)}
                           disabled={Boolean(actionPending[`follow:${selectedProfile.visitorId}`])}
-                          className={`rounded-full px-5 py-2 text-xs font-black disabled:opacity-50 ${selectedProfile.isFollowing ? "border border-white/15 text-white/70" : "bg-white text-black"}`}
+                          className={`rounded-full px-5 py-2 text-xs font-black disabled:opacity-50 ${selectedProfile.isFollowing ? "rk-ghost" : "rk-btn-primary"}`}
                         >
                           {selectedProfile.isFollowing ? "Following" : "Follow"}
                         </button>
@@ -1338,12 +1573,12 @@ export default function RaakaSocialPage() {
 
                     {editingProfile && selectedProfile.visitorId === visitorId ? (
                       <div className="mt-6 space-y-3">
-                        <input value={editName} onChange={(e) => setEditName(e.target.value.slice(0, 40))} placeholder="Display name" className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
-                        <input value={editHandle} onChange={(e) => setEditHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20))} placeholder="Handle" className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
-                        <textarea value={editBio} onChange={(e) => setEditBio(e.target.value.slice(0, 160))} placeholder="Bio" rows={3} className="w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none" />
+                        <input value={editName} onChange={(e) => setEditName(e.target.value.slice(0, 40))} placeholder="Display name" className="w-full rk-input rounded-2xl px-4 py-3 text-sm " />
+                        <input value={editHandle} onChange={(e) => setEditHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20))} placeholder="Handle" className="w-full rk-input rounded-2xl px-4 py-3 text-sm " />
+                        <textarea value={editBio} onChange={(e) => setEditBio(e.target.value.slice(0, 160))} placeholder="Bio" rows={3} className="w-full resize-none rk-input rounded-2xl px-4 py-3 text-sm " />
                         <div className="flex gap-2">
-                          <button onClick={saveProfile} disabled={savingProfile} className="rounded-full bg-white px-5 py-2 text-xs font-black text-black disabled:opacity-40">{savingProfile ? "Saving…" : "Save changes"}</button>
-                          <button onClick={() => setEditingProfile(false)} className="rounded-full border border-white/10 px-5 py-2 text-xs font-bold text-white/60">Cancel</button>
+                          <button onClick={saveProfile} disabled={savingProfile} className="rk-btn-primary rounded-full px-5 py-2 text-xs font-black disabled:opacity-40">{savingProfile ? "Saving…" : "Save changes"}</button>
+                          <button onClick={() => setEditingProfile(false)} className="rk-ghost rounded-full px-5 py-2 text-xs font-bold">Cancel</button>
                         </div>
                       </div>
                     ) : (
@@ -1366,15 +1601,14 @@ export default function RaakaSocialPage() {
                         <span className="font-black">{selectedProfile.following}</span> <span className="text-white/35">Following</span>
                       </button>
                     </div>
-                    {message && <div className="mt-4 text-xs text-red-300">{message}</div>}
                   </div>
 
-                  <div className="border-b border-white/10">
+                  <div className="border-b border-white/[.07]">
                     {selectedProfileLoading ? (
                       <div className="p-10 text-center text-sm text-white/30">Loading posts…</div>
                     ) : selectedProfilePosts.length ? (
                       selectedProfilePosts.map((post) => (
-                        <article key={post.id} className="border-b border-white/10 px-5 py-5 last:border-b-0">
+                        <article key={post.id} className="rk-post border-b border-white/[.07] px-5 py-5 last:border-b-0">
                           <button type="button" onClick={() => void openProfile(post.author.handle)} className="text-left text-sm font-bold hover:underline">
                             {post.author.displayName}
                             <span className="ml-2 font-normal text-white/35">@{post.author.handle} · {timeAgo(post.createdAt)}</span>
@@ -1395,11 +1629,11 @@ export default function RaakaSocialPage() {
 
           ) : view === "bookmarks" ? (
             <div className="min-h-screen">
-              <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050505]/90 px-5 py-5 backdrop-blur-xl">
+              <header className="rk-header sticky top-0 z-20 px-5 py-5">
                 <div className="flex items-center gap-3">
-                  <button onClick={goHome} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60 hover:text-white">←</button>
+                  <button onClick={goHome} className="rk-iconbtn rounded-xl px-3 py-2 text-xs">←</button>
                   <div>
-                    <div className="text-xl font-black">Bookmarks</div>
+                    <div className="rk-display text-[17px]">Bookmarks</div>
                     <div className="text-xs text-white/35">Posts you saved</div>
                   </div>
                 </div>
@@ -1410,12 +1644,12 @@ export default function RaakaSocialPage() {
               ) : bookmarkPosts.length ? (
                 <div>
                   {bookmarkPosts.map((post) => (
-                    <article key={post.id} className="border-b border-white/10 px-5 py-5 transition hover:bg-white/[.018]">
+                    <article key={post.id} className="rk-post border-b border-white/[.07] px-5 py-5">
                       <div className="flex gap-3">
                         <button
                           type="button"
                           onClick={() => void openProfile(post.author.handle)}
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 font-bold"
+                          className="rk-avatar-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold"
                           aria-label={`Open @${post.author.handle} profile`}
                         >
                           {post.author.displayName.slice(0, 1).toUpperCase()}
@@ -1439,7 +1673,7 @@ export default function RaakaSocialPage() {
                 </div>
               ) : (
                 <div className="p-12 text-center">
-                  <div className="text-3xl">🔖</div>
+                  <div className="rk-float text-4xl">🔖</div>
                   <div className="mt-3 font-bold">No bookmarks yet</div>
                   <div className="mt-1 text-sm text-white/35">Save a post and it will appear here.</div>
                 </div>
@@ -1448,7 +1682,7 @@ export default function RaakaSocialPage() {
 
           ) : view === "settings" ? (
             <div className="min-h-screen">
-              <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050505]/95 px-5 py-4 backdrop-blur-xl">
+              <header className="rk-header sticky top-0 z-20 px-5 py-4">
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => settingsSection === "home" ? goHome() : resetSettingsHome()}
@@ -1496,23 +1730,22 @@ export default function RaakaSocialPage() {
                 </div>
               ) : settingsSection === "account" ? (
                 <div className="p-5">
-                  <div className="rounded-3xl border border-white/10 bg-white/[.03] p-5">
-                    <div className="text-xs font-bold uppercase tracking-[.2em] text-red-400">Account information</div>
+                  <div className="rk-card rounded-3xl p-5">
+                    <div className="text-xs font-bold tracking-wide text-red-400">Account information</div>
                     <div className="mt-5 space-y-4 text-sm">
                       <div><div className="text-white/35">Display name</div><div className="mt-1 font-bold">{profile?.displayName}</div></div>
                       <div><div className="text-white/35">Username</div><div className="mt-1 font-bold">@{profile?.handle}</div></div>
                       <div><div className="text-white/35">Account status</div><div className="mt-1 font-bold text-emerald-300">Verified</div></div>
                     </div>
                   </div>
-                  <button onClick={startEditingProfile} className="mt-4 flex w-full items-center justify-between rounded-2xl border border-white/10 px-4 py-4 text-left font-bold hover:bg-white/5"><span>Edit profile</span><span className="text-white/30">→</span></button>
-                  <button onClick={() => { setMessage(""); setPasswordModalOpen(true); }} className="mt-2 flex w-full items-center justify-between rounded-2xl border border-white/10 px-4 py-4 text-left font-bold hover:bg-white/5"><span>Change password</span><span className="text-white/30">→</span></button>
+                  <button onClick={startEditingProfile} className="mt-4 flex w-full items-center justify-between rounded-2xl border border-white/[.07] px-4 py-4 text-left font-bold hover:bg-white/5"><span>Edit profile</span><span className="text-white/30">→</span></button>
+                  <button onClick={() => { setMessage(""); setPasswordModalOpen(true); }} className="mt-2 flex w-full items-center justify-between rounded-2xl border border-white/[.07] px-4 py-4 text-left font-bold hover:bg-white/5"><span>Change password</span><span className="text-white/30">→</span></button>
                   <div className="mt-6 rounded-3xl border border-red-500/15 bg-red-500/[.03] p-5">
                     <div className="font-bold text-red-300">Account deactivation</div>
                     <p className="mt-2 text-sm leading-6 text-white/40">Temporarily deactivate your RAAKA Social account. Your profile and posts are kept, but all active sessions are signed out.</p>
                     <button onClick={() => setAccountAction("deactivate")} className="mt-4 rounded-full border border-red-500/20 px-5 py-2 text-xs font-bold text-red-300 hover:bg-red-500/10">Deactivate account</button>
                     <button onClick={() => setAccountAction("delete")} className="ml-2 mt-4 rounded-full bg-red-500 px-5 py-2 text-xs font-black text-white">Delete account</button>
                   </div>
-                  {message && <div className="mt-4 text-xs text-red-300">{message}</div>}
                 </div>
               ) : settingsSection === "security" ? (
                 <div className="p-5 space-y-3">
@@ -1534,59 +1767,54 @@ export default function RaakaSocialPage() {
                           setMessage(`${title} is not available yet.`);
                         }
                       }}
-                      className="w-full rounded-2xl border border-white/10 px-5 py-4 text-left hover:bg-white/[.04]"
+                      className="w-full rk-row rounded-2xl border border-white/[.07] px-5 py-4 text-left hover:bg-white/[.04]"
                     >
                       <div className="font-bold">{title}</div>
                       <div className="mt-1 text-sm leading-6 text-white/40">{desc}</div>
                     </button>
                   ))}
-                  {message && <div className="text-xs text-red-300">{message}</div>}
                 </div>
               ) : settingsSection === "privacy" ? (
                 <div className="p-5 space-y-4">
-                  <div className="rounded-3xl border border-white/10 bg-white/[.03] p-5">
+                  <div className="rk-card rounded-3xl p-5">
                     <div className="font-bold">Private account</div><div className="mt-1 text-sm text-white/40">Only approved followers can see your posts.</div>
-                    <button onClick={() => { const v=!privateAccount; setPrivateAccount(v); updateLocalSetting("raaka-social-private", v?"1":"0"); }} className={`mt-4 h-8 w-14 rounded-full p-1 ${privateAccount ? "bg-red-500" : "bg-white/15"}`}><span className={`block h-6 w-6 rounded-full bg-white transition ${privateAccount ? "translate-x-6" : "translate-x-0"}`} /></button>
+                    <button onClick={() => { const v=!privateAccount; setPrivateAccount(v); updateLocalSetting("raaka-social-private", v?"1":"0"); }} className={`mt-4 h-8 w-14 rounded-full p-1 ${privateAccount ? "rk-switch-on" : "rk-switch-off"}`}><span className={`rk-knob block h-6 w-6 rounded-full ${privateAccount ? "translate-x-6" : "translate-x-0"}`} /></button>
                   </div>
-                  <div className="rounded-3xl border border-white/10 bg-white/[.03] p-5"><div className="font-bold">Who can reply</div><div className="mt-1 text-sm text-white/40">Choose who can reply to your posts.</div><div className="mt-4 flex gap-2"><button onClick={() => {setReplyPermission("everyone");updateLocalSetting("raaka-social-replies","everyone")}} className={`rounded-full px-4 py-2 text-xs font-bold ${replyPermission === "everyone" ? "bg-white text-black" : "border border-white/10 text-white/60"}`}>Everyone</button><button onClick={() => {setReplyPermission("following");updateLocalSetting("raaka-social-replies","following")}} className={`rounded-full px-4 py-2 text-xs font-bold ${replyPermission === "following" ? "bg-white text-black" : "border border-white/10 text-white/60"}`}>People you follow</button></div></div>
+                  <div className="rk-card rounded-3xl p-5"><div className="font-bold">Who can reply</div><div className="mt-1 text-sm text-white/40">Choose who can reply to your posts.</div><div className="mt-4 flex gap-2"><button onClick={() => {setReplyPermission("everyone");updateLocalSetting("raaka-social-replies","everyone")}} className={`rounded-full px-4 py-2 text-xs font-bold ${replyPermission === "everyone" ? "rk-btn-primary" : "border border-white/[.07] text-white/60"}`}>Everyone</button><button onClick={() => {setReplyPermission("following");updateLocalSetting("raaka-social-replies","following")}} className={`rounded-full px-4 py-2 text-xs font-bold ${replyPermission === "following" ? "rk-btn-primary" : "border border-white/[.07] text-white/60"}`}>People you follow</button></div></div>
                   {[
                     ["Blocked accounts", "Manage accounts you have blocked."],
                     ["Muted accounts", "Manage accounts you have muted."],
                     ["Hidden words", "Filter words and phrases from your experience."],
                     ["Report history", "Review reports submitted from your account."],
-                  ].map(([title, desc]) => <button key={title} onClick={() => setMessage(`${title} management will open here.`)} className="w-full rounded-2xl border border-white/10 px-5 py-4 text-left hover:bg-white/[.04]"><div className="font-bold">{title}</div><div className="mt-1 text-sm text-white/40">{desc}</div></button>)}
-                  {message && <div className="text-xs text-red-300">{message}</div>}
+                  ].map(([title, desc]) => <button key={title} onClick={() => setMessage(`${title} management will open here.`)} className="w-full rk-row rounded-2xl border border-white/[.07] px-5 py-4 text-left hover:bg-white/[.04]"><div className="font-bold">{title}</div><div className="mt-1 text-sm text-white/40">{desc}</div></button>)}
                 </div>
               ) : settingsSection === "notifications" ? (
                 <div className="p-5 space-y-3">
-                  {[["Likes", true],["Replies", true],["Reposts", true],["New followers", true],["Mentions", true]].map(([title]) => <div key={String(title)} className="flex items-center justify-between rounded-2xl border border-white/10 px-5 py-4"><div><div className="font-bold">{title}</div><div className="mt-1 text-sm text-white/40">Notify me about {String(title).toLowerCase()}.</div></div><div className="h-2 w-2 rounded-full bg-emerald-400" /></div>)}
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 px-5 py-4"><div><div className="font-bold">Push notifications</div><div className="mt-1 text-sm text-white/40">Allow activity notifications.</div></div><button onClick={() => {const v=!notificationsEnabled;setNotificationsEnabled(v);updateLocalSetting("raaka-social-notifications",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${notificationsEnabled?"bg-red-500":"bg-white/15"}`}><span className={`block h-6 w-6 rounded-full bg-white transition ${notificationsEnabled?"translate-x-6":"translate-x-0"}`} /></button></div>
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 px-5 py-4"><div><div className="font-bold">Email notifications</div><div className="mt-1 text-sm text-white/40">Receive important account emails.</div></div><button onClick={() => {const v=!emailNotifications;setEmailNotifications(v);updateLocalSetting("raaka-social-email-notifications",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${emailNotifications?"bg-red-500":"bg-white/15"}`}><span className={`block h-6 w-6 rounded-full bg-white transition ${emailNotifications?"translate-x-6":"translate-x-0"}`} /></button></div>
+                  {[["Likes", true],["Replies", true],["Reposts", true],["New followers", true],["Mentions", true]].map(([title]) => <div key={String(title)} className="flex items-center justify-between rk-row rounded-2xl border border-white/[.07] px-5 py-4"><div><div className="font-bold">{title}</div><div className="mt-1 text-sm text-white/40">Notify me about {String(title).toLowerCase()}.</div></div><div className="h-2 w-2 rounded-full bg-emerald-400" /></div>)}
+                  <div className="flex items-center justify-between rk-row rounded-2xl border border-white/[.07] px-5 py-4"><div><div className="font-bold">Push notifications</div><div className="mt-1 text-sm text-white/40">Allow activity notifications.</div></div><button onClick={() => {const v=!notificationsEnabled;setNotificationsEnabled(v);updateLocalSetting("raaka-social-notifications",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${notificationsEnabled?"rk-switch-on" : "rk-switch-off"}`}><span className={`rk-knob block h-6 w-6 rounded-full ${notificationsEnabled?"translate-x-6":"translate-x-0"}`} /></button></div>
+                  <div className="flex items-center justify-between rk-row rounded-2xl border border-white/[.07] px-5 py-4"><div><div className="font-bold">Email notifications</div><div className="mt-1 text-sm text-white/40">Receive important account emails.</div></div><button onClick={() => {const v=!emailNotifications;setEmailNotifications(v);updateLocalSetting("raaka-social-email-notifications",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${emailNotifications?"rk-switch-on" : "rk-switch-off"}`}><span className={`rk-knob block h-6 w-6 rounded-full ${emailNotifications?"translate-x-6":"translate-x-0"}`} /></button></div>
                 </div>
               ) : settingsSection === "accessibility" ? (
                 <div className="p-5 space-y-4">
-                  <div className="rounded-3xl border border-white/10 bg-white/[.03] p-5"><div className="font-bold">Theme</div><div className="mt-1 text-sm text-white/40">RAAKA Social currently uses dark mode.</div><div className="mt-4 rounded-full bg-white/10 px-4 py-3 text-sm">Dark mode <span className="float-right text-emerald-300">Active</span></div></div>
-                  <div className="rounded-3xl border border-white/10 bg-white/[.03] p-5"><div className="font-bold">Font size</div><div className="mt-3 flex gap-2">{[["small","Small"],["default","Default"],["large","Large"]].map(([v,label])=><button key={v} onClick={()=>{setFontSize(v as typeof fontSize);updateLocalSetting("raaka-social-font-size",v)}} className={`rounded-full px-4 py-2 text-xs font-bold ${fontSize===v?"bg-white text-black":"border border-white/10 text-white/60"}`}>{label}</button>)}</div></div>
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 px-5 py-4"><div><div className="font-bold">Reduce animations</div><div className="mt-1 text-sm text-white/40">Use fewer motion effects.</div></div><button onClick={()=>{const v=!reduceAnimations;setReduceAnimations(v);updateLocalSetting("raaka-social-reduce-animations",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${reduceAnimations?"bg-red-500":"bg-white/15"}`}><span className={`block h-6 w-6 rounded-full bg-white transition ${reduceAnimations?"translate-x-6":"translate-x-0"}`} /></button></div>
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 px-5 py-4"><div><div className="font-bold">Data saver</div><div className="mt-1 text-sm text-white/40">Reduce background network activity.</div></div><button onClick={()=>{const v=!dataSaver;setDataSaver(v);updateLocalSetting("raaka-social-data-saver",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${dataSaver?"bg-red-500":"bg-white/15"}`}><span className={`block h-6 w-6 rounded-full bg-white transition ${dataSaver?"translate-x-6":"translate-x-0"}`} /></button></div>
-                  <div className="rounded-3xl border border-white/10 p-5"><div className="font-bold">Language</div><div className="mt-1 text-sm text-white/40">English</div></div>
+                  <div className="rk-card rounded-3xl p-5"><div className="font-bold">Theme</div><div className="mt-1 text-sm text-white/40">RAAKA Social currently uses dark mode.</div><div className="mt-4 rounded-full bg-white/10 px-4 py-3 text-sm">Dark mode <span className="float-right text-emerald-300">Active</span></div></div>
+                  <div className="rk-card rounded-3xl p-5"><div className="font-bold">Font size</div><div className="mt-3 flex gap-2">{[["small","Small"],["default","Default"],["large","Large"]].map(([v,label])=><button key={v} onClick={()=>{setFontSize(v as typeof fontSize);updateLocalSetting("raaka-social-font-size",v)}} className={`rounded-full px-4 py-2 text-xs font-bold ${fontSize===v?"rk-btn-primary":"border border-white/[.07] text-white/60"}`}>{label}</button>)}</div></div>
+                  <div className="flex items-center justify-between rk-row rounded-2xl border border-white/[.07] px-5 py-4"><div><div className="font-bold">Reduce animations</div><div className="mt-1 text-sm text-white/40">Use fewer motion effects.</div></div><button onClick={()=>{const v=!reduceAnimations;setReduceAnimations(v);updateLocalSetting("raaka-social-reduce-animations",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${reduceAnimations?"rk-switch-on" : "rk-switch-off"}`}><span className={`rk-knob block h-6 w-6 rounded-full ${reduceAnimations?"translate-x-6":"translate-x-0"}`} /></button></div>
+                  <div className="flex items-center justify-between rk-row rounded-2xl border border-white/[.07] px-5 py-4"><div><div className="font-bold">Data saver</div><div className="mt-1 text-sm text-white/40">Reduce background network activity.</div></div><button onClick={()=>{const v=!dataSaver;setDataSaver(v);updateLocalSetting("raaka-social-data-saver",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${dataSaver?"rk-switch-on" : "rk-switch-off"}`}><span className={`rk-knob block h-6 w-6 rounded-full ${dataSaver?"translate-x-6":"translate-x-0"}`} /></button></div>
+                  <div className="rounded-3xl border border-white/[.07] p-5"><div className="font-bold">Language</div><div className="mt-1 text-sm text-white/40">English</div></div>
                 </div>
               ) : (
                 <div className="p-5 space-y-3">
-                  <button onClick={() => {const blob=new Blob([JSON.stringify({profile,exportedAt:new Date().toISOString()},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="raaka-social-data.json";a.click();URL.revokeObjectURL(a.href)}} className="w-full rounded-2xl border border-white/10 px-5 py-4 text-left hover:bg-white/[.04]"><div className="font-bold">Download your data</div><div className="mt-1 text-sm text-white/40">Download the account data currently available to this session.</div></button>
-                  {["Privacy Policy","Terms of Service","Community Guidelines","Help Center","About RAAKA Social"].map((title)=><button key={title} onClick={()=>setMessage(`${title} page will open here.`)} className="w-full rounded-2xl border border-white/10 px-5 py-4 text-left hover:bg-white/[.04]"><div className="font-bold">{title}</div><div className="mt-1 text-sm text-white/40">RAAKA Social information and resources.</div></button>)}
-                  {message && <div className="text-xs text-red-300">{message}</div>}
+                  <button onClick={() => {const blob=new Blob([JSON.stringify({profile,exportedAt:new Date().toISOString()},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="raaka-social-data.json";a.click();URL.revokeObjectURL(a.href)}} className="w-full rk-row rounded-2xl border border-white/[.07] px-5 py-4 text-left hover:bg-white/[.04]"><div className="font-bold">Download your data</div><div className="mt-1 text-sm text-white/40">Download the account data currently available to this session.</div></button>
+                  {["Privacy Policy","Terms of Service","Community Guidelines","Help Center","About RAAKA Social"].map((title)=><button key={title} onClick={()=>setMessage(`${title} page will open here.`)} className="w-full rk-row rounded-2xl border border-white/[.07] px-5 py-4 text-left hover:bg-white/[.04]"><div className="font-bold">{title}</div><div className="mt-1 text-sm text-white/40">RAAKA Social information and resources.</div></button>)}
                 </div>
               )}
             </div>
           ) : (
             <>
-          <header className="sticky top-0 z-20 border-b border-white/10 bg-[#050505]/90 px-5 py-5 backdrop-blur-xl">
+          <header className="rk-header sticky top-0 z-20 px-5 py-5">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xl font-black">
-                  RAAKA Social
-                </div>
+                <div className="rk-display rk-wordmark text-[17px]">RAAKA Social</div>
 
                 <div className="text-xs text-white/35">
                   Text-only fan community
@@ -1596,7 +1824,7 @@ export default function RaakaSocialPage() {
               <div className="flex items-center gap-2 lg:hidden">
                 <button
                   onClick={() => setMobileMenuOpen(true)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/80 transition hover:bg-white/10 active:scale-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[.07] text-white/80 transition hover:bg-white/10 active:scale-95"
                   aria-label="Open menu"
                 >
                   <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -1606,26 +1834,19 @@ export default function RaakaSocialPage() {
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 rounded-xl bg-white/[.03] p-1">
+            <div className="rk-tabs relative mt-5 grid grid-cols-2 rounded-xl p-1" role="tablist">
+              <span aria-hidden="true" className="rk-tab-pill" style={{ transform: tab === "following" ? "translateX(100%)" : "translateX(0)" }} />
 
               <button
                 onClick={() => setTab("for-you")}
-                className={`rounded-lg py-2 text-xs font-bold ${
-                  tab === "for-you"
-                    ? "bg-white/10 text-white"
-                    : "text-white/40"
-                }`}
+                className={`rk-tab rounded-lg py-2 text-xs font-bold ${tab === "for-you" ? "text-white" : "text-white/45 hover:text-white/80"}`}
               >
                 For You
               </button>
 
               <button
                 onClick={() => setTab("following")}
-                className={`rounded-lg py-2 text-xs font-bold ${
-                  tab === "following"
-                    ? "bg-white/10 text-white"
-                    : "text-white/40"
-                }`}
+                className={`rk-tab rounded-lg py-2 text-xs font-bold ${tab === "following" ? "text-white" : "text-white/45 hover:text-white/80"}`}
               >
                 Following
               </button>
@@ -1633,8 +1854,8 @@ export default function RaakaSocialPage() {
             </div>
           </header>
 
-          <div className="border-b border-white/10 p-4 lg:hidden">
-            <div className="flex gap-2 rounded-2xl border border-white/10 bg-white/[.03] p-2">
+          <div className="border-b border-white/[.07] p-4 lg:hidden">
+            <div className="flex gap-2 rk-card rounded-2xl p-2">
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -1655,11 +1876,11 @@ export default function RaakaSocialPage() {
           </div>
 
           {searchResults && (
-            <div className="border-b border-white/10 px-4 pb-4 xl:hidden">
-              <div className="mt-4 overflow-hidden rounded-3xl border border-white/10 bg-white/[.03]">
-                <div className="border-b border-white/10 px-4 pt-4">
+            <div className="border-b border-white/[.07] px-4 pb-4 xl:hidden">
+              <div className="mt-4 overflow-hidden rk-card rounded-3xl">
+                <div className="border-b border-white/[.07] px-4 pt-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-xs font-bold uppercase tracking-[.2em] text-white/40">
+                    <div className="text-xs font-bold tracking-wide text-white/40">
                       Search results
                     </div>
                     {searchLoading && <span className="text-[10px] text-white/30">Searching…</span>}
@@ -1703,7 +1924,7 @@ export default function RaakaSocialPage() {
                               onClick={() => void openProfile(user.handle)}
                               className="flex min-w-0 flex-1 items-center gap-3 text-left"
                             >
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 font-black">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full rk-avatar-grad font-black">
                                 {user.displayName.slice(0, 1).toUpperCase()}
                               </div>
 
@@ -1728,8 +1949,8 @@ export default function RaakaSocialPage() {
                                 onClick={() => void follow(user.visitorId)}
                                 className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black ${
                                   user.isFollowing
-                                    ? "border border-white/15 text-white/70"
-                                    : "bg-white text-black"
+                                    ? "rk-ghost"
+                                    : "rk-btn-primary"
                                 }`}
                               >
                                 {user.isFollowing ? "Following" : "Follow"}
@@ -1784,9 +2005,9 @@ export default function RaakaSocialPage() {
           )}
 
           {notifications.length > 0 && (
-            <div className="border-b border-white/10 p-4">
+            <div className="border-b border-white/[.07] p-4">
               <div className="mb-3 flex items-center justify-between">
-                <div className="text-xs font-bold uppercase tracking-[.2em] text-white/40">Notifications</div>
+                <div className="text-xs font-bold tracking-wide text-white/40">Notifications</div>
                 <button type="button" onClick={() => setNotifications([])} className="text-[11px] text-white/30 hover:text-white">Clear</button>
               </div>
               <div className="space-y-1">
@@ -1809,10 +2030,10 @@ export default function RaakaSocialPage() {
             </div>
           )}
 
-          <div className="border-b border-white/10 p-5">
+          <div className="rk-composer border-b border-white/[.07] p-5">
             <div className="flex gap-3">
 
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 font-black">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full rk-avatar-grad font-black">
                 {profileInitial}
               </div>
 
@@ -1827,25 +2048,26 @@ export default function RaakaSocialPage() {
                   }
                   placeholder="What's happening in the RAAKA universe?"
                   rows={3}
-                  className="w-full resize-none bg-transparent text-base outline-none placeholder:text-white/25"
+                  className="w-full resize-none bg-transparent text-base leading-7 outline-none placeholder:text-white/30"
                 />
 
                 <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
 
-                  <span
-                    className={`text-xs ${
-                      text.length > 250
-                        ? "text-red-400"
-                        : "text-white/30"
-                    }`}
-                  >
-                    {text.length}/280
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="rk-ring"
+                      aria-hidden="true"
+                      style={{ background: `conic-gradient(${text.length > 250 ? "#ff3b55" : "#ff7a3d"} ${(text.length / 280) * 360}deg, rgba(255,255,255,.1) 0deg)` }}
+                    />
+                    <span className={`text-xs tabular-nums ${text.length > 250 ? "text-red-400" : "text-white/30"}`}>
+                      {text.length}/280
+                    </span>
                   </span>
 
                   <button
                     disabled={!text.trim() || posting}
                     onClick={createPost}
-                    className="rounded-full bg-white px-5 py-2 text-xs font-black text-black disabled:cursor-not-allowed disabled:opacity-30"
+                    className="rk-btn-primary rounded-full px-5 py-2 text-xs font-black disabled:cursor-not-allowed disabled:opacity-30"
                   >
                     {posting ? "Posting…" : "Post"}
                   </button>
@@ -1854,20 +2076,25 @@ export default function RaakaSocialPage() {
               </div>
             </div>
 
-            {message && (
-              <div className="mt-2 text-xs text-red-300">
-                {message}
-              </div>
-            )}
-          </div>
+                      </div>
 
           {loading ? (
-            <div className="p-10 text-center text-sm text-white/30">
-              Loading RAAKA Social…
+            <div aria-busy="true">
+              <span className="sr-only">Loading RAAKA Social…</span>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-3 border-b border-white/[.07] px-5 py-5">
+                  <div className="rk-skel h-10 w-10 shrink-0" style={{ borderRadius: 9999 }} />
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div className="rk-skel h-3 w-40" />
+                    <div className="rk-skel h-3 w-full" />
+                    <div className="rk-skel h-3 w-4/5" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : posts.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="text-3xl">✦</div>
+              <div className="rk-float text-4xl text-[#ff7a3d]">✦</div>
 
               <div className="mt-3 font-bold">
                 No posts yet
@@ -1878,10 +2105,11 @@ export default function RaakaSocialPage() {
               </div>
             </div>
           ) : (
-            posts.map((post) => (
+            posts.map((post, postIndex) => (
               <article
                 key={post.id}
-                className="border-b border-white/10 px-5 py-5 transition hover:bg-white/[.018]"
+                style={{ "--rk-d": `${Math.min(postIndex, 8) * 60}ms` } as CSSProperties}
+                className="rk-post border-b border-white/[.07] px-5 py-5"
               >
                 <div className="flex gap-3">
 
@@ -1889,7 +2117,7 @@ export default function RaakaSocialPage() {
                     type="button"
                     onClick={() => void openProfile(post.author.handle)}
                     aria-label={`Open @${post.author.handle} profile`}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 font-bold transition hover:bg-white/15"
+                    className="rk-avatar-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold"
                   >
                     {post.author.displayName.slice(0, 1).toUpperCase()}
                   </button>
@@ -1951,7 +2179,7 @@ export default function RaakaSocialPage() {
                             )
                           }
                           aria-label="Reply"
-                          className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full text-white/40 transition hover:bg-sky-500/10 hover:text-sky-400"
+                          className="rk-act flex h-10 w-full items-center justify-center gap-1.5 rounded-full text-white/40 hover:bg-sky-500/10 hover:text-sky-400"
                         >
                           <ActionIcon type="reply" />
                           <span className="text-[13px] tabular-nums">{post.replies}</span>
@@ -1959,11 +2187,11 @@ export default function RaakaSocialPage() {
 
                         <button
                           type="button"
-                          onClick={() => void repost(post.id)}
+                          onClick={() => { setPulse(`repost:${post.id}`); void repost(post.id); }}
                           disabled={Boolean(actionPending[`repost:${post.id}`])}
                           aria-label={post.reposted ? "Remove repost" : "Repost"}
                           aria-pressed={post.reposted}
-                          className={`flex h-10 w-full items-center justify-center gap-1.5 rounded-full transition disabled:opacity-40 ${post.reposted ? "text-green-400" : "text-white/40 hover:bg-green-500/10 hover:text-green-400"}`}
+                          className={`rk-act flex h-10 w-full items-center justify-center gap-1.5 rounded-full disabled:opacity-40 ${post.reposted ? "rk-rp-on text-emerald-400" : "text-white/40 hover:bg-emerald-500/10 hover:text-emerald-400"} ${post.reposted && pulse === `repost:${post.id}` ? "rk-pulse" : ""}`}
                         >
                           <ActionIcon type="repost" />
                           <span className="text-[13px] tabular-nums">{post.reposts}</span>
@@ -1971,13 +2199,9 @@ export default function RaakaSocialPage() {
 
                         <button
                           type="button"
-                          onClick={() => like(post.id)}
+                          onClick={() => { setPulse(`like:${post.id}`); void like(post.id); }}
                           aria-label={post.liked ? "Unlike" : "Like"}
-                          className={`flex h-10 w-full items-center justify-center gap-1.5 rounded-full transition ${
-                            post.liked
-                              ? "text-pink-500"
-                              : "text-white/40 hover:bg-pink-500/10 hover:text-pink-500"
-                          }`}
+                          className={`rk-act flex h-10 w-full items-center justify-center gap-1.5 rounded-full ${post.liked ? "rk-like-on text-[#ff4d6d]" : "text-white/40 hover:bg-[#ff4d6d]/10 hover:text-[#ff4d6d]"} ${post.liked && pulse === `like:${post.id}` ? "rk-pulse" : ""}`}
                         >
                           <ActionIcon type="like" />
                           <span className="text-[13px] tabular-nums">{post.likes}</span>
@@ -1985,14 +2209,10 @@ export default function RaakaSocialPage() {
 
                         <button
                           type="button"
-                          onClick={() => void bookmark(post.id)}
+                          onClick={() => { setPulse(`bookmark:${post.id}`); void bookmark(post.id); }}
                           disabled={Boolean(actionPending[`bookmark:${post.id}`])}
                           aria-label={post.bookmarked ? "Remove bookmark" : "Bookmark"}
-                          className={`flex h-10 w-full items-center justify-center rounded-full transition ${
-                            post.bookmarked
-                              ? "text-amber-400"
-                              : "text-white/40 hover:bg-amber-500/10 hover:text-amber-400"
-                          }`}
+                          className={`rk-act flex h-10 w-full items-center justify-center rounded-full ${post.bookmarked ? "rk-bm-on text-amber-400" : "text-white/40 hover:bg-amber-500/10 hover:text-amber-400"} ${post.bookmarked && pulse === `bookmark:${post.id}` ? "rk-pulse" : ""}`}
                         >
                           <ActionIcon type="bookmark" />
                         </button>
@@ -2001,7 +2221,7 @@ export default function RaakaSocialPage() {
                           type="button"
                           onClick={() => sharePost(post.id)}
                           aria-label="Share"
-                          className="flex h-10 w-full items-center justify-center rounded-full text-white/40 transition hover:bg-sky-500/10 hover:text-sky-400"
+                          className="rk-act flex h-10 w-full items-center justify-center rounded-full text-white/40 hover:bg-sky-500/10 hover:text-sky-400"
                         >
                           <ActionIcon type="share" />
                         </button>
@@ -2014,14 +2234,14 @@ export default function RaakaSocialPage() {
                             )
                           }
                           aria-label="More"
-                          className="flex h-10 w-full items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white"
+                          className="rk-act flex h-10 w-full items-center justify-center rounded-full text-white/40 hover:bg-white/10 hover:text-white"
                         >
                           <ActionIcon type="more" />
                         </button>
                       </div>
 
                       {moreMenu === post.id && (
-                        <div className="absolute right-0 top-11 z-30 w-56 overflow-hidden rounded-2xl border border-white/10 bg-[#101010] p-1.5 shadow-2xl shadow-black/50">
+                        <div className="rk-pop absolute right-0 top-11 z-30 w-56 overflow-hidden rounded-2xl p-1.5">
                           <button
                             type="button"
                             onClick={() => {
@@ -2081,14 +2301,14 @@ export default function RaakaSocialPage() {
                             )
                           }
                           placeholder="Reply to this post…"
-                          className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+                          className="min-w-0 flex-1 rk-input rounded-xl px-3 py-2 text-sm "
                         />
 
                         <button
                           onClick={() =>
                             reply(post.id)
                           }
-                          className="rounded-xl bg-white px-4 text-xs font-bold text-black"
+                          className="rk-btn-primary rounded-xl px-4 text-xs font-bold"
                         >
                           Reply
                         </button>
@@ -2103,12 +2323,12 @@ export default function RaakaSocialPage() {
           )}
 
           {nextCursor > 0 && (
-            <div className="border-b border-white/10 p-4">
+            <div className="border-b border-white/[.07] p-4">
               <button
                 type="button"
                 disabled={loadingMore}
                 onClick={() => void load(true, nextCursor)}
-                className="w-full rounded-2xl border border-white/10 px-4 py-3 text-xs font-bold text-white/70 transition hover:bg-white/[.05] disabled:opacity-40"
+                className="rk-ghost w-full rounded-2xl px-4 py-3 text-xs font-bold disabled:opacity-40"
               >
                 {loadingMore ? "Loading more…" : "Load more posts"}
               </button>
@@ -2123,7 +2343,7 @@ export default function RaakaSocialPage() {
 
         <aside className="hidden w-[300px] px-5 py-8 xl:block">
 
-          <div className="rounded-2xl border border-white/10 bg-white/[.03] p-3">
+          <div className="rk-card rounded-2xl p-3">
 
             <div className="flex gap-2">
 
@@ -2153,9 +2373,9 @@ export default function RaakaSocialPage() {
           </div>
 
           {searchResults ? (
-            <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-white/[.03]">
-              <div className="border-b border-white/10 px-5 pt-5">
-                <div className="text-xs font-bold uppercase tracking-[.2em] text-white/40">
+            <div className="mt-5 overflow-hidden rk-card rounded-3xl">
+              <div className="border-b border-white/[.07] px-5 pt-5">
+                <div className="text-xs font-bold tracking-wide text-white/40">
                   Search results
                 </div>
 
@@ -2196,7 +2416,7 @@ export default function RaakaSocialPage() {
                             onClick={() => void openProfile(user.handle)}
                             className="flex min-w-0 flex-1 items-center gap-3 text-left"
                           >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 font-black">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full rk-avatar-grad font-black">
                               {user.displayName.slice(0, 1).toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -2219,8 +2439,8 @@ export default function RaakaSocialPage() {
                               onClick={() => follow(user.visitorId)}
                               className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black ${
                                 user.isFollowing
-                                  ? "border border-white/15 text-white/70"
-                                  : "bg-white text-black"
+                                  ? "rk-ghost"
+                                  : "rk-btn-primary"
                               }`}
                             >
                               {user.isFollowing ? "Following" : "Follow"}
@@ -2264,9 +2484,9 @@ export default function RaakaSocialPage() {
               </div>
             </div>
           ) : (
-            <div className="mt-5 rounded-3xl border border-white/10 bg-white/[.03] p-5">
+            <div className="mt-5 rk-card rounded-3xl p-5">
 
-              <div className="text-xs font-bold uppercase tracking-[.2em] text-red-400">
+              <div className="text-xs font-bold tracking-wide text-red-400">
                 RAAKA Social
               </div>
 
@@ -2288,7 +2508,7 @@ export default function RaakaSocialPage() {
 
       {profileListMode && selectedProfile && (
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          className="rk-overlay fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-label={`${profileListMode === "followers" ? "Followers" : "Following"} of @${selectedProfile.handle}`}
@@ -2296,8 +2516,8 @@ export default function RaakaSocialPage() {
             if (event.target === event.currentTarget) setProfileListMode(null);
           }}
         >
-          <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0b0b0b] shadow-2xl shadow-black/60">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rk-modal rounded-3xl">
+            <div className="flex items-center justify-between border-b border-white/[.07] px-5 py-4">
               <div>
                 <div className="font-black">{profileListMode === "followers" ? "Followers" : "Following"}</div>
                 <div className="text-xs text-white/35">@{selectedProfile.handle}</div>
@@ -2314,7 +2534,7 @@ export default function RaakaSocialPage() {
                 profileListUsers.map((user) => (
                   <div key={user.visitorId} className="flex items-center gap-3 rounded-2xl p-3 hover:bg-white/[.04]">
                     <button type="button" onClick={() => { setProfileListMode(null); void openProfile(user.handle); }} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-400 font-black">{user.displayName.slice(0, 1).toUpperCase()}</div>
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full rk-avatar-grad font-black">{user.displayName.slice(0, 1).toUpperCase()}</div>
                       <div className="min-w-0">
                         <div className="flex min-w-0 items-center gap-1.5 font-bold">
                           <span className="truncate">{user.displayName}</span>
@@ -2328,7 +2548,7 @@ export default function RaakaSocialPage() {
                         type="button"
                         onClick={() => void follow(user.visitorId)}
                         disabled={Boolean(actionPending[`follow:${user.visitorId}`])}
-                        className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black disabled:opacity-40 ${user.isFollowing ? "border border-white/15 text-white/70" : "bg-white text-black"}`}
+                        className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black disabled:opacity-40 ${user.isFollowing ? "rk-ghost" : "rk-btn-primary"}`}
                       >
                         {user.isFollowing ? "Following" : "Follow"}
                       </button>
@@ -2346,11 +2566,11 @@ export default function RaakaSocialPage() {
       )}
 
       {passwordModalOpen && (
-        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0b0b0b] p-6 shadow-2xl">
+        <div className="rk-overlay fixed inset-0 z-[160] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="rk-modal w-full max-w-md rounded-3xl p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-xl font-black">Change password</div>
+                <div className="rk-display text-[17px]">Change password</div>
                 <p className="mt-1 text-sm leading-6 text-white/40">Use your current password to set a new one.</p>
               </div>
               <button onClick={() => !passwordSaving && setPasswordModalOpen(false)} className="text-xl text-white/40 hover:text-white" aria-label="Close">×</button>
@@ -2363,7 +2583,7 @@ export default function RaakaSocialPage() {
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Current password"
                 autoComplete="current-password"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none focus:border-white/25"
+                className="w-full rk-input rounded-2xl px-4 py-3 text-sm "
               />
               <input
                 type="password"
@@ -2371,7 +2591,7 @@ export default function RaakaSocialPage() {
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="New password"
                 autoComplete="new-password"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none focus:border-white/25"
+                className="w-full rk-input rounded-2xl px-4 py-3 text-sm "
               />
               <input
                 type="password"
@@ -2379,13 +2599,13 @@ export default function RaakaSocialPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
                 autoComplete="new-password"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none focus:border-white/25"
+                className="w-full rk-input rounded-2xl px-4 py-3 text-sm "
               />
             </div>
 
             <div className="mt-5 flex gap-2">
-              <button onClick={() => setPasswordModalOpen(false)} disabled={passwordSaving} className="rounded-full border border-white/10 px-5 py-2.5 text-xs font-bold text-white/60 disabled:opacity-40">Cancel</button>
-              <button onClick={() => void changePassword()} disabled={passwordSaving} className="rounded-full bg-white px-5 py-2.5 text-xs font-black text-black disabled:opacity-40">
+              <button onClick={() => setPasswordModalOpen(false)} disabled={passwordSaving} className="rk-ghost rounded-full px-5 py-2.5 text-xs font-bold disabled:opacity-40">Cancel</button>
+              <button onClick={() => void changePassword()} disabled={passwordSaving} className="rk-btn-primary rounded-full px-5 py-2.5 text-xs font-black disabled:opacity-40">
                 {passwordSaving ? "Changing…" : "Change password"}
               </button>
             </div>
@@ -2394,9 +2614,9 @@ export default function RaakaSocialPage() {
       )}
 
       {accountAction && (
-        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-red-500/15 bg-[#0b0b0b] p-6 shadow-2xl">
-            <div className="text-xl font-black">
+        <div className="rk-overlay fixed inset-0 z-[160] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="rk-modal w-full max-w-md rounded-3xl p-6">
+            <div className="rk-display text-[17px]">
               {accountAction === "delete" ? "Delete account?" : "Deactivate account?"}
             </div>
             <p className="mt-3 text-sm leading-6 text-white/50">
@@ -2406,12 +2626,18 @@ export default function RaakaSocialPage() {
             </p>
 
             <div className="mt-6 flex justify-end gap-2">
-              <button onClick={() => !accountActionPending && setAccountAction(null)} disabled={accountActionPending} className="rounded-full border border-white/10 px-5 py-2.5 text-xs font-bold text-white/60 disabled:opacity-40">Cancel</button>
+              <button onClick={() => !accountActionPending && setAccountAction(null)} disabled={accountActionPending} className="rk-ghost rounded-full px-5 py-2.5 text-xs font-bold disabled:opacity-40">Cancel</button>
               <button onClick={() => void runAccountAction()} disabled={accountActionPending} className={`rounded-full px-5 py-2.5 text-xs font-black text-white disabled:opacity-40 ${accountAction === "delete" ? "bg-red-500" : "border border-red-500/30 bg-red-500/10 text-red-300"}`}>
                 {accountActionPending ? "Please wait…" : accountAction === "delete" ? "Delete permanently" : "Deactivate"}
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {message && (
+        <div key={message} className="rk-toast" role="status" aria-live="polite">
+          <i aria-hidden="true" />
+          <span>{message}</span>
         </div>
       )}
     </main>
