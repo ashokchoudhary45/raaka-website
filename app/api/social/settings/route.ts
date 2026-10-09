@@ -134,7 +134,7 @@ function validateSettings(input: any, current: any) {
 export async function GET(request: Request) {
   try {
     const auth = await requireUser(request);
-    if (!auth.userId) return auth.response;
+    if (!auth.userId) return auth.response ?? jsonError("You must be logged in.", 401);
 
     const db = getD1();
     await ensureSettingsTable(db);
@@ -175,7 +175,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const auth = await requireUser(request);
-    if (!auth.userId) return auth.response;
+    if (!auth.userId) return auth.response ?? jsonError("You must be logged in.", 401);
 
     let body: any;
     try {
