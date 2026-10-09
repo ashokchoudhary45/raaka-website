@@ -24,7 +24,11 @@ const DEFAULTS = {
   },
 };
 
-async function requireUser(request: Request) {
+type AuthResult =
+  | { userId: string; response?: never }
+  | { userId: null; response: Response };
+
+async function requireUser(request: Request): Promise<AuthResult> {
   const user = await getCurrentUser(request);
   if (!user) {
     return {
@@ -44,7 +48,7 @@ async function requireUser(request: Request) {
       ),
     };
   }
-  return { userId: user.userId, response: null };
+  return { userId: user.userId };
 }
 
 function jsonError(error: string, status = 400) {
@@ -131,10 +135,10 @@ function validateSettings(input: any, current: any) {
   return next;
 }
 
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<Response> {
   try {
     const auth = await requireUser(request);
-    if (!auth.userId) return auth.response ?? jsonError("You must be logged in.", 401);
+    if (!auth.userId) return auth.response;
 
     const db = getD1();
     await ensureSettingsTable(db);
@@ -172,10 +176,10 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<Response> {
   try {
     const auth = await requireUser(request);
-    if (!auth.userId) return auth.response ?? jsonError("You must be logged in.", 401);
+    if (!auth.userId) return auth.response;
 
     let body: any;
     try {
