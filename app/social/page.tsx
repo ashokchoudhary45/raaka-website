@@ -385,6 +385,27 @@ const RAAKA_CSS = `
 }
 html[data-raaka-reduced-motion="1"] .rk-root *:not(.rk-toast),html[data-raaka-reduced-motion="1"] .rk-root::before{
   animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+
+/* Accessible light theme. All rules are scoped to RAAKA Social. */
+html[data-raaka-theme="light"] .rk-root{--rk-bg:#f7f8fa;--rk-line:rgba(15,23,42,.13);background:#f7f8fa!important;color:#172033!important}
+html[data-raaka-theme="light"] .rk-root::before{opacity:.18}
+html[data-raaka-theme="light"] .rk-root::after{opacity:.015}
+html[data-raaka-theme="light"] .rk-root [class*="text-white"]{color:#273449!important}
+html[data-raaka-theme="light"] .rk-root [class*="text-white/"],html[data-raaka-theme="light"] .rk-root [class*="text-white/"] *{color:#526176!important}
+html[data-raaka-theme="light"] .rk-root .rk-header{background:rgba(255,255,255,.92)!important;border-color:#dce2ea!important}
+html[data-raaka-theme="light"] .rk-root .rk-feed,html[data-raaka-theme="light"] .rk-root .rk-card,html[data-raaka-theme="light"] .rk-root .rk-row{background:#fff!important;border-color:#dce2ea!important;color:#172033!important;box-shadow:0 8px 24px rgba(15,23,42,.04)}
+html[data-raaka-theme="light"] .rk-root .rk-input{background:#fff!important;color:#172033!important;border-color:#cbd5e1!important}
+html[data-raaka-theme="light"] .rk-root .rk-input::placeholder{color:#64748b!important}
+html[data-raaka-theme="light"] .rk-root .rk-ghost,html[data-raaka-theme="light"] .rk-root .rk-iconbtn{background:#fff!important;color:#334155!important;border-color:#cbd5e1!important}
+html[data-raaka-theme="light"] .rk-root .rk-nav{color:#475569!important}
+html[data-raaka-theme="light"] .rk-root .rk-nav:hover,html[data-raaka-theme="light"] .rk-root .rk-nav-active{color:#172033!important;background:#fff1ec!important}
+html[data-raaka-theme="light"] .rk-root .rk-tabs{background:#eef2f7!important}
+html[data-raaka-theme="light"] .rk-root .rk-auth-card,html[data-raaka-theme="light"] .rk-root .rk-modal{background:#fff!important;color:#172033!important;border:1px solid #dce2ea}
+html[data-raaka-theme="light"] .rk-root .rk-avatar-soft{background:#eef2f7!important;color:#334155!important;border-color:#dce2ea!important}
+html[data-raaka-theme="light"] .rk-root .border-white\/\[.07\],html[data-raaka-theme="light"] .rk-root [class*="border-white/"]{border-color:#dce2ea!important}
+html[data-raaka-theme="light"] .rk-root .bg-black\/75{background:rgba(15,23,42,.38)!important}
+html[data-raaka-theme="light"] .rk-root .rk-wordmark{-webkit-text-fill-color:transparent!important}
+
 `;
 
 function RaakaStyles() {
@@ -481,6 +502,8 @@ export default function RaakaSocialPage() {
   const [reduceAnimations, setReduceAnimations] = useState(false);
   const [dataSaver, setDataSaver] = useState(false);
   const [fontSize, setFontSize] = useState<"small" | "default" | "large">("default");
+  const [theme, setTheme] = useState<"dark" | "light" | "system">("dark");
+  const [language, setLanguage] = useState("en");
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -498,6 +521,8 @@ export default function RaakaSocialPage() {
       setReduceAnimations(localStorage.getItem("raaka-social-reduce-animations") === "1");
       setDataSaver(localStorage.getItem("raaka-social-data-saver") === "1");
       setFontSize((localStorage.getItem("raaka-social-font-size") as "small" | "default" | "large") || "default");
+      setTheme((localStorage.getItem("raaka-social-theme") as "dark" | "light" | "system") || "dark");
+      setLanguage(localStorage.getItem("raaka-social-language") || "en");
     } catch {}
   }, []);
 
@@ -505,16 +530,101 @@ export default function RaakaSocialPage() {
     try { localStorage.setItem(key, value); } catch {}
   };
 
+  const saveAccessibilityPreference = async (nextTheme: "dark" | "light" | "system", nextLanguage: string) => {
+    try {
+      const response = await fetch("/api/social/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ action: "save-settings", settings: { accessibility: { theme: nextTheme, language: nextLanguage } } }),
+      });
+      if (!response.ok) {
+        const result = (await response.json().catch(() => ({}))) as {
+          success?: boolean;
+          settings?: Record<string, unknown>;
+          error?: string;
+        };
+        setMessage(result.error || "Preference saved on this device, but account sync failed.");
+      }
+    } catch {
+      setMessage("Preference saved on this device. Account sync is temporarily unavailable.");
+    }
+  };
+
+  const resolvedTheme = theme === "system"
+    ? (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")
+    : theme;
+
   useEffect(() => {
+    document.documentElement.dataset.raakaTheme = resolvedTheme;
+    document.documentElement.lang = language || "en";
     document.documentElement.dataset.raakaReducedMotion = reduceAnimations ? "1" : "0";
     document.documentElement.dataset.raakaDataSaver = dataSaver ? "1" : "0";
     document.documentElement.dataset.raakaFontSize = fontSize;
     return () => {
+      delete document.documentElement.dataset.raakaTheme;
       delete document.documentElement.dataset.raakaReducedMotion;
       delete document.documentElement.dataset.raakaDataSaver;
       delete document.documentElement.dataset.raakaFontSize;
     };
-  }, [reduceAnimations, dataSaver, fontSize]);
+  }, [reduceAnimations, dataSaver, fontSize, resolvedTheme, language]);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/social/settings", { cache: "no-store", credentials: "same-origin" });
+        if (!response.ok) return;
+        const result = (await response.json()) as {
+          success?: boolean;
+          settings?: {
+            accessibility?: {
+              theme?: "dark" | "light" | "system";
+              language?: string;
+              fontSize?: "small" | "default" | "large";
+              reduceAnimations?: boolean;
+              dataSaver?: boolean;
+            };
+          };
+          error?: string;
+        };
+        if (cancelled || !result.success) return;
+        const accessibility = result.settings?.accessibility;
+        if (accessibility) {
+          if (
+            accessibility.theme === "dark" ||
+            accessibility.theme === "light" ||
+            accessibility.theme === "system"
+          ) {
+            setTheme(accessibility.theme);
+            updateLocalSetting("raaka-social-theme", accessibility.theme);
+          }
+          if (typeof accessibility.language === "string" && accessibility.language) {
+            setLanguage(accessibility.language);
+            updateLocalSetting("raaka-social-language", accessibility.language);
+          }
+          if (
+            accessibility.fontSize === "small" ||
+            accessibility.fontSize === "default" ||
+            accessibility.fontSize === "large"
+          ) {
+            setFontSize(accessibility.fontSize);
+            updateLocalSetting("raaka-social-font-size", accessibility.fontSize);
+          }
+          if (typeof accessibility.reduceAnimations === "boolean") {
+            setReduceAnimations(accessibility.reduceAnimations);
+            updateLocalSetting("raaka-social-reduce-animations", accessibility.reduceAnimations ? "1" : "0");
+          }
+          if (typeof accessibility.dataSaver === "boolean") {
+            setDataSaver(accessibility.dataSaver);
+            updateLocalSetting("raaka-social-data-saver", accessibility.dataSaver ? "1" : "0");
+          }
+        }
+      } catch { /* Local preferences remain available if settings sync is offline. */ }
+    })();
+    return () => { cancelled = true; };
+  }, [authenticated]);
 
   useEffect(() => {
     if (!message) return;
@@ -1378,7 +1488,7 @@ export default function RaakaSocialPage() {
 
   if (!authChecked) {
     return (
-      <main className="rk-root">
+      <main className="rk-root" data-theme={resolvedTheme}>
         <RaakaStyles />
         <div className="relative z-[1] flex min-h-screen flex-col items-center justify-center gap-6">
           <div className="rk-orbit" aria-hidden="true" />
@@ -1393,7 +1503,7 @@ export default function RaakaSocialPage() {
 
   if (!authenticated) {
     return (
-      <main className="rk-root px-5">
+      <main className="rk-root px-5" data-theme={resolvedTheme}>
         <RaakaStyles />
         <div className="relative z-[1] flex min-h-screen items-center justify-center py-10">
           <div className="rk-auth w-full max-w-md">
@@ -1431,6 +1541,13 @@ export default function RaakaSocialPage() {
                 </a>
 
                 <a
+                  href="/social/forgot-password"
+                  className="block rounded-xl px-4 py-2.5 text-xs font-semibold text-white/60 transition hover:text-white"
+                >
+                  Forgot password?
+                </a>
+
+                <a
                   href="/social/resend"
                   className="block rounded-xl px-4 py-2.5 text-xs text-white/45 transition hover:text-white"
                 >
@@ -1445,7 +1562,7 @@ export default function RaakaSocialPage() {
   }
 
   return (
-    <main className="rk-root">
+    <main className="rk-root" data-theme={resolvedTheme}>
       <RaakaStyles />
       <div className="relative z-[1] mx-auto flex min-h-screen w-full max-w-[1180px]">
 
@@ -1936,11 +2053,27 @@ export default function RaakaSocialPage() {
                 </div>
               ) : settingsSection === "accessibility" ? (
                 <div className="p-5 space-y-4">
-                  <div className="rk-card rounded-3xl p-5"><div className="font-bold">Theme</div><div className="mt-1 text-sm text-white/40">RAAKA Social currently uses dark mode.</div><div className="mt-4 rounded-full bg-white/10 px-4 py-3 text-sm">Dark mode <span className="float-right text-emerald-300">Active</span></div></div>
-                  <div className="rk-card rounded-3xl p-5"><div className="font-bold">Font size</div><div className="mt-3 flex gap-2">{[["small","Small"],["default","Default"],["large","Large"]].map(([v,label])=><button key={v} onClick={()=>{setFontSize(v as typeof fontSize);updateLocalSetting("raaka-social-font-size",v)}} className={`rounded-full px-4 py-2 text-xs font-bold ${fontSize===v?"rk-btn-primary":"border border-white/[.07] text-white/60"}`}>{label}</button>)}</div></div>
-                  <div className="flex items-center justify-between rk-row rounded-2xl border border-white/[.07] px-5 py-4"><div><div className="font-bold">Reduce animations</div><div className="mt-1 text-sm text-white/40">Use fewer motion effects.</div></div><button onClick={()=>{const v=!reduceAnimations;setReduceAnimations(v);updateLocalSetting("raaka-social-reduce-animations",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${reduceAnimations?"rk-switch-on" : "rk-switch-off"}`}><span className={`rk-knob block h-6 w-6 rounded-full ${reduceAnimations?"translate-x-6":"translate-x-0"}`} /></button></div>
-                  <div className="flex items-center justify-between rk-row rounded-2xl border border-white/[.07] px-5 py-4"><div><div className="font-bold">Data saver</div><div className="mt-1 text-sm text-white/40">Reduce background network activity.</div></div><button onClick={()=>{const v=!dataSaver;setDataSaver(v);updateLocalSetting("raaka-social-data-saver",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${dataSaver?"rk-switch-on" : "rk-switch-off"}`}><span className={`rk-knob block h-6 w-6 rounded-full ${dataSaver?"translate-x-6":"translate-x-0"}`} /></button></div>
-                  <div className="rounded-3xl border border-white/[.07] p-5"><div className="font-bold">Language</div><div className="mt-1 text-sm text-white/40">English</div></div>
+                  <div className="rk-card rounded-3xl p-5">
+                    <div className="font-bold">Display theme</div>
+                    <p className="mt-1 text-sm text-white/40">Choose a comfortable display. Your choice is saved on this device.</p>
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      {([["dark", "🌙 Dark"], ["light", "☀️ Light"], ["system", "🖥 System"]] as const).map(([value, label]) => (
+                        <button key={value} type="button" aria-pressed={theme === value} onClick={() => { setTheme(value); updateLocalSetting("raaka-social-theme", value); void saveAccessibilityPreference(value, language); }} className={`rounded-xl border px-3 py-3 text-sm font-bold ${theme === value ? "rk-btn-primary border-transparent" : "rk-ghost"}`}>{label}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rk-card rounded-3xl p-5"><div className="font-bold">Font size</div><div className="mt-3 flex flex-wrap gap-2">{[["small","Small"],["default","Default"],["large","Large"]].map(([v,label])=><button key={v} onClick={()=>{setFontSize(v as typeof fontSize);updateLocalSetting("raaka-social-font-size",v)}} className={`rounded-full px-4 py-2 text-xs font-bold ${fontSize===v?"rk-btn-primary":"border border-white/[.07] text-white/60"}`}>{label}</button>)}</div></div>
+                  <div className="flex items-center justify-between rk-row rounded-2xl border border-white/[.07] px-5 py-4"><div><div className="font-bold">Reduce animations</div><div className="mt-1 text-sm text-white/40">Use fewer motion effects.</div></div><button type="button" aria-pressed={reduceAnimations} onClick={()=>{const v=!reduceAnimations;setReduceAnimations(v);updateLocalSetting("raaka-social-reduce-animations",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${reduceAnimations?"rk-switch-on" : "rk-switch-off"}`}><span className={`rk-knob block h-6 w-6 rounded-full ${reduceAnimations?"translate-x-6":"translate-x-0"}`} /></button></div>
+                  <div className="flex items-center justify-between rk-row rounded-2xl border border-white/[.07] px-5 py-4"><div><div className="font-bold">Data saver</div><div className="mt-1 text-sm text-white/40">Reduce background network activity.</div></div><button type="button" aria-pressed={dataSaver} onClick={()=>{const v=!dataSaver;setDataSaver(v);updateLocalSetting("raaka-social-data-saver",v?"1":"0")}} className={`h-8 w-14 rounded-full p-1 ${dataSaver?"rk-switch-on" : "rk-switch-off"}`}><span className={`rk-knob block h-6 w-6 rounded-full ${dataSaver?"translate-x-6":"translate-x-0"}`} /></button></div>
+                  <div className="rk-card rounded-3xl p-5">
+                    <label htmlFor="raaka-language" className="font-bold">Language preference</label>
+                    <p className="mt-1 text-sm text-white/40">Select your preferred language. Full app-wide translations need translated interface strings to be added separately.</p>
+                    <select id="raaka-language" value={language} onChange={(event) => { const value = event.target.value; setLanguage(value); updateLocalSetting("raaka-social-language", value); void saveAccessibilityPreference(theme, value); }} className="rk-input mt-3 w-full rounded-xl px-4 py-3 text-sm" aria-label="Preferred language">
+                      {[
+                        ["en","English"],["hi","हिन्दी"],["bn","বাংলা"],["te","తెలుగు"],["mr","मराठी"],["ta","தமிழ்"],["ur","اردو"],["gu","ગુજરાતી"],["kn","ಕನ್ನಡ"],["or","ଓଡ଼ିଆ"],["ml","മലയാളം"],["pa","ਪੰਜਾਬੀ"],["as","অসমীয়া"],["ne","नेपाली"],["es","Español"],["fr","Français"],["de","Deutsch"],["pt","Português"],["it","Italiano"],["ru","Русский"],["ar","العربية"],["zh","中文"],["ja","日本語"],["ko","한국어"],["id","Bahasa Indonesia"],["tr","Türkçe"],["th","ไทย"],["vi","Tiếng Việt"],["fa","فارسی"],["sw","Kiswahili"]
+                      ].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </div>
                 </div>
               ) : (
                 <div className="p-5 space-y-3">
