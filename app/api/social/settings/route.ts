@@ -138,7 +138,7 @@ function validateSettings(input: any, current: any) {
 export async function GET(request: Request): Promise<Response> {
   try {
     const auth = await requireUser(request);
-    if (!auth.userId) return auth.response;
+    if ("response" in auth) return auth.response;
 
     const db = getD1();
     await ensureSettingsTable(db);
@@ -179,7 +179,7 @@ export async function GET(request: Request): Promise<Response> {
 export async function POST(request: Request): Promise<Response> {
   try {
     const auth = await requireUser(request);
-    if (!auth.userId) return auth.response;
+    if ("response" in auth) return auth.response;
 
     let body: any;
     try {
