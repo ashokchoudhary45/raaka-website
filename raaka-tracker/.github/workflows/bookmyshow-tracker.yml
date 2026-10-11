@@ -1,0 +1,35 @@
+name: RAAKA BookMyShow Tracker
+
+on:
+  schedule:
+    - cron: "35 18 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  track-bookmyshow:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./raaka-tracker
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: raaka-tracker/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run BookMyShow tracker
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: node index.js
