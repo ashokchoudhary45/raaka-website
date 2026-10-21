@@ -129,7 +129,7 @@ const CAST = [
 ];
 
 const CREW = [
-  { name: "Atlee Kumar", role: "Director", image: "/images/crew1.jpg" },
+  { name: "Atlee Kumar", role: "Writer & Director", image: "/images/crew1.jpg" },
   { name: "Sai Abhyankkar", role: "Musician", image: "/images/crew2.jpg", alt: "Sai Abhyankar" },
   { name: "Kalanithi Maran", role: "Producer", image: "/images/crew3.jpg" },
   { name: "Sun Pictures", role: "Banner", image: "/images/crew4.jpg", alt: "Sun Picture" },
@@ -2129,7 +2129,7 @@ img,video,iframe{max-width:100%}
 
             <div className="flex flex-col justify-center">
               <p className="max-w-xl text-lg leading-8 text-zinc-300">
-                Welcome to the World of Raaka. This website brings together everything related to the movie in one place.
+                Prepare yourself for a vision beyond limits.
               </p>
 
               <dl className="mt-10 grid grid-cols-2 gap-x-8 gap-y-6 border-t border-white/10 pt-8 sm:grid-cols-4 md:grid-cols-2">
