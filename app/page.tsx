@@ -122,10 +122,10 @@ const RELEASE_LANGUAGES = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "
 
 const CAST = [
   { name: "Allu Arjun", image: "/images/actor3.jpg", href: "/allu-arjun" },
-  { name: "Deepika Padukone", image: "/images/actor2.jpg" },
-  { name: "Rashmika Mandanna", image: "/images/rashmika.jpg" },
   { name: "Mrunal Thakur", image: "/images/mrunal.jpg" },
+  { name: "Rashmika Mandanna", image: "/images/rashmika.jpg" },
   { name: "Janhvi Kapoor", image: "/images/janhavi.jpg" },
+  { name: "Deepika Padukone", image: "/images/actor2.jpg" },
 ];
 
 const CREW = [
@@ -175,7 +175,7 @@ const BOX_OFFICE_LANGS: [string, string][] = [
 const BOX_OFFICE_STATS = ["Opening Day", "First Weekend", "India Net", "Highest Day"];
 
 const CREW_CREDITS: { department: string; names: string[] }[] = [
-  { department: "Cast", names: ["Allu Arjun", "Deepika Padukone", "Rashmika Mandanna", "Mrunal Thakur", "Janhvi Kapoor"] },
+  { department: "Cast", names: ["Allu Arjun", "Mrunal Thakur", "Rashmika Mandanna", "Janhvi Kapoor", "Deepika Padukone"] },
   { department: "Musician", names: ["Sai Abhyankar"] },
   { department: "Cinematography", names: ["G.K. Vishnu"] },
   { department: "Editor", names: ["Antony L. Ruben"] },
@@ -1057,6 +1057,36 @@ prefers-reduced-motion:reduce){
 .raaka-countdown-section .raaka-timer-number{animation:rxTimerNumber 2.8s ease-in-out infinite;}
 @keyframes rxTimerSweep{0%,45%{left:-100%}70%,100%{left:150%}}
 @keyframes rxTimerNumber{0%,100%{transform:translateY(0);filter:drop-shadow(0 4px 15px rgba(0,0,0,.8))}50%{transform:translateY(-2px);filter:drop-shadow(0 0 30px rgba(255,185,70,.30))}}
+
+
+/* Cast and Crew cards stay in one horizontal row and scroll sideways */
+.cast-crew-horizontal-scroll {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+}
+.cast-crew-horizontal-scroll > .cast-crew-horizontal-item {
+  flex: 0 0 78% !important;
+  width: 78% !important;
+  min-width: 0;
+  max-width: none !important;
+  scroll-snap-align: start;
+}
+.cast-crew-horizontal-item > .raaka-person-card { width: 100%; }
+@media (min-width: 640px) {
+  .cast-crew-horizontal-scroll > .cast-crew-horizontal-item { flex-basis: 42% !important; width: 42% !important; }
+}
+@media (min-width: 768px) {
+  .cast-crew-horizontal-scroll > .cast-crew-horizontal-item { flex-basis: 30% !important; width: 30% !important; }
+}
+@media (min-width: 1024px) {
+  .cast-crew-horizontal-scroll > .cast-crew-horizontal-item { flex-basis: 24% !important; width: 24% !important; }
+}
 
 /* ---------- CAST & CREW: CINEMATIC PORTRAIT MOTION — NO SCAN LINES ---------- */
 #cast .raaka-person-card,
@@ -2184,9 +2214,9 @@ img,video,iframe{max-width:100%}
         <section id="cast" data-design-section="cast" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
             <Reveal><SectionHeading eyebrow="The Cast" title="Cast & Characters" /></Reveal>
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+            <div className="cast-crew-horizontal-scroll flex flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain pb-5 snap-x snap-mandatory sm:gap-6 [scrollbar-width:thin]">
               {CAST.map((person, i) => (
-                <Reveal key={person.name} delay={i * 120} className="w-[calc(50%-0.5rem)] sm:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]">
+                <Reveal key={person.name} delay={i * 120} className="cast-crew-horizontal-item shrink-0 snap-start">
                   <PersonCard {...person} size="large" index={i} />
                 </Reveal>
               ))}
@@ -2198,9 +2228,9 @@ img,video,iframe{max-width:100%}
         <section id="crew" data-design-section="crew" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
             <Reveal><SectionHeading eyebrow="Behind The World" title="Crew" /></Reveal>
-            <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4">
+            <div className="cast-crew-horizontal-scroll flex flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain pb-5 snap-x snap-mandatory sm:gap-6 [scrollbar-width:thin]">
               {CREW.map((person, i) => (
-                <Reveal key={person.name} delay={i * 110}>
+                <Reveal key={person.name} delay={i * 110} className="cast-crew-horizontal-item shrink-0 snap-start">
                   <PersonCard {...person} index={i} />
                 </Reveal>
               ))}
