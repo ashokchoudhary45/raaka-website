@@ -1058,36 +1058,6 @@ prefers-reduced-motion:reduce){
 @keyframes rxTimerSweep{0%,45%{left:-100%}70%,100%{left:150%}}
 @keyframes rxTimerNumber{0%,100%{transform:translateY(0);filter:drop-shadow(0 4px 15px rgba(0,0,0,.8))}50%{transform:translateY(-2px);filter:drop-shadow(0 0 30px rgba(255,185,70,.30))}}
 
-
-/* Cast and Crew cards stay in one horizontal row and scroll sideways */
-.cast-crew-horizontal-scroll {
-  display: flex !important;
-  flex-flow: row nowrap !important;
-  overflow-x: auto !important;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scroll-snap-type: x mandatory;
-  overscroll-behavior-x: contain;
-}
-.cast-crew-horizontal-scroll > .cast-crew-horizontal-item {
-  flex: 0 0 78% !important;
-  width: 78% !important;
-  min-width: 0;
-  max-width: none !important;
-  scroll-snap-align: start;
-}
-.cast-crew-horizontal-item > .raaka-person-card { width: 100%; }
-@media (min-width: 640px) {
-  .cast-crew-horizontal-scroll > .cast-crew-horizontal-item { flex-basis: 42% !important; width: 42% !important; }
-}
-@media (min-width: 768px) {
-  .cast-crew-horizontal-scroll > .cast-crew-horizontal-item { flex-basis: 30% !important; width: 30% !important; }
-}
-@media (min-width: 1024px) {
-  .cast-crew-horizontal-scroll > .cast-crew-horizontal-item { flex-basis: 24% !important; width: 24% !important; }
-}
-
 /* ---------- CAST & CREW: CINEMATIC PORTRAIT MOTION — NO SCAN LINES ---------- */
 #cast .raaka-person-card,
 #crew .raaka-person-card{
@@ -1527,6 +1497,24 @@ prefers-reduced-motion:reduce){
 ================================================================ */
 html,body{max-width:100%;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 img,video,iframe{max-width:100%}
+/* Cast & Crew: invisible scrollbar + next-card peek, touch/trackpad friendly */
+#cast .cast-crew-track,#crew .cast-crew-track,.cast-crew-track{
+  display:flex!important;flex-wrap:nowrap!important;align-items:stretch;
+  overflow-x:auto!important;overflow-y:hidden!important;
+  scroll-behavior:smooth;-webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;touch-action:pan-x pan-y;
+  scroll-snap-type:x proximity;scroll-padding-inline:1.25rem;
+  scrollbar-width:none!important;scrollbar-color:transparent transparent!important;
+  -ms-overflow-style:none!important;contain:layout paint;
+  padding-bottom:8px!important;
+}
+#cast .cast-crew-track::-webkit-scrollbar,#crew .cast-crew-track::-webkit-scrollbar,.cast-crew-track::-webkit-scrollbar{display:none!important;width:0!important;height:0!important;background:transparent!important}
+#cast .cast-crew-track::-webkit-scrollbar-thumb,#crew .cast-crew-track::-webkit-scrollbar-thumb,.cast-crew-track::-webkit-scrollbar-thumb{background:transparent!important;border:0!important}
+#cast .cast-crew-track::-webkit-scrollbar-track,#crew .cast-crew-track::-webkit-scrollbar-track,.cast-crew-track::-webkit-scrollbar-track{background:transparent!important;border:0!important}
+.cast-crew-item{flex:0 0 auto!important;min-width:0;scroll-snap-align:start;scroll-snap-stop:normal;}
+.cast-crew-item .rx-reveal{height:100%}
+@media(prefers-reduced-motion:reduce){.cast-crew-track{scroll-behavior:auto;scroll-snap-type:none}}
+@media(hover:none){.cast-crew-track{scrollbar-width:none!important}.cast-crew-item{transform:none!important}}
 
 /* scroll reveal */
 .rx-reveal{opacity:0;transform:translateY(28px) scale(.98);filter:blur(6px);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1),filter .9s}
@@ -2214,9 +2202,9 @@ img,video,iframe{max-width:100%}
         <section id="cast" data-design-section="cast" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
             <Reveal><SectionHeading eyebrow="The Cast" title="Cast & Characters" /></Reveal>
-            <div className="cast-crew-horizontal-scroll flex flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain pb-5 snap-x snap-mandatory sm:gap-6 [scrollbar-width:thin]">
+            <div className="cast-crew-track -mx-5 flex w-[calc(100%+2.5rem)] flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain px-5 pb-5 pt-1 snap-x snap-mandatory scroll-smooth touch-pan-x sm:-mx-6 sm:w-[calc(100%+3rem)] sm:gap-5 sm:px-6 md:-mx-10 md:w-[calc(100%+5rem)] md:gap-6 md:px-10">
               {CAST.map((person, i) => (
-                <Reveal key={person.name} delay={i * 120} className="cast-crew-horizontal-item shrink-0 snap-start">
+                <Reveal key={person.name} delay={i * 120} className="cast-crew-item w-[78%] max-w-[290px] shrink-0 snap-start sm:w-[42%] sm:max-w-[300px] md:w-[31%] lg:w-[24%]">
                   <PersonCard {...person} size="large" index={i} />
                 </Reveal>
               ))}
@@ -2228,9 +2216,9 @@ img,video,iframe{max-width:100%}
         <section id="crew" data-design-section="crew" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
             <Reveal><SectionHeading eyebrow="Behind The World" title="Crew" /></Reveal>
-            <div className="cast-crew-horizontal-scroll flex flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain pb-5 snap-x snap-mandatory sm:gap-6 [scrollbar-width:thin]">
+            <div className="cast-crew-track -mx-5 flex w-[calc(100%+2.5rem)] flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain px-5 pb-5 pt-1 snap-x snap-mandatory scroll-smooth touch-pan-x sm:-mx-6 sm:w-[calc(100%+3rem)] sm:gap-5 sm:px-6 md:-mx-10 md:w-[calc(100%+5rem)] md:gap-6 md:px-10">
               {CREW.map((person, i) => (
-                <Reveal key={person.name} delay={i * 110} className="cast-crew-horizontal-item shrink-0 snap-start">
+                <Reveal key={person.name} delay={i * 110} className="cast-crew-item w-[78%] max-w-[290px] shrink-0 snap-start sm:w-[42%] sm:max-w-[300px] md:w-[31%] lg:w-[24%]">
                   <PersonCard {...person} index={i} />
                 </Reveal>
               ))}
