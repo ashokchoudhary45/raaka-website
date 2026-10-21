@@ -318,8 +318,8 @@ const CSS = `
 .kick{margin:0;display:flex;align-items:center;gap:1rem;font:italic 400 1.5rem "Instrument Serif",Georgia,serif;color:var(--steel);opacity:0}.kick::before{content:"";width:3rem;height:1px;background:var(--ember)}
 .hero.go .kick{animation:rise 1.2s var(--ease) 1.2s both}
 @keyframes rise{from{opacity:0;transform:translateY(20px);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
-.h1{margin:.6rem 0 0;font-weight:900;line-height:.86;letter-spacing:-.045em;font-size:clamp(3.4rem,15vw,14rem)}
-.hl{display:block;overflow:hidden;padding:.04em .02em .1em}.hl>span{display:block;transform:translateY(110%);filter:brightness(.3)}
+.h1{margin:.6rem 0 0;width:100%;max-width:100%;min-width:0;font-weight:900;line-height:.88;letter-spacing:-.055em;font-size:clamp(2.65rem,11.8vw,11.5rem);font-stretch:100%;font-variation-settings:"wdth" 100;overflow-wrap:normal}
+.hl{display:block;width:100%;max-width:100%;min-width:0;overflow:hidden;padding:.04em .02em .1em}.hl>span{display:block;width:max-content;max-width:100%;white-space:nowrap;transform:translateY(110%);filter:brightness(.3)}
 .hero.go .hl>span{animation:lit 1.5s var(--ease) both;animation-delay:calc(1.3s + var(--l)*.18s)}
 @keyframes lit{from{transform:translateY(110%);filter:brightness(.3)}60%{filter:brightness(.6)}to{transform:none;filter:none}}
 .hl.dim{color:transparent;-webkit-text-stroke:1.5px rgba(232,236,243,.55)}
@@ -406,7 +406,7 @@ const CSS = `
 .quote{margin:.6rem 0 1.2rem;font:400 clamp(1.8rem,4.4vw,3.2rem) "Instrument Serif",Georgia,serif;color:var(--moon)}.quote em{color:var(--ember)}
 .foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.8rem;max-width:84rem;margin:0 auto;padding:1.8rem 1.25rem 2.4rem;border-top:1px solid var(--line);font:500 .58rem "DM Mono",monospace;letter-spacing:.24em;text-transform:uppercase;color:rgba(232,236,243,.3)}@media(min-width:768px){.foot{padding-inline:3rem}}
 
-@media(max-width:600px){.logo-s{height:26px}.brand-t{display:none}.row{grid-template-columns:6.6rem 1fr}.stepper{margin-left:0}.f-play{width:3.8rem;height:3.8rem;margin:-1.9rem 0 0 -1.9rem}.stats{gap:1.4rem}}
+@media(max-width:600px){.logo-s{height:26px}.brand-t{display:none}.row{grid-template-columns:6.6rem 1fr}.stepper{margin-left:0}.f-play{width:3.8rem;height:3.8rem;margin:-1.9rem 0 0 -1.9rem}.stats{gap:1.4rem}.h1{font-size:clamp(2.45rem,11.4vw,4.8rem);letter-spacing:-.06em;line-height:.9}}
 @media (prefers-reduced-motion:reduce){
 html{scroll-behavior:auto}.grain{display:none}
 .beam,.kick,.hl>span,.hero-row,.cue,.cue i,.nav,.screen-in,.info,.amb-in,.claws i,.logo-l,.end-shaft{animation:none!important}
