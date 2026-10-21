@@ -5,12 +5,27 @@ import Image from "next/image";
 import NewBadge from "@/components/NewBadge";
 import Link from "next/link";
 
-type Theme = "obsidian" | "ember" | "cosmic" | "graphite" | "onyx" | "aurora" | "crimson" | "sunset";
+type Theme = "obsidian" | "ember" | "cosmic" | "graphite" | "onyx" | "aurora" | "crimson" | "sunset" | "neon" | "frost" | "meteor";
 
-const THEME_ORDER: Theme[] = ["obsidian", "ember", "cosmic", "graphite", "onyx", "aurora", "crimson", "sunset"];
+const THEME_ORDER: Theme[] = ["obsidian", "ember", "cosmic", "graphite", "onyx", "aurora", "crimson", "sunset", "neon", "frost", "meteor"];
 const AURA_RGB: Record<Theme, string> = {
   obsidian: "255,255,255", ember: "255,110,30", cosmic: "129,140,248", graphite: "212,212,216",
   onyx: "250,204,21", aurora: "45,212,191", crimson: "244,63,94", sunset: "236,72,153",
+  neon: "232,60,255", frost: "125,211,252", meteor: "196,181,253",
+};
+
+const AURA_META: Record<Theme, { label: string; tag: string; bg: string; isNew?: boolean }> = {
+  obsidian: { label: "Obsidian", tag: "Pure cinema", bg: "radial-gradient(circle at 50% 0%,#3d3d3d,#050505 72%)" },
+  ember: { label: "Ember", tag: "Fire world", bg: "radial-gradient(circle at 50% 110%,#ff6a1a,#5a1500 48%,#0a0201 85%)" },
+  cosmic: { label: "Cosmic", tag: "Deep space", bg: "radial-gradient(circle at 30% 20%,#6366f1,#1e1b4b 52%,#02040b 88%)" },
+  graphite: { label: "Graphite", tag: "Silver steel", bg: "linear-gradient(135deg,#9a9da5,#2a2c30 55%,#111214)" },
+  onyx: { label: "Onyx", tag: "Black gold", bg: "linear-gradient(135deg,#f5c542,#6b4a0a 50%,#070706)" },
+  aurora: { label: "Aurora", tag: "Northern lights", bg: "linear-gradient(135deg,#2dd4bf,#10b981 38%,#7c3aed 78%,#020807)" },
+  crimson: { label: "Crimson", tag: "Blood moon", bg: "radial-gradient(circle at 50% 0%,#f43f5e,#7f1022 52%,#0a0204 88%)" },
+  sunset: { label: "Sunset", tag: "Dusk glow", bg: "linear-gradient(160deg,#ec4899,#f97316 50%,#3b0764)" },
+  neon: { label: "Neon Grid", tag: "Synthwave", bg: "linear-gradient(180deg,#1a0536,#c026d3 55%,#22d3ee)", isNew: true },
+  frost: { label: "Frost", tag: "Falling snow", bg: "linear-gradient(160deg,#e0f2fe,#38bdf8 45%,#0c2a4a)", isNew: true },
+  meteor: { label: "Stardust", tag: "Shooting stars", bg: "linear-gradient(135deg,#0b1030,#4c1d95 55%,#c4b5fd)", isNew: true },
 };
 
 // ---------- scroll helpers ----------
@@ -73,60 +88,24 @@ const NAV_LINKS: { href: string; label: string; isNew?: boolean }[] = [
 ];
 
 const HERO_ACTIONS = [
-  {
-    href: "/videos",
-    eyebrow: "Trailers & More",
-    title: "Watch Videos",
-    accent: "orange",
-    icon: (
-      <svg className="ml-0.5 h-4 w-4 md:h-[18px] md:w-[18px]" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M8 5.5v13l11-6.5z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/fans-art",
-    eyebrow: "Art by the Fans",
-    title: "Fan Art",
-    accent: "purple",
-    isNew: true,
-    icon: (
-      <svg className="h-4 w-4 md:h-[18px] md:w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-        <path d="M12 3.5l2.4 5.1 5.6.8-4 4 1 5.6-5-2.7-5 2.7 1-5.6-4-4 5.6-.8z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/box-office",
-    eyebrow: "Track the Numbers",
-    title: "Box Office",
-    accent: "yellow",
-    isNew: true,
-    icon: (
-      <svg className="h-4 w-4 md:h-[18px] md:w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M5 19V10" />
-        <path d="M12 19V5" />
-        <path d="M19 19v-7" />
-      </svg>
-    ),
-  },
+  { href: "/videos", eyebrow: "Trailers & More", title: "Watch Videos", kind: "video", rgb: "56,189,248" },
+  { href: "/fans-art", eyebrow: "Art by the Fans", title: "Fan Art", kind: "art", rgb: "251,113,133", isNew: true },
+  { href: "/box-office", eyebrow: "Track the Numbers", title: "Box Office", kind: "box", rgb: "52,211,153", isNew: true },
 ] as const;
 
-const ACCENTS: Record<string, { border: string; bg: string; text: string; glow: string; bar: string }> = {
-  orange: { border: "hover:border-orange-400/50", bg: "from-orange-500/[0.08]", text: "text-orange-300", glow: "border-orange-400/35 bg-orange-500/[0.08]", bar: "bg-orange-400" },
-  purple: { border: "hover:border-purple-400/50", bg: "from-purple-500/[0.08]", text: "text-purple-300", glow: "border-purple-400/35 bg-purple-500/[0.08]", bar: "bg-purple-400" },
-  yellow: { border: "hover:border-yellow-400/50", bg: "from-yellow-500/[0.07]", text: "text-yellow-300", glow: "border-yellow-400/35 bg-yellow-500/[0.08]", bar: "bg-yellow-400" },
-};
 
 const RELEASE_LANGUAGES = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "Bengali", "Arabic", "English"];
 
 const CAST = [
   { name: "Allu Arjun", image: "/images/actor3.jpg", href: "/allu-arjun" },
+  { name: "Mrunal Thakur", image: "/images/mrunal.jpg" },
+  { name: "Rashmika Mandanna", image: "/images/rashmika.jpg" },
+  { name: "Janhvi Kapoor", image: "/images/janhavi.jpg" },
   { name: "Deepika Padukone", image: "/images/actor2.jpg" },
 ];
 
 const CREW = [
-  { name: "Atlee Kumar", role: "Director", image: "/images/crew1.jpg" },
+  { name: "Atlee Kumar", role: "Writer & Director", image: "/images/crew1.jpg" },
   { name: "Sai Abhyankkar", role: "Musician", image: "/images/crew2.jpg", alt: "Sai Abhyankar" },
   { name: "Kalanithi Maran", role: "Producer", image: "/images/crew3.jpg" },
   { name: "Sun Pictures", role: "Banner", image: "/images/crew4.jpg", alt: "Sun Picture" },
@@ -172,7 +151,7 @@ const BOX_OFFICE_LANGS: [string, string][] = [
 const BOX_OFFICE_STATS = ["Opening Day", "First Weekend", "India Net", "Highest Day"];
 
 const CREW_CREDITS: { department: string; names: string[] }[] = [
-  { department: "Cast", names: ["Allu Arjun", "Deepika Padukone"] },
+  { department: "Cast", names: ["Allu Arjun", "Mrunal Thakur", "Rashmika Mandanna", "Janhvi Kapoor", "Deepika Padukone"] },
   { department: "Musician", names: ["Sai Abhyankar"] },
   { department: "Cinematography", names: ["G.K. Vishnu"] },
   { department: "Editor", names: ["Antony L. Ruben"] },
@@ -373,23 +352,262 @@ function LogoShine({ src, alt = "RAAKA", imgClassName = "" }: { src: string; alt
   );
 }
 
-function ActionArt({ kind }: { kind: string }) {
-  if (kind === "purple") {
+function HeroIcon({ kind }: { kind: string }) {
+  if (kind === "video")
     return (
-      <span className="rx-art rx-art-spark" aria-hidden>
-        <i style={{ "--k": 0, "--z": "9px" } as React.CSSProperties} />
-        <i style={{ "--k": 1, "--z": "6px" } as React.CSSProperties} />
-        <i style={{ "--k": 2, "--z": "11px" } as React.CSSProperties} />
+      <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor"><path d="M8.5 5.8v12.4a.7.7 0 0 0 1.07.6l10-6.2a.7.7 0 0 0 0-1.2l-10-6.2a.7.7 0 0 0-1.07.6z" /></svg>
+    );
+  if (kind === "art")
+    return (
+      <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3.2l2.3 5 5.5.7-4 3.9 1 5.5-4.8-2.7-4.8 2.7 1-5.5-4-3.9 5.5-.7z" />
+        <path d="M19.5 3v3M18 4.5h3" />
+      </svg>
+    );
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19V11M10 19V6M16 19v-6M21 7l-5 4.5-3-2" />
+    </svg>
+  );
+}
+
+function HeroScene({ kind }: { kind: string }) {
+  if (kind === "video")
+    return (
+      <span className="rxp-scene rxp-scene-video" aria-hidden>
+        <i className="rxp-film rxp-film-t" />
+        <i className="rxp-film rxp-film-b" />
+        <i className="rxp-ripple" style={{ "--d": "0s" } as React.CSSProperties} />
+        <i className="rxp-ripple" style={{ "--d": "1.1s" } as React.CSSProperties} />
+        <i className="rxp-ripple" style={{ "--d": "2.2s" } as React.CSSProperties} />
+        <i className="rxp-leak" />
       </span>
     );
-  }
-  const heights = kind === "yellow" ? ["35%", "55%", "78%", "100%"] : ["60%", "100%", "45%", "85%", "55%"];
+  if (kind === "art")
+    return (
+      <span className="rxp-scene rxp-scene-art" aria-hidden>
+        <i className="rxp-blob rxp-blob-1" />
+        <i className="rxp-blob rxp-blob-2" />
+        <i className="rxp-blob rxp-blob-3" />
+        {[0, 1, 2, 3, 4].map((k) => (
+          <i key={k} className="rxp-spark" style={{ "--k": k } as React.CSSProperties} />
+        ))}
+        <svg className="rxp-squiggle" viewBox="0 0 160 40" fill="none" preserveAspectRatio="none">
+          <path d="M2 28 C 20 4, 36 4, 52 22 S 86 40, 104 18 S 140 2, 158 14" />
+        </svg>
+      </span>
+    );
   return (
-    <span className={`rx-art ${kind === "yellow" ? "rx-art-rise" : "rx-art-eq"}`} aria-hidden>
-      {heights.map((h, k) => (
-        <i key={k} style={{ "--k": k, "--h": h } as React.CSSProperties} />
-      ))}
+    <span className="rxp-scene rxp-scene-box" aria-hidden>
+      <span className="rxp-bars">
+        {[38, 55, 44, 70, 62, 88, 100].map((h, k) => (
+          <i key={k} style={{ "--h": `${h}%`, "--k": k } as React.CSSProperties} />
+        ))}
+      </span>
+      <svg className="rxp-spark-line" viewBox="0 0 200 80" fill="none" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="rxpLineG" x1="0" x2="1"><stop offset="0" stopColor="rgba(52,211,153,.2)" /><stop offset="1" stopColor="#6ee7b7" /></linearGradient>
+          <linearGradient id="rxpAreaG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="rgba(52,211,153,.35)" /><stop offset="1" stopColor="rgba(52,211,153,0)" /></linearGradient>
+        </defs>
+        <path className="rxp-area" d="M0 70 L25 60 L50 64 L75 44 L100 50 L130 28 L160 34 L198 8 L198 80 L0 80 Z" fill="url(#rxpAreaG)" />
+        <path className="rxp-line" pathLength={100} d="M0 70 L25 60 L50 64 L75 44 L100 50 L130 28 L160 34 L198 8" stroke="url(#rxpLineG)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <i className="rxp-live" />
     </span>
+  );
+}
+
+function HeroActionCard({ action, index }: { action: (typeof HERO_ACTIONS)[number]; index: number }) {
+  const onMove = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    if (e.pointerType !== "mouse") return;
+    const el = e.currentTarget;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width;
+    const py = (e.clientY - r.top) / r.height;
+    el.style.setProperty("--mx", `${px * 100}%`);
+    el.style.setProperty("--my", `${py * 100}%`);
+    el.style.setProperty("--ry", `${(px - 0.5) * 9}deg`);
+    el.style.setProperty("--rx", `${(0.5 - py) * 7}deg`);
+  };
+  const onLeave = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    const el = e.currentTarget;
+    el.style.setProperty("--rx", "0deg");
+    el.style.setProperty("--ry", "0deg");
+  };
+  return (
+    <a
+      href={action.href}
+      onPointerMove={onMove}
+      onPointerLeave={onLeave}
+      style={{ "--c": action.rgb, "--i": index } as React.CSSProperties}
+      className={`rxp-card rxp-${action.kind} group w-[82vw] shrink-0 snap-start sm:w-auto`}
+    >
+      <span className="rxp-foil" aria-hidden />
+      <span className="rxp-grid" aria-hidden />
+      <HeroScene kind={action.kind} />
+      <span className="rxp-corner rxp-c1" aria-hidden />
+      <span className="rxp-corner rxp-c2" aria-hidden />
+      <span className="rxp-corner rxp-c3" aria-hidden />
+      <span className="rxp-corner rxp-c4" aria-hidden />
+
+      <span className="rxp-icon">
+        <span className="rxp-icon-ring" aria-hidden />
+        <span className="rxp-icon-pulse" aria-hidden />
+        <HeroIcon kind={action.kind} />
+      </span>
+
+      <span className="rxp-body">
+        <span className="rxp-eyebrow">
+          <span className="rxp-eyebrow-line" aria-hidden />
+          <span className="truncate">{action.eyebrow}</span>
+          {"isNew" in action && action.isNew && <NewBadge addedAt="2026-09-06" />}
+        </span>
+        <span className="rxp-title">{action.title}</span>
+      </span>
+
+      <span className="rxp-go" aria-hidden>
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </span>
+    </a>
+  );
+}
+
+function AuraSwitcher({ theme, setTheme }: { theme: Theme; setTheme: (t: Theme) => void }) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div
+      ref={wrap}
+      style={{ "--aura": AURA_RGB[theme] } as React.CSSProperties}
+      className="fixed left-3 top-3 z-[90] sm:left-5 sm:top-5 md:left-7 md:top-6"
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={`Choose aura. Current: ${AURA_META[theme].label}`}
+        className={`rxa-btn ${open ? "is-open" : ""}`}
+      >
+        <span className="rxa-orb" aria-hidden>
+          <span className="rxa-orb-sat" />
+          <span className="rxa-orb-core" key={theme} />
+        </span>
+        <span className="rxa-btn-text">
+          <b>Aura</b>
+          <span key={theme}>{AURA_META[theme].label}</span>
+        </span>
+        <svg className="rxa-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      <div className={`rxa-panel ${open ? "is-open" : ""}`} role="dialog" aria-label="Choose aura theme" aria-hidden={!open}>
+        <div className="rxa-panel-head">
+          <span>Choose your Aura</span>
+          <em>{THEME_ORDER.length} worlds</em>
+        </div>
+        <div className="rxa-grid">
+          {THEME_ORDER.map((t, i) => {
+            const m = AURA_META[t];
+            const active = t === theme;
+            return (
+              <button
+                key={t}
+                type="button"
+                tabIndex={open ? 0 : -1}
+                onClick={() => setTheme(t)}
+                aria-pressed={active}
+                style={{ "--c": AURA_RGB[t], "--i": i } as React.CSSProperties}
+                className={`rxa-item ${active ? "is-active" : ""}`}
+              >
+                <span className="rxa-thumb" style={{ background: m.bg }}>
+                  <span className="rxa-thumb-shine" />
+                  {m.isNew && <span className="rxa-new">New</span>}
+                  {active && (
+                    <span className="rxa-check">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                    </span>
+                  )}
+                </span>
+                <span className="rxa-item-name">{m.label}</span>
+                <span className="rxa-item-tag">{m.tag}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SnowField() {
+  return (
+    <>
+      {Array.from({ length: 34 }).map((_, i) => (
+        <i
+          key={i}
+          className="rxa-snow"
+          style={{
+            left: `${(i * 29 + 7) % 100}%`,
+            "--s": `${2 + (i % 4)}px`,
+            "--t": `${10 + ((i * 7) % 11)}s`,
+            "--d": `${-((i * 13) % 17)}s`,
+            "--x": `${((i % 5) - 2) * 38}px`,
+            "--o": 0.35 + (i % 4) * 0.15,
+          } as React.CSSProperties}
+        />
+      ))}
+    </>
+  );
+}
+
+function StarField() {
+  return (
+    <>
+      {Array.from({ length: 64 }).map((_, i) => (
+        <i
+          key={i}
+          className="rxa-star"
+          style={{
+            left: `${(i * 37 + 11) % 100}%`,
+            top: `${(i * 53 + 5) % 100}%`,
+            "--s": `${1 + (i % 3)}px`,
+            "--t": `${2.4 + (i % 5) * 0.8}s`,
+            "--d": `${-((i * 7) % 9)}s`,
+          } as React.CSSProperties}
+        />
+      ))}
+      {[0, 1, 2, 3, 4].map((k) => (
+        <i
+          key={`m${k}`}
+          className="rxa-meteor"
+          style={{
+            top: `${[6, 22, 38, 12, 30][k]}%`,
+            left: `${[62, 78, 45, 90, 70][k]}%`,
+            "--t": `${[5.5, 7, 6.2, 8, 6.8][k]}s`,
+            "--d": `${[0, 2.4, 4.1, 1.2, 5.6][k]}s`,
+          } as React.CSSProperties}
+        />
+      ))}
+    </>
   );
 }
 
@@ -476,6 +694,16 @@ export default function Home() {
   const [ticketsOpen, setTicketsOpen] = useState(false);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const musicRef = useRef<HTMLAudioElement | null>(null);
+  const castTrackRef = useRef<HTMLDivElement | null>(null);
+  const crewTrackRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollCastCrew = (track: React.RefObject<HTMLDivElement | null>, direction: -1 | 1) => {
+    const el = track.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>(".cast-crew-item");
+    const step = card ? card.getBoundingClientRect().width + 24 : el.clientWidth * 0.8;
+    el.scrollBy({ left: direction * step, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  };
 
   
 
@@ -621,8 +849,6 @@ export default function Home() {
       clearInterval(timer);
     };
   }, []);
-
-  const themeOrder = THEME_ORDER;
 
   useEffect(() => {
     const audio = new Audio("/sounds/king.mp3");
@@ -1494,6 +1720,34 @@ prefers-reduced-motion:reduce){
 ================================================================ */
 html,body{max-width:100%;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 img,video,iframe{max-width:100%}
+/* Subtle gold carousel controls; scrollbar stays hidden, card peek hints at more content */
+.cast-crew-carousel{isolation:isolate}
+.cast-crew-arrow{position:absolute;z-index:5;top:46%;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid rgba(214,165,91,.42);border-radius:9999px;background:rgba(8,8,8,.82);color:#e8bd7a;font-size:30px;line-height:1;box-shadow:0 5px 22px rgba(0,0,0,.4);backdrop-filter:blur(10px);opacity:0;transform:scale(.94);transition:opacity .22s ease,transform .22s ease,background .22s ease,border-color .22s ease;cursor:pointer}
+.cast-crew-carousel:hover .cast-crew-arrow,.cast-crew-carousel:focus-within .cast-crew-arrow{opacity:1;transform:scale(1)}
+.cast-crew-arrow:hover{background:rgba(214,165,91,.16);border-color:rgba(214,165,91,.8)}
+.cast-crew-arrow-left{left:8px}.cast-crew-arrow-right{right:8px}
+@media(hover:none){.cast-crew-arrow{opacity:.92;transform:none;width:36px;height:36px;font-size:26px;background:rgba(8,8,8,.72)}}
+@media(max-width:640px){.cast-crew-arrow-left{left:7px}.cast-crew-arrow-right{right:7px}}
+@media(prefers-reduced-motion:reduce){.cast-crew-arrow{transition:none}}
+
+/* Cast & Crew: invisible scrollbar + next-card peek, touch/trackpad friendly */
+#cast .cast-crew-track,#crew .cast-crew-track,.cast-crew-track{
+  display:flex!important;flex-wrap:nowrap!important;align-items:stretch;
+  overflow-x:auto!important;overflow-y:hidden!important;
+  scroll-behavior:smooth;-webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;touch-action:pan-x pan-y;
+  scroll-snap-type:x proximity;scroll-padding-inline:1.25rem;
+  scrollbar-width:none!important;scrollbar-color:transparent transparent!important;
+  -ms-overflow-style:none!important;contain:layout paint;
+  padding-bottom:8px!important;
+}
+#cast .cast-crew-track::-webkit-scrollbar,#crew .cast-crew-track::-webkit-scrollbar,.cast-crew-track::-webkit-scrollbar{display:none!important;width:0!important;height:0!important;background:transparent!important}
+#cast .cast-crew-track::-webkit-scrollbar-thumb,#crew .cast-crew-track::-webkit-scrollbar-thumb,.cast-crew-track::-webkit-scrollbar-thumb{background:transparent!important;border:0!important}
+#cast .cast-crew-track::-webkit-scrollbar-track,#crew .cast-crew-track::-webkit-scrollbar-track,.cast-crew-track::-webkit-scrollbar-track{background:transparent!important;border:0!important}
+.cast-crew-item{flex:0 0 auto!important;min-width:0;scroll-snap-align:start;scroll-snap-stop:normal;}
+.cast-crew-item .rx-reveal{height:100%}
+@media(prefers-reduced-motion:reduce){.cast-crew-track{scroll-behavior:auto;scroll-snap-type:none}}
+@media(hover:none){.cast-crew-track{scrollbar-width:none!important}.cast-crew-item{transform:none!important}}
 
 /* scroll reveal */
 .rx-reveal{opacity:0;transform:translateY(28px) scale(.98);filter:blur(6px);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1),filter .9s}
@@ -1679,6 +1933,188 @@ img,video,iframe{max-width:100%}
 @media (hover:none){.rx-timer:hover{transform:none}}
 @media (prefers-reduced-motion:reduce){.rx-cd-card::before,.rx-cd-photo,.rx-cd-glow,.rx-timer::before{animation:none!important}.rx-timer-bar i{transition:none}}
 
+/* ================================================================
+   RAAKA v4 — PORTAL HERO CARDS (rxp-) + AURA SWITCHER (rxa-)
+================================================================ */
+
+/* ---------- HERO PORTAL CARDS ---------- */
+.rxp-card{--c:56,189,248;--rx:0deg;--ry:0deg;--mx:50%;--my:50%;position:relative;isolation:isolate;display:flex;align-items:center;gap:1rem;min-height:106px;padding:1rem 1.05rem;border-radius:1.5rem;overflow:hidden;text-decoration:none;color:#fff;
+  background:radial-gradient(120% 150% at 0% 0%,rgba(var(--c),.18),transparent 58%),linear-gradient(160deg,rgba(255,255,255,.06),rgba(6,6,10,.78) 58%);
+  border:1px solid rgba(255,255,255,.09);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  box-shadow:0 16px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.09);
+  transform:perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateZ(0);
+  transition:transform .35s cubic-bezier(.16,1,.3,1),box-shadow .5s,border-color .4s;
+  animation:rxpIn 1.1s cubic-bezier(.16,1,.3,1) backwards;animation-delay:calc(var(--i,0)*150ms + 450ms)}
+@keyframes rxpIn{from{opacity:0;transform:perspective(900px) translateY(34px) rotateX(20deg) scale(.94);filter:blur(10px)}}
+.rxp-card::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;z-index:5;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 58%,rgba(var(--c),.95) 78%,#fff 82%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.55;animation:rxAng 5s linear infinite;transition:opacity .4s}
+.rxp-card:hover,.rxp-card:focus-visible{border-color:rgba(var(--c),.35);box-shadow:0 30px 80px rgba(var(--c),.28),0 0 0 1px rgba(var(--c),.18),inset 0 0 60px rgba(var(--c),.07);outline:none}
+.rxp-card:hover::before{opacity:1;animation-duration:1.8s}
+.rxp-card:active{transform:perspective(900px) scale(.985)}
+.rxp-foil{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(300px circle at var(--mx) var(--my),rgba(255,255,255,.16),rgba(var(--c),.16) 38%,transparent 72%);mix-blend-mode:screen}
+.rxp-card:hover .rxp-foil{opacity:1}
+.rxp-grid{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;background-image:linear-gradient(rgba(var(--c),.07) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--c),.07) 1px,transparent 1px);background-size:22px 22px;-webkit-mask-image:radial-gradient(ellipse at 20% 0%,#000,transparent 70%);mask-image:radial-gradient(ellipse at 20% 0%,#000,transparent 70%)}
+.rxp-corner{position:absolute;z-index:4;width:12px;height:12px;pointer-events:none;border:0 solid rgba(var(--c),.9);opacity:0;transition:all .45s cubic-bezier(.16,1,.3,1)}
+.rxp-c1{top:10px;left:10px;border-top-width:1.5px;border-left-width:1.5px;border-top-left-radius:5px;transform:translate(6px,6px)}
+.rxp-c2{top:10px;right:10px;border-top-width:1.5px;border-right-width:1.5px;border-top-right-radius:5px;transform:translate(-6px,6px)}
+.rxp-c3{bottom:10px;left:10px;border-bottom-width:1.5px;border-left-width:1.5px;border-bottom-left-radius:5px;transform:translate(6px,-6px)}
+.rxp-c4{bottom:10px;right:10px;border-bottom-width:1.5px;border-right-width:1.5px;border-bottom-right-radius:5px;transform:translate(-6px,-6px)}
+.rxp-card:hover .rxp-corner{opacity:1;transform:none}
+
+.rxp-icon{position:relative;z-index:3;flex:none;display:flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:1.15rem;color:#fff;background:linear-gradient(145deg,rgba(var(--c),.95),rgba(var(--c),.38));box-shadow:0 10px 30px rgba(var(--c),.45),inset 0 1px 0 rgba(255,255,255,.45),inset 0 -8px 16px rgba(0,0,0,.25);transition:transform .6s cubic-bezier(.16,1,.3,1),box-shadow .5s}
+.rxp-icon svg{position:relative;z-index:2;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));transition:transform .6s cubic-bezier(.16,1,.3,1)}
+.rxp-card:hover .rxp-icon{transform:scale(1.1) rotate(-4deg);box-shadow:0 14px 44px rgba(var(--c),.7),inset 0 1px 0 rgba(255,255,255,.55)}
+.rxp-card:hover .rxp-icon svg{transform:scale(1.12) rotate(4deg)}
+.rxp-icon-ring{position:absolute;inset:-7px;border-radius:1.5rem;border:1px dashed rgba(var(--c),.55);animation:rxpSpin 14s linear infinite;pointer-events:none}
+.rxp-icon-pulse{position:absolute;inset:0;border-radius:inherit;border:1.5px solid rgba(var(--c),.7);animation:rxpPulse 2.6s ease-out infinite;pointer-events:none}
+@keyframes rxpSpin{to{transform:rotate(360deg)}}
+@keyframes rxpPulse{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.7);opacity:0}}
+
+.rxp-body{position:relative;z-index:3;flex:1;min-width:0;display:flex;flex-direction:column;gap:.35rem}
+.rxp-eyebrow{display:flex;align-items:center;gap:.5rem;min-width:0;font-size:8.5px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.rxp-eyebrow-line{flex:none;width:14px;height:1px;background:rgba(var(--c),1);box-shadow:0 0 8px rgba(var(--c),.9);transition:width .5s cubic-bezier(.16,1,.3,1)}
+.rxp-card:hover .rxp-eyebrow-line{width:26px}
+.rxp-title{font-size:clamp(1.15rem,4.6vw,1.55rem);font-weight:700;line-height:1.1;letter-spacing:-.01em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:letter-spacing .5s cubic-bezier(.16,1,.3,1)}
+.rxp-card:hover .rxp-title{letter-spacing:.015em;color:transparent;background:linear-gradient(100deg,#fff 0%,rgba(var(--c),1) 40%,#fff 60%,rgba(var(--c),1) 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;animation:rxpTitle 2.2s linear infinite}
+@keyframes rxpTitle{to{background-position:-250% 0}}
+
+.rxp-go{position:relative;z-index:3;flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:999px;color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);overflow:hidden;transition:all .5s cubic-bezier(.16,1,.3,1)}
+.rxp-go svg{transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.rxp-card:hover .rxp-go{color:#fff;border-color:rgba(var(--c),.9);background:rgba(var(--c),.9);box-shadow:0 0 30px rgba(var(--c),.7);transform:scale(1.1)}
+.rxp-card:hover .rxp-go svg{transform:translateX(2px) rotate(-45deg)}
+
+/* scenes */
+.rxp-scene{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;border-radius:inherit}
+.rxp-scene i{position:absolute;display:block}
+
+/* video scene */
+.rxp-film{left:0;right:0;height:9px;opacity:.5;background:repeating-linear-gradient(90deg,rgba(var(--c),.7) 0 7px,transparent 7px 16px);-webkit-mask-image:linear-gradient(90deg,transparent,#000 35%,#000);mask-image:linear-gradient(90deg,transparent,#000 35%,#000);animation:rxpFilm 2.4s linear infinite}
+.rxp-film-t{top:7px}.rxp-film-b{bottom:7px;animation-direction:reverse}
+@keyframes rxpFilm{to{background-position:16px 0}}
+.rxp-card:hover .rxp-film{opacity:.95;animation-duration:.9s}
+.rxp-ripple{right:46px;top:50%;width:44px;height:44px;margin-top:-22px;border-radius:999px;border:1px solid rgba(var(--c),.6);opacity:0;animation:rxpRip 3.3s ease-out infinite;animation-delay:var(--d)}
+@keyframes rxpRip{0%{transform:scale(.6);opacity:.8}100%{transform:scale(4.2);opacity:0}}
+.rxp-leak{top:0;bottom:0;left:0;width:34%;opacity:0;background:linear-gradient(100deg,transparent,rgba(var(--c),.22),transparent);transform:translateX(-130%) skewX(-14deg)}
+.rxp-card:hover .rxp-leak{opacity:1;animation:rxpLeak 1.1s ease-out}
+@keyframes rxpLeak{to{transform:translateX(320%) skewX(-14deg)}}
+
+/* art scene */
+.rxp-blob{filter:blur(16px);opacity:.7;animation:rxpMorph 9s ease-in-out infinite}
+.rxp-blob-1{right:-14px;top:-16px;width:96px;height:96px;background:radial-gradient(circle at 35% 35%,#fb7185,transparent 70%)}
+.rxp-blob-2{right:46px;bottom:-26px;width:84px;height:84px;background:radial-gradient(circle at 40% 40%,#a78bfa,transparent 70%);animation-delay:-3s}
+.rxp-blob-3{right:96px;top:-10px;width:70px;height:70px;background:radial-gradient(circle at 40% 40%,#fbbf24,transparent 70%);animation-delay:-6s;opacity:.5}
+@keyframes rxpMorph{0%,100%{border-radius:60% 40% 55% 45%;transform:translate(0,0) rotate(0)}33%{border-radius:40% 60% 45% 55%;transform:translate(-10px,8px) rotate(60deg)}66%{border-radius:55% 45% 60% 40%;transform:translate(8px,-6px) rotate(120deg)}}
+.rxp-card:hover .rxp-blob{opacity:1;filter:blur(12px)}
+.rxp-spark{bottom:-8px;width:9px;height:9px;background:#fff;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);opacity:0;left:calc(52% + var(--k)*9%);animation:rxpFloat 3.4s ease-in infinite;animation-delay:calc(var(--k)*.6s)}
+@keyframes rxpFloat{0%{transform:translateY(0) scale(.4) rotate(0);opacity:0}25%{opacity:1}100%{transform:translateY(-92px) scale(1.2) rotate(180deg);opacity:0}}
+.rxp-squiggle{position:absolute;right:8px;bottom:6px;width:46%;height:26px;overflow:visible}
+.rxp-squiggle path{stroke:rgba(var(--c),.9);stroke-width:2;stroke-linecap:round;stroke-dasharray:240;stroke-dashoffset:240;animation:rxpDraw 3.6s ease-in-out infinite;filter:drop-shadow(0 0 5px rgba(var(--c),.8))}
+@keyframes rxpDraw{0%{stroke-dashoffset:240}55%,80%{stroke-dashoffset:0}100%{stroke-dashoffset:-240}}
+
+/* box scene */
+.rxp-bars{position:absolute;right:62px;bottom:0;display:flex;align-items:flex-end;gap:5px;height:70%}
+.rxp-bars i{position:relative;width:5px;height:var(--h);border-radius:3px 3px 0 0;background:linear-gradient(to top,rgba(var(--c),.05),rgba(var(--c),.5));transform-origin:bottom;animation:rxpBar 3.2s ease-in-out infinite;animation-delay:calc(var(--k)*.14s)}
+@keyframes rxpBar{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
+.rxp-spark-line{position:absolute;right:56px;bottom:12px;width:44%;height:54%;overflow:visible}
+.rxp-line{stroke-dasharray:100;stroke-dashoffset:100;animation:rxpLine 4s ease-in-out infinite;filter:drop-shadow(0 0 5px rgba(var(--c),.9))}
+.rxp-area{opacity:0;animation:rxpArea 4s ease-in-out infinite}
+@keyframes rxpLine{0%{stroke-dashoffset:100}55%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:-100}}
+@keyframes rxpArea{0%,15%{opacity:0}55%,85%{opacity:1}100%{opacity:0}}
+.rxp-live{top:14px;right:62px;width:7px;height:7px;border-radius:99px;background:rgb(var(--c));box-shadow:0 0 0 0 rgba(var(--c),.7);animation:rxpLive 1.6s ease-out infinite}
+@keyframes rxpLive{0%{box-shadow:0 0 0 0 rgba(var(--c),.75)}100%{box-shadow:0 0 0 12px rgba(var(--c),0)}}
+
+@media (min-width:640px){
+  .rxp-card{min-height:132px;padding:1.2rem 1.25rem;gap:1.1rem}
+  .rxp-icon{width:66px;height:66px;border-radius:1.3rem}
+  .rxp-eyebrow{font-size:9px}
+}
+@media (hover:none){
+  .rxp-card:hover{box-shadow:0 16px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.09)}
+  .rxp-card:hover .rxp-title{color:#fff;background:none;animation:none}
+}
+
+/* ---------- AURA SWITCHER ---------- */
+.rxa-btn{--aura:255,255,255;position:relative;isolation:isolate;display:flex;align-items:center;gap:.7rem;height:48px;padding:.3rem .95rem .3rem .3rem;border-radius:999px;color:#fff;overflow:hidden;
+  background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(8,8,12,.72));border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);
+  box-shadow:0 14px 40px rgba(0,0,0,.5),0 0 28px rgba(var(--aura),.12);transition:transform .45s cubic-bezier(.16,1,.3,1),box-shadow .5s,border-color .4s}
+.rxa-btn::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;z-index:2;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 50%,rgba(var(--aura),.95) 74%,#fff 78%,transparent 90%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:rxAng 3.2s linear infinite}
+.rxa-btn::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40%;z-index:1;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(var(--aura),.22),transparent);transform:translateX(-140%) skewX(-16deg);animation:rxaBtnShine 5s ease-in-out infinite}
+@keyframes rxaBtnShine{0%,60%{transform:translateX(-140%) skewX(-16deg)}100%{transform:translateX(380%) skewX(-16deg)}}
+.rxa-btn:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 40px rgba(var(--aura),.35)}
+.rxa-btn:active{transform:scale(.97)}
+.rxa-orb{position:relative;z-index:3;flex:none;width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:conic-gradient(from var(--ang),rgba(var(--aura),1),rgba(255,255,255,.95),rgba(var(--aura),.15),rgba(var(--aura),1));animation:rxAng 4s linear infinite;box-shadow:0 0 22px rgba(var(--aura),.55)}
+.rxa-orb::after{content:"";position:absolute;inset:3.5px;border-radius:inherit;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.18),rgba(6,6,10,.96) 65%)}
+.rxa-orb-core{position:relative;z-index:2;width:11px;height:11px;border-radius:999px;background:rgb(var(--aura));box-shadow:0 0 16px rgba(var(--aura),1),0 0 4px #fff;animation:rxAuraPop .7s cubic-bezier(.16,1,.3,1)}
+.rxa-orb-sat{position:absolute;inset:-5px;z-index:3;border-radius:999px;animation:rxpSpin 3s linear infinite}
+.rxa-orb-sat::before{content:"";position:absolute;top:0;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:99px;background:#fff;box-shadow:0 0 8px rgba(var(--aura),1)}
+.rxa-btn-text{position:relative;z-index:3;display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;line-height:1;overflow:hidden}
+.rxa-btn-text b{font-size:9px;font-weight:700;letter-spacing:.38em;text-transform:uppercase}
+.rxa-btn-text span{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(var(--aura),1);animation:rxaSwap .55s cubic-bezier(.16,1,.3,1)}
+@keyframes rxaSwap{from{transform:translateY(120%);opacity:0}}
+.rxa-chev{position:relative;z-index:3;width:14px;height:14px;color:rgba(255,255,255,.6);transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.rxa-btn.is-open .rxa-chev{transform:rotate(180deg)}
+
+.rxa-panel{position:absolute;top:calc(100% + 12px);left:0;width:min(88vw,368px);max-height:min(74vh,560px);overflow-y:auto;overscroll-behavior:contain;padding:.9rem;border-radius:1.7rem;
+  background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(8,8,12,.86) 40%);border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(30px) saturate(1.5);backdrop-filter:blur(30px) saturate(1.5);
+  box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 60px rgba(var(--aura),.16),inset 0 1px 0 rgba(255,255,255,.1);
+  transform-origin:top left;opacity:0;visibility:hidden;transform:translateY(-12px) scale(.94);filter:blur(8px);pointer-events:none;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent;
+  transition:opacity .35s,transform .55s cubic-bezier(.16,1,.3,1),filter .4s,visibility 0s .55s}
+.rxa-panel.is-open{opacity:1;visibility:visible;transform:none;filter:none;pointer-events:auto;transition:opacity .35s,transform .55s cubic-bezier(.16,1,.3,1),filter .4s,visibility 0s}
+.rxa-panel-head{display:flex;align-items:baseline;justify-content:space-between;padding:.2rem .35rem .8rem;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.85)}
+.rxa-panel-head em{font-style:normal;font-size:8.5px;letter-spacing:.2em;color:rgba(var(--aura),1)}
+.rxa-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}
+.rxa-item{--c:255,255,255;position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;padding:.45rem .45rem .6rem;border-radius:1.1rem;text-align:left;color:#fff;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);transition:transform .4s cubic-bezier(.16,1,.3,1),border-color .35s,box-shadow .45s,background .35s}
+.rxa-panel.is-open .rxa-item{animation:rxaItemIn .6s cubic-bezier(.16,1,.3,1) backwards;animation-delay:calc(var(--i)*45ms + 90ms)}
+@keyframes rxaItemIn{from{opacity:0;transform:translateY(16px) scale(.92)}}
+.rxa-item:hover{transform:translateY(-3px);border-color:rgba(var(--c),.6);background:rgba(var(--c),.07);box-shadow:0 14px 34px rgba(var(--c),.22)}
+.rxa-item.is-active{border-color:rgba(var(--c),.95);background:rgba(var(--c),.1);box-shadow:0 0 0 1px rgba(var(--c),.35),0 12px 36px rgba(var(--c),.3)}
+.rxa-thumb{position:relative;display:block;width:100%;height:58px;border-radius:.8rem;overflow:hidden;margin-bottom:.4rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.rxa-thumb-shine{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:translateX(-130%) skewX(-18deg)}
+.rxa-item:hover .rxa-thumb-shine{animation:rxaThumb .9s ease-out}
+.rxa-item.is-active .rxa-thumb-shine{animation:rxaThumb 2.8s ease-in-out infinite}
+@keyframes rxaThumb{to{transform:translateX(320%) skewX(-18deg)}}
+.rxa-item-name{padding:0 .2rem;font-size:11.5px;font-weight:600;letter-spacing:.02em}
+.rxa-item-tag{padding:0 .2rem;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.rxa-new{position:absolute;top:5px;left:5px;padding:2px 6px;border-radius:99px;font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#000;background:linear-gradient(90deg,#fde68a,#fb923c);box-shadow:0 0 12px rgba(251,146,60,.6);animation:rxaNew 2s ease-in-out infinite}
+@keyframes rxaNew{50%{box-shadow:0 0 20px rgba(251,146,60,.95)}}
+.rxa-check{position:absolute;top:5px;right:5px;display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:99px;color:#000;background:rgb(var(--c));box-shadow:0 0 16px rgba(var(--c),.9);animation:rxAuraPop .5s cubic-bezier(.16,1,.3,1)}
+.rxa-check svg{width:11px;height:11px}
+
+/* ---------- NEW THEMES: shared ---------- */
+.rxa-layer:not(.is-on) *{animation-play-state:paused!important}
+.rxa-drift{animation:rxaDrift 16s ease-in-out infinite}
+.rxa-drift-2{animation-duration:21s;animation-direction:reverse}
+@keyframes rxaDrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,-30px) scale(1.12)}}
+
+/* NEON GRID */
+.rxa-neon-sun{position:absolute;left:50%;top:15%;width:clamp(220px,34vw,380px);aspect-ratio:1;margin-left:calc(clamp(220px,34vw,380px)/-2);border-radius:999px;background:linear-gradient(to bottom,#fde047 0%,#fb7185 48%,#c026d3 100%);opacity:.8;filter:drop-shadow(0 0 60px rgba(232,60,255,.55));
+  -webkit-mask-image:linear-gradient(#000,#000),repeating-linear-gradient(to bottom,#000 0 11px,transparent 11px 16px);-webkit-mask-size:100% 48%,100% 52%;-webkit-mask-position:top,bottom;-webkit-mask-repeat:no-repeat;
+  mask-image:linear-gradient(#000,#000),repeating-linear-gradient(to bottom,#000 0 11px,transparent 11px 16px);mask-size:100% 48%,100% 52%;mask-position:top,bottom;mask-repeat:no-repeat;animation:rxaSun 6s ease-in-out infinite}
+@keyframes rxaSun{50%{opacity:.95;transform:translateY(-8px)}}
+.rxa-neon-horizon{position:absolute;left:0;right:0;top:56%;height:2px;background:linear-gradient(90deg,transparent,#22d3ee,#e83cff,#22d3ee,transparent);box-shadow:0 0 28px 6px rgba(232,60,255,.55);opacity:.9}
+.rxa-neon-floor{position:absolute;left:-60%;right:-60%;top:56%;bottom:-6%;transform:perspective(380px) rotateX(64deg);transform-origin:50% 0;
+  background-image:linear-gradient(rgba(232,60,255,.7) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(34,211,238,.6) 1.5px,transparent 1.5px);background-size:64px 64px;animation:rxaGrid 1.5s linear infinite;
+  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 30%);mask-image:linear-gradient(to bottom,transparent,#000 30%)}
+@keyframes rxaGrid{to{background-position:0 64px,0 0}}
+
+/* FROST */
+.rxa-frost-sheen{position:absolute;inset:-20% -40%;background:linear-gradient(115deg,transparent 40%,rgba(186,230,253,.07) 50%,transparent 60%);animation:rxaSheen 11s ease-in-out infinite}
+@keyframes rxaSheen{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+.rxa-snow{position:absolute;top:-4vh;width:var(--s);height:var(--s);border-radius:99px;background:#fff;opacity:var(--o);box-shadow:0 0 8px rgba(186,230,253,.9);animation:rxaSnow var(--t) linear infinite;animation-delay:var(--d)}
+@keyframes rxaSnow{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(var(--x),55vh,0)}100%{transform:translate3d(calc(var(--x)*-.6),112vh,0)}}
+
+/* STARDUST */
+.rxa-star{position:absolute;width:var(--s);height:var(--s);border-radius:99px;background:#fff;box-shadow:0 0 6px rgba(196,181,253,.95);animation:rxaTwinkle var(--t) ease-in-out infinite;animation-delay:var(--d)}
+@keyframes rxaTwinkle{0%,100%{opacity:.15;transform:scale(.6)}50%{opacity:1;transform:scale(1.25)}}
+.rxa-meteor{position:absolute;width:150px;height:1.5px;border-radius:99px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(196,181,253,.9),#fff);opacity:0;transform:rotate(-35deg);animation:rxaMeteor var(--t) linear infinite;animation-delay:var(--d)}
+.rxa-meteor::after{content:"";position:absolute;right:-1px;top:-2px;width:5px;height:5px;border-radius:99px;background:#fff;box-shadow:0 0 12px 3px rgba(196,181,253,.9)}
+@keyframes rxaMeteor{0%{transform:rotate(-35deg) translateX(0);opacity:0}4%{opacity:1}14%{transform:rotate(-35deg) translateX(-620px);opacity:0}100%{transform:rotate(-35deg) translateX(-620px);opacity:0}}
+
+@media (prefers-reduced-motion:reduce){
+  .rxp-card,.rxp-card::before,.rxp-icon-ring,.rxp-icon-pulse,.rxp-film,.rxp-ripple,.rxp-blob,.rxp-spark,.rxp-squiggle path,.rxp-bars i,.rxp-line,.rxp-area,.rxp-live,
+  .rxa-btn::before,.rxa-btn::after,.rxa-orb,.rxa-orb-sat,.rxa-new,.rxa-drift,.rxa-neon-sun,.rxa-neon-floor,.rxa-frost-sheen,.rxa-snow,.rxa-star,.rxa-meteor{animation:none!important}
+  .rxp-line{stroke-dashoffset:0}.rxp-area{opacity:1}.rxp-squiggle path{stroke-dashoffset:0}
+}
+
       `}
 </style>
 
@@ -1802,46 +2238,46 @@ img,video,iframe{max-width:100%}
           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(0,0,0,0.88))]" />
         </div>
 
+        {/* NEON GRID — synthwave sun + moving grid floor */}
+        <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "neon" ? "is-on opacity-100" : "opacity-0"}`}>
+          <div className="absolute inset-0 bg-[#05010f]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#12012b_0%,#2a0540_42%,#05010f_70%)]" />
+          <div className="rxa-neon-sun" />
+          <div className="absolute left-[-10%] top-[10%] h-[460px] w-[560px] rounded-full bg-fuchsia-600/[0.14] blur-[140px] rxa-drift" />
+          <div className="absolute right-[-8%] top-[26%] h-[420px] w-[520px] rounded-full bg-cyan-400/[0.10] blur-[140px] rxa-drift rxa-drift-2" />
+          <div className="rxa-neon-horizon" />
+          <div className="rxa-neon-floor" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_55%,rgba(5,1,15,0.78))]" />
+        </div>
+
+        {/* FROST — glacier blue + falling snow */}
+        <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "frost" ? "is-on opacity-100" : "opacity-0"}`}>
+          <div className="absolute inset-0 bg-[#030b16]" />
+          <div className="absolute left-[-12%] top-[-14%] h-[640px] w-[820px] rounded-full bg-sky-400/[0.13] blur-[150px] rxa-drift" />
+          <div className="absolute right-[-10%] top-[24%] h-[540px] w-[700px] rounded-full bg-cyan-300/[0.09] blur-[150px] rxa-drift rxa-drift-2" />
+          <div className="absolute bottom-[-18%] left-1/2 h-[480px] w-[900px] -translate-x-1/2 rounded-full bg-blue-500/[0.10] blur-[160px]" />
+          <div className="rxa-frost-sheen" />
+          <SnowField />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_40%,rgba(2,8,18,0.85))]" />
+        </div>
+
+        {/* STARDUST — twinkling stars + shooting meteors */}
+        <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "meteor" ? "is-on opacity-100" : "opacity-0"}`}>
+          <div className="absolute inset-0 bg-[#02030a]" />
+          <div className="absolute left-[10%] top-[-8%] h-[560px] w-[680px] rounded-full bg-violet-700/[0.14] blur-[150px] rxa-drift" />
+          <div className="absolute right-[-6%] top-[30%] h-[480px] w-[600px] rounded-full bg-indigo-600/[0.12] blur-[150px] rxa-drift rxa-drift-2" />
+          <div className="absolute bottom-[-14%] left-1/3 h-[420px] w-[760px] rounded-full bg-fuchsia-700/[0.08] blur-[160px]" />
+          <StarField />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_45%,rgba(2,3,10,0.85))]" />
+        </div>
+
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_18%,rgba(0,0,0,0.72)_100%)]" />
       </div>
 
       {/* ==================================
-          BACKGROUND THEME SWITCHER (AURA)
+          AURA THEME SWITCHER
       ================================== */}
-      <div className="fixed left-3 top-3 z-[90] sm:left-5 sm:top-5 md:left-7 md:top-6">
-        <button
-          type="button"
-          onClick={() =>
-            setTheme((current) => themeOrder[(themeOrder.indexOf(current) + 1) % themeOrder.length])
-          }
-          style={{ "--aura": AURA_RGB[theme] } as React.CSSProperties}
-          className="raaka-control raaka-aura-premium group relative flex h-11 items-center gap-2.5 overflow-hidden rounded-full border border-white/15 bg-black/55 py-1 pl-1.5 pr-3.5 text-white/85 shadow-[0_12px_45px_rgba(0,0,0,0.45)] backdrop-blur-2xl transition-all duration-300 sm:h-12 sm:gap-3 sm:pr-4"
-          aria-label={`Change visual aura. Current: ${theme}`}
-          title="Change visual aura"
-        >
-          <span className="rx-aura-orb relative flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] sm:h-9 sm:w-9">
-            <span className="rx-aura-ring absolute inset-0 rounded-full" />
-            <span
-              key={theme}
-              className="rx-aura-core relative h-3 w-3 rounded-full"
-              style={{ background: `rgb(${AURA_RGB[theme]})`, boxShadow: `0 0 16px rgba(${AURA_RGB[theme]},.95)` }}
-            />
-          </span>
-          <span className="relative flex flex-col items-start leading-none">
-            <span className="text-[9px] font-semibold uppercase tracking-[0.34em]">Aura</span>
-            <span className="mt-1.5 text-[8px] uppercase tracking-[0.2em] text-white/50">{theme}</span>
-          </span>
-          <span className="relative hidden items-center gap-1 md:flex">
-            {THEME_ORDER.map((t) => (
-              <span
-                key={t}
-                className={`h-1 rounded-full transition-all duration-500 ${t === theme ? "w-4" : "w-1 bg-white/20"}`}
-                style={t === theme ? { background: `rgb(${AURA_RGB[t]})` } : undefined}
-              />
-            ))}
-          </span>
-        </button>
-      </div>
+      <AuraSwitcher theme={theme} setTheme={setTheme} />
 
       {/* PREMIUM MUSIC CONTROL */}
       <div className="fixed bottom-5 right-5 z-[110] sm:bottom-7 sm:right-7">
@@ -2039,39 +2475,10 @@ img,video,iframe{max-width:100%}
               </p>
 
               {/* Action rail — horizontal scroll on mobile, grid on desktop */}
-              <div className="mt-7 -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-3 pt-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-3">
-                {HERO_ACTIONS.map((action, i) => {
-                  const accent = ACCENTS[action.accent];
-                  return (
-                    <a
-                      key={action.title}
-                      href={action.href}
-                      onMouseMove={(e) => {
-                        const r = e.currentTarget.getBoundingClientRect();
-                        e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
-                        e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
-                      }}
-                      style={{ "--i": i } as React.CSSProperties}
-                      className={`rx-action rx-action-${action.accent} group relative flex min-h-[84px] w-[80vw] shrink-0 snap-start items-center rounded-2xl px-3.5 sm:min-h-[98px] sm:w-auto sm:px-5`}
-                    >
-                      <span className="rx-action-spot" aria-hidden />
-                      <ActionArt kind={action.accent} />
-                      <div className={`raaka-action-icon relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${accent.glow} ${accent.text} md:h-14 md:w-14`}>
-                        <span className="rx-action-iring" aria-hidden />
-                        {action.icon}
-                      </div>
-                      <div className="relative z-10 ml-3.5 min-w-0 flex-1 md:ml-4">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <p className="truncate text-[8px] font-medium uppercase tracking-[0.26em] text-white/40 md:text-[9px]">{action.eyebrow}</p>
-                          {"isNew" in action && action.isNew && <NewBadge addedAt="2026-09-06" />}
-                        </div>
-                        <h3 className="mt-1 truncate text-[15px] font-semibold text-white md:text-[17px]">{action.title}</h3>
-                      </div>
-                      <div className="rx-action-arrow relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.14] text-sm text-white/50 md:h-10 md:w-10">→</div>
-                      <span className={`absolute bottom-0 left-0 z-10 h-[2px] w-0 transition-all duration-500 group-hover:w-full ${accent.bar}`} />
-                    </a>
-                  );
-                })}
+              <div className="mt-8 -mx-5 flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-5 pb-4 pt-3 [scrollbar-width:none] [perspective:1200px] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-3">
+                {HERO_ACTIONS.map((action, i) => (
+                  <HeroActionCard key={action.title} action={action} index={i} />
+                ))}
               </div>
             </div>
           </div>
@@ -2088,7 +2495,7 @@ img,video,iframe{max-width:100%}
 
             <div className="flex flex-col justify-center">
               <p className="max-w-xl text-lg leading-8 text-zinc-300">
-                Welcome to the World of Raaka. This website brings together everything related to the movie in one place.
+                Prepare yourself for a vision beyond limits.
               </p>
 
               <dl className="mt-10 grid grid-cols-2 gap-x-8 gap-y-6 border-t border-white/10 pt-8 sm:grid-cols-4 md:grid-cols-2">
@@ -2181,12 +2588,16 @@ img,video,iframe{max-width:100%}
         <section id="cast" data-design-section="cast" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
             <Reveal><SectionHeading eyebrow="The Cast" title="Cast & Characters" /></Reveal>
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-              {CAST.map((person, i) => (
-                <Reveal key={person.name} delay={i * 120} className="w-[calc(50%-0.5rem)] sm:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1.125rem)]">
-                  <PersonCard {...person} size="large" index={i} />
-                </Reveal>
-              ))}
+            <div className="cast-crew-carousel relative">
+              <button type="button" aria-label="Scroll cast left" onClick={() => scrollCastCrew(castTrackRef, -1)} className="cast-crew-arrow cast-crew-arrow-left" >‹</button>
+              <div ref={castTrackRef} className="cast-crew-track -mx-5 flex w-[calc(100%+2.5rem)] flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain px-5 pb-5 pt-1 snap-x snap-mandatory scroll-smooth touch-pan-x sm:-mx-6 sm:w-[calc(100%+3rem)] sm:gap-5 sm:px-6 md:-mx-10 md:w-[calc(100%+5rem)] md:gap-6 md:px-10">
+                {CAST.map((person, i) => (
+                  <Reveal key={person.name} delay={i * 120} className="cast-crew-item w-[78%] max-w-[290px] shrink-0 snap-start sm:w-[42%] sm:max-w-[300px] md:w-[31%] lg:w-[22%]">
+                    <PersonCard {...person} size="large" index={i} />
+                  </Reveal>
+                ))}
+              </div>
+              <button type="button" aria-label="Scroll cast right" onClick={() => scrollCastCrew(castTrackRef, 1)} className="cast-crew-arrow cast-crew-arrow-right" >›</button>
             </div>
           </div>
         </section>
@@ -2195,12 +2606,16 @@ img,video,iframe{max-width:100%}
         <section id="crew" data-design-section="crew" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
             <Reveal><SectionHeading eyebrow="Behind The World" title="Crew" /></Reveal>
-            <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4">
-              {CREW.map((person, i) => (
-                <Reveal key={person.name} delay={i * 110}>
-                  <PersonCard {...person} index={i} />
-                </Reveal>
-              ))}
+            <div className="cast-crew-carousel relative">
+              <button type="button" aria-label="Scroll crew left" onClick={() => scrollCastCrew(crewTrackRef, -1)} className="cast-crew-arrow cast-crew-arrow-left" >‹</button>
+              <div ref={crewTrackRef} className="cast-crew-track -mx-5 flex w-[calc(100%+2.5rem)] flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain px-5 pb-5 pt-1 snap-x snap-mandatory scroll-smooth touch-pan-x sm:-mx-6 sm:w-[calc(100%+3rem)] sm:gap-5 sm:px-6 md:-mx-10 md:w-[calc(100%+5rem)] md:gap-6 md:px-10">
+                {CREW.map((person, i) => (
+                  <Reveal key={person.name} delay={i * 110} className="cast-crew-item w-[78%] max-w-[290px] shrink-0 snap-start sm:w-[42%] sm:max-w-[300px] md:w-[31%] lg:w-[22%]">
+                    <PersonCard {...person} index={i} />
+                  </Reveal>
+                ))}
+              </div>
+              <button type="button" aria-label="Scroll crew right" onClick={() => scrollCastCrew(crewTrackRef, 1)} className="cast-crew-arrow cast-crew-arrow-right" >›</button>
             </div>
           </div>
         </section>
