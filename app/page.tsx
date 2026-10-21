@@ -99,9 +99,10 @@ const RELEASE_LANGUAGES = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "
 const CAST = [
   { name: "Allu Arjun", image: "/images/actor3.jpg", href: "/allu-arjun" },
   { name: "Mrunal Thakur", image: "/images/mrunal.jpg" },
+ { name: "Deepika Padukone", image: "/images/actor2.jpg" },
   { name: "Rashmika Mandanna", image: "/images/rashmika.jpg" },
   { name: "Janhvi Kapoor", image: "/images/janhavi.jpg" },
-  { name: "Deepika Padukone", image: "/images/actor2.jpg" },
+ 
 ];
 
 const CREW = [
