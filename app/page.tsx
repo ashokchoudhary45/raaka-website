@@ -77,7 +77,7 @@ const HERO_ACTIONS = [
     href: "/videos",
     eyebrow: "Trailers & More",
     title: "Watch Videos",
-    accent: "orange",
+    accent: "baby blue",
     icon: (
       <svg className="ml-0.5 h-4 w-4 md:h-[18px] md:w-[18px]" viewBox="0 0 24 24" fill="currentColor">
         <path d="M8 5.5v13l11-6.5z" />
@@ -88,7 +88,7 @@ const HERO_ACTIONS = [
     href: "/fans-art",
     eyebrow: "Art by the Fans",
     title: "Fan Art",
-    accent: "purple",
+    accent: "coral red",
     isNew: true,
     icon: (
       <svg className="h-4 w-4 md:h-[18px] md:w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -100,7 +100,7 @@ const HERO_ACTIONS = [
     href: "/box-office",
     eyebrow: "Track the Numbers",
     title: "Box Office",
-    accent: "yellow",
+    accent: "mint green",
     isNew: true,
     icon: (
       <svg className="h-4 w-4 md:h-[18px] md:w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -116,6 +116,9 @@ const ACCENTS: Record<string, { border: string; bg: string; text: string; glow: 
   orange: { border: "hover:border-orange-400/50", bg: "from-orange-500/[0.08]", text: "text-orange-300", glow: "border-orange-400/35 bg-orange-500/[0.08]", bar: "bg-orange-400" },
   purple: { border: "hover:border-purple-400/50", bg: "from-purple-500/[0.08]", text: "text-purple-300", glow: "border-purple-400/35 bg-purple-500/[0.08]", bar: "bg-purple-400" },
   yellow: { border: "hover:border-yellow-400/50", bg: "from-yellow-500/[0.07]", text: "text-yellow-300", glow: "border-yellow-400/35 bg-yellow-500/[0.08]", bar: "bg-yellow-400" },
+  "baby blue": { border: "hover:border-sky-400/50", bg: "from-sky-500/[0.08]", text: "text-sky-300", glow: "border-sky-400/35 bg-sky-500/[0.08]", bar: "bg-sky-400" },
+  "coral red": { border: "hover:border-rose-400/50", bg: "from-rose-500/[0.08]", text: "text-rose-300", glow: "border-rose-400/35 bg-rose-500/[0.08]", bar: "bg-rose-400" },
+  "mint green": { border: "hover:border-emerald-400/50", bg: "from-emerald-500/[0.08]", text: "text-emerald-300", glow: "border-emerald-400/35 bg-emerald-500/[0.08]", bar: "bg-emerald-400" },
 };
 
 const RELEASE_LANGUAGES = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "Bengali", "Arabic", "English"];
@@ -2082,7 +2085,7 @@ img,video,iframe{max-width:100%}
               {/* Action rail — horizontal scroll on mobile, grid on desktop */}
               <div className="mt-7 -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-3 pt-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-3">
                 {HERO_ACTIONS.map((action, i) => {
-                  const accent = ACCENTS[action.accent];
+                  const accent = ACCENTS[action.accent] ?? ACCENTS.orange;
                   return (
                     <a
                       key={action.title}
@@ -2093,7 +2096,7 @@ img,video,iframe{max-width:100%}
                         e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
                       }}
                       style={{ "--i": i } as React.CSSProperties}
-                      className={`rx-action rx-action-${action.accent} group relative flex min-h-[84px] w-[80vw] shrink-0 snap-start items-center rounded-2xl px-3.5 sm:min-h-[98px] sm:w-auto sm:px-5`}
+                      className={`rx-action rx-action-${action.accent.replace(/\s+/g, "-")} group relative flex min-h-[84px] w-[80vw] shrink-0 snap-start items-center rounded-2xl px-3.5 sm:min-h-[98px] sm:w-auto sm:px-5`}
                     >
                       <span className="rx-action-spot" aria-hidden />
                       <ActionArt kind={action.accent} />
