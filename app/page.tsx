@@ -123,6 +123,9 @@ const RELEASE_LANGUAGES = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "
 const CAST = [
   { name: "Allu Arjun", image: "/images/actor3.jpg", href: "/allu-arjun" },
   { name: "Deepika Padukone", image: "/images/actor2.jpg" },
+  { name: "Rashmika Mandanna", image: "/images/rashmika.jpg" },
+  { name: "Mrunal Thakur", image: "/images/mrunal.jpg" },
+  { name: "Janhvi Kapoor", image: "/images/janhavi.jpg" },
 ];
 
 const CREW = [
@@ -172,7 +175,7 @@ const BOX_OFFICE_LANGS: [string, string][] = [
 const BOX_OFFICE_STATS = ["Opening Day", "First Weekend", "India Net", "Highest Day"];
 
 const CREW_CREDITS: { department: string; names: string[] }[] = [
-  { department: "Cast", names: ["Allu Arjun", "Deepika Padukone"] },
+  { department: "Cast", names: ["Allu Arjun", "Deepika Padukone", "Rashmika Mandanna", "Mrunal Thakur", "Janhvi Kapoor"] },
   { department: "Musician", names: ["Sai Abhyankar"] },
   { department: "Cinematography", names: ["G.K. Vishnu"] },
   { department: "Editor", names: ["Antony L. Ruben"] },
