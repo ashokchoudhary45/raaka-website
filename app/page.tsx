@@ -479,6 +479,16 @@ export default function Home() {
   const [ticketsOpen, setTicketsOpen] = useState(false);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const musicRef = useRef<HTMLAudioElement | null>(null);
+  const castTrackRef = useRef<HTMLDivElement | null>(null);
+  const crewTrackRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollCastCrew = (track: React.RefObject<HTMLDivElement | null>, direction: -1 | 1) => {
+    const el = track.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>(".cast-crew-item");
+    const step = card ? card.getBoundingClientRect().width + 24 : el.clientWidth * 0.8;
+    el.scrollBy({ left: direction * step, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  };
 
   
 
@@ -1497,6 +1507,16 @@ prefers-reduced-motion:reduce){
 ================================================================ */
 html,body{max-width:100%;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 img,video,iframe{max-width:100%}
+/* Subtle gold carousel controls; scrollbar stays hidden, card peek hints at more content */
+.cast-crew-carousel{isolation:isolate}
+.cast-crew-arrow{position:absolute;z-index:5;top:46%;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid rgba(214,165,91,.42);border-radius:9999px;background:rgba(8,8,8,.82);color:#e8bd7a;font-size:30px;line-height:1;box-shadow:0 5px 22px rgba(0,0,0,.4);backdrop-filter:blur(10px);opacity:0;transform:scale(.94);transition:opacity .22s ease,transform .22s ease,background .22s ease,border-color .22s ease;cursor:pointer}
+.cast-crew-carousel:hover .cast-crew-arrow,.cast-crew-carousel:focus-within .cast-crew-arrow{opacity:1;transform:scale(1)}
+.cast-crew-arrow:hover{background:rgba(214,165,91,.16);border-color:rgba(214,165,91,.8)}
+.cast-crew-arrow-left{left:8px}.cast-crew-arrow-right{right:8px}
+@media(hover:none){.cast-crew-arrow{opacity:.92;transform:none;width:36px;height:36px;font-size:26px;background:rgba(8,8,8,.72)}}
+@media(max-width:640px){.cast-crew-arrow-left{left:7px}.cast-crew-arrow-right{right:7px}}
+@media(prefers-reduced-motion:reduce){.cast-crew-arrow{transition:none}}
+
 /* Cast & Crew: invisible scrollbar + next-card peek, touch/trackpad friendly */
 #cast .cast-crew-track,#crew .cast-crew-track,.cast-crew-track{
   display:flex!important;flex-wrap:nowrap!important;align-items:stretch;
@@ -2202,12 +2222,16 @@ img,video,iframe{max-width:100%}
         <section id="cast" data-design-section="cast" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
             <Reveal><SectionHeading eyebrow="The Cast" title="Cast & Characters" /></Reveal>
-            <div className="cast-crew-track -mx-5 flex w-[calc(100%+2.5rem)] flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain px-5 pb-5 pt-1 snap-x snap-mandatory scroll-smooth touch-pan-x sm:-mx-6 sm:w-[calc(100%+3rem)] sm:gap-5 sm:px-6 md:-mx-10 md:w-[calc(100%+5rem)] md:gap-6 md:px-10">
-              {CAST.map((person, i) => (
-                <Reveal key={person.name} delay={i * 120} className="cast-crew-item w-[78%] max-w-[290px] shrink-0 snap-start sm:w-[42%] sm:max-w-[300px] md:w-[31%] lg:w-[24%]">
-                  <PersonCard {...person} size="large" index={i} />
-                </Reveal>
-              ))}
+            <div className="cast-crew-carousel relative">
+              <button type="button" aria-label="Scroll cast left" onClick={() => scrollCastCrew(castTrackRef, -1)} className="cast-crew-arrow cast-crew-arrow-left" >‹</button>
+              <div ref={castTrackRef} className="cast-crew-track -mx-5 flex w-[calc(100%+2.5rem)] flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain px-5 pb-5 pt-1 snap-x snap-mandatory scroll-smooth touch-pan-x sm:-mx-6 sm:w-[calc(100%+3rem)] sm:gap-5 sm:px-6 md:-mx-10 md:w-[calc(100%+5rem)] md:gap-6 md:px-10">
+                {CAST.map((person, i) => (
+                  <Reveal key={person.name} delay={i * 120} className="cast-crew-item w-[78%] max-w-[290px] shrink-0 snap-start sm:w-[42%] sm:max-w-[300px] md:w-[31%] lg:w-[22%]">
+                    <PersonCard {...person} size="large" index={i} />
+                  </Reveal>
+                ))}
+              </div>
+              <button type="button" aria-label="Scroll cast right" onClick={() => scrollCastCrew(castTrackRef, 1)} className="cast-crew-arrow cast-crew-arrow-right" >›</button>
             </div>
           </div>
         </section>
@@ -2216,12 +2240,16 @@ img,video,iframe{max-width:100%}
         <section id="crew" data-design-section="crew" className="px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
           <div className="mx-auto max-w-6xl">
             <Reveal><SectionHeading eyebrow="Behind The World" title="Crew" /></Reveal>
-            <div className="cast-crew-track -mx-5 flex w-[calc(100%+2.5rem)] flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain px-5 pb-5 pt-1 snap-x snap-mandatory scroll-smooth touch-pan-x sm:-mx-6 sm:w-[calc(100%+3rem)] sm:gap-5 sm:px-6 md:-mx-10 md:w-[calc(100%+5rem)] md:gap-6 md:px-10">
-              {CREW.map((person, i) => (
-                <Reveal key={person.name} delay={i * 110} className="cast-crew-item w-[78%] max-w-[290px] shrink-0 snap-start sm:w-[42%] sm:max-w-[300px] md:w-[31%] lg:w-[24%]">
-                  <PersonCard {...person} index={i} />
-                </Reveal>
-              ))}
+            <div className="cast-crew-carousel relative">
+              <button type="button" aria-label="Scroll crew left" onClick={() => scrollCastCrew(crewTrackRef, -1)} className="cast-crew-arrow cast-crew-arrow-left" >‹</button>
+              <div ref={crewTrackRef} className="cast-crew-track -mx-5 flex w-[calc(100%+2.5rem)] flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain px-5 pb-5 pt-1 snap-x snap-mandatory scroll-smooth touch-pan-x sm:-mx-6 sm:w-[calc(100%+3rem)] sm:gap-5 sm:px-6 md:-mx-10 md:w-[calc(100%+5rem)] md:gap-6 md:px-10">
+                {CREW.map((person, i) => (
+                  <Reveal key={person.name} delay={i * 110} className="cast-crew-item w-[78%] max-w-[290px] shrink-0 snap-start sm:w-[42%] sm:max-w-[300px] md:w-[31%] lg:w-[22%]">
+                    <PersonCard {...person} index={i} />
+                  </Reveal>
+                ))}
+              </div>
+              <button type="button" aria-label="Scroll crew right" onClick={() => scrollCastCrew(crewTrackRef, 1)} className="cast-crew-arrow cast-crew-arrow-right" >›</button>
             </div>
           </div>
         </section>
