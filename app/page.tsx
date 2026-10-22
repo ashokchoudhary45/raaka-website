@@ -5,13 +5,14 @@ import Image from "next/image";
 import NewBadge from "@/components/NewBadge";
 import Link from "next/link";
 
-type Theme = "obsidian" | "ember" | "cosmic" | "graphite" | "onyx" | "aurora" | "crimson" | "sunset" | "neon" | "frost" | "meteor";
+type Theme = "obsidian" | "ember" | "cosmic" | "graphite" | "onyx" | "aurora" | "crimson" | "sunset" | "frost" | "meteor" | "sakura" | "thunder" | "dawn";
 
-const THEME_ORDER: Theme[] = ["obsidian", "ember", "cosmic", "graphite", "onyx", "aurora", "crimson", "sunset", "neon", "frost", "meteor"];
+const THEME_ORDER: Theme[] = ["obsidian", "ember", "cosmic", "graphite", "onyx", "aurora", "crimson", "sunset", "frost", "meteor", "sakura", "thunder", "dawn"];
 const AURA_RGB: Record<Theme, string> = {
   obsidian: "255,255,255", ember: "255,110,30", cosmic: "129,140,248", graphite: "212,212,216",
   onyx: "250,204,21", aurora: "45,212,191", crimson: "244,63,94", sunset: "236,72,153",
-  neon: "232,60,255", frost: "125,211,252", meteor: "196,181,253",
+  frost: "125,211,252", meteor: "196,181,253",
+  sakura: "244,114,182", thunder: "147,197,253", dawn: "253,186,116",
 };
 
 const AURA_META: Record<Theme, { label: string; tag: string; bg: string; isNew?: boolean }> = {
@@ -23,9 +24,11 @@ const AURA_META: Record<Theme, { label: string; tag: string; bg: string; isNew?:
   aurora: { label: "Aurora", tag: "Northern lights", bg: "linear-gradient(135deg,#2dd4bf,#10b981 38%,#7c3aed 78%,#020807)" },
   crimson: { label: "Crimson", tag: "Blood moon", bg: "radial-gradient(circle at 50% 0%,#f43f5e,#7f1022 52%,#0a0204 88%)" },
   sunset: { label: "Sunset", tag: "Dusk glow", bg: "linear-gradient(160deg,#ec4899,#f97316 50%,#3b0764)" },
-  neon: { label: "Neon Grid", tag: "Synthwave", bg: "linear-gradient(180deg,#1a0536,#c026d3 55%,#22d3ee)", isNew: true },
-  frost: { label: "Frost", tag: "Falling snow", bg: "linear-gradient(160deg,#e0f2fe,#38bdf8 45%,#0c2a4a)", isNew: true },
-  meteor: { label: "Stardust", tag: "Shooting stars", bg: "linear-gradient(135deg,#0b1030,#4c1d95 55%,#c4b5fd)", isNew: true },
+  frost: { label: "Frost", tag: "Falling snow", bg: "linear-gradient(160deg,#e0f2fe,#38bdf8 45%,#0c2a4a)" },
+  meteor: { label: "Stardust", tag: "Shooting stars", bg: "linear-gradient(135deg,#0b1030,#4c1d95 55%,#c4b5fd)" },
+  sakura: { label: "Sakura", tag: "Petal night", bg: "radial-gradient(circle at 76% 24%,#fde2ee 0,#f472b6 12%,transparent 13%),linear-gradient(160deg,#5a1744,#1d0a22 58%,#07020a)", isNew: true },
+  thunder: { label: "Thunder", tag: "Storm & lightning", bg: "linear-gradient(165deg,#3b5f8f,#0f1d33 52%,#02040a)", isNew: true },
+  dawn: { label: "Divine Dawn", tag: "God rays", bg: "linear-gradient(180deg,#fde3ae 0%,#7fa8c9 30%,#16314a 64%,#050a12)", isNew: true },
 };
 
 // ---------- scroll helpers ----------
@@ -88,9 +91,9 @@ const NAV_LINKS: { href: string; label: string; isNew?: boolean }[] = [
 ];
 
 const HERO_ACTIONS = [
-  { href: "/videos", eyebrow: "Trailers & More", title: "Watch Videos", kind: "video", rgb: "56,189,248" },
-  { href: "/fans-art", eyebrow: "Art by the Fans", title: "Fan Art", kind: "art", rgb: "251,113,133", isNew: true },
-  { href: "/box-office", eyebrow: "Track the Numbers", title: "Box Office", kind: "box", rgb: "52,211,153", isNew: true },
+  { href: "/videos", eyebrow: "Trailers & More", title: "Watch Videos", kind: "video", rgb: "255,176,64" },
+  { href: "/fans-art", eyebrow: "Art by the Fans", title: "Fan Art", kind: "art", rgb: "244,114,182", isNew: true },
+  { href: "/box-office", eyebrow: "Track the Numbers", title: "Box Office", kind: "box", rgb: "45,212,170", isNew: true },
 ] as const;
 
 
@@ -99,10 +102,9 @@ const RELEASE_LANGUAGES = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "
 const CAST = [
   { name: "Allu Arjun", image: "/images/actor3.jpg", href: "/allu-arjun" },
   { name: "Mrunal Thakur", image: "/images/mrunal.jpg" },
- { name: "Deepika Padukone", image: "/images/actor2.jpg" },
   { name: "Rashmika Mandanna", image: "/images/rashmika.jpg" },
   { name: "Janhvi Kapoor", image: "/images/janhavi.jpg" },
- 
+  { name: "Deepika Padukone", image: "/images/actor2.jpg" },
 ];
 
 const CREW = [
@@ -356,18 +358,25 @@ function LogoShine({ src, alt = "RAAKA", imgClassName = "" }: { src: string; alt
 function HeroIcon({ kind }: { kind: string }) {
   if (kind === "video")
     return (
-      <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor"><path d="M8.5 5.8v12.4a.7.7 0 0 0 1.07.6l10-6.2a.7.7 0 0 0 0-1.2l-10-6.2a.7.7 0 0 0-1.07.6z" /></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M10 8.6v6.8a.5.5 0 0 0 .76.43l5.5-3.4a.5.5 0 0 0 0-.86l-5.5-3.4A.5.5 0 0 0 10 8.6z" fill="currentColor" />
+      </svg>
     );
   if (kind === "art")
     return (
-      <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3.2l2.3 5 5.5.7-4 3.9 1 5.5-4.8-2.7-4.8 2.7 1-5.5-4-3.9 5.5-.7z" />
-        <path d="M19.5 3v3M18 4.5h3" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A3.6 3.6 0 0 0 21 11 9 9 0 0 0 12 3z" />
+        <circle cx="7.6" cy="11.2" r="1" fill="currentColor" />
+        <circle cx="10.2" cy="7.2" r="1" fill="currentColor" />
+        <circle cx="15" cy="7.2" r="1" fill="currentColor" />
       </svg>
     );
   return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 19V11M10 19V6M16 19v-6M21 7l-5 4.5-3-2" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3.5 3.5v17h17" />
+      <path d="m7.5 15 3.8-4 3 2.8 5-6" />
+      <path d="M16.6 7.8h2.7v2.7" />
     </svg>
   );
 }
@@ -375,45 +384,45 @@ function HeroIcon({ kind }: { kind: string }) {
 function HeroScene({ kind }: { kind: string }) {
   if (kind === "video")
     return (
-      <span className="rxp-scene rxp-scene-video" aria-hidden>
-        <i className="rxp-film rxp-film-t" />
-        <i className="rxp-film rxp-film-b" />
-        <i className="rxp-ripple" style={{ "--d": "0s" } as React.CSSProperties} />
-        <i className="rxp-ripple" style={{ "--d": "1.1s" } as React.CSSProperties} />
-        <i className="rxp-ripple" style={{ "--d": "2.2s" } as React.CSSProperties} />
-        <i className="rxp-leak" />
+      <span className="rzh-scene" aria-hidden>
+        <svg className="rzh-iris" viewBox="0 0 100 100">
+          <g className="rzh-iris-blades">
+            {[0, 1, 2, 3, 4, 5].map((k) => (
+              <path key={k} d="M50 50 L50 7 A43 43 0 0 1 87.2 28.5 Z" transform={`rotate(${k * 60} 50 50)`} />
+            ))}
+          </g>
+          <circle className="rzh-iris-rim" cx="50" cy="50" r="43" />
+          <circle className="rzh-iris-eye" cx="50" cy="50" r="9" />
+        </svg>
+        <i className="rzh-strip rzh-strip-t" />
+        <i className="rzh-strip rzh-strip-b" />
       </span>
     );
   if (kind === "art")
     return (
-      <span className="rxp-scene rxp-scene-art" aria-hidden>
-        <i className="rxp-blob rxp-blob-1" />
-        <i className="rxp-blob rxp-blob-2" />
-        <i className="rxp-blob rxp-blob-3" />
-        {[0, 1, 2, 3, 4].map((k) => (
-          <i key={k} className="rxp-spark" style={{ "--k": k } as React.CSSProperties} />
-        ))}
-        <svg className="rxp-squiggle" viewBox="0 0 160 40" fill="none" preserveAspectRatio="none">
-          <path d="M2 28 C 20 4, 36 4, 52 22 S 86 40, 104 18 S 140 2, 158 14" />
+      <span className="rzh-scene" aria-hidden>
+        <svg className="rzh-strokes" viewBox="0 0 220 120" fill="none" preserveAspectRatio="xMaxYMid meet">
+          <path pathLength={100} className="rzh-stroke rzh-st1" d="M8 96 C 46 14, 88 128, 128 54 S 190 22, 214 62" />
+          <path pathLength={100} className="rzh-stroke rzh-st2" d="M20 112 C 62 54, 100 116, 140 80 S 186 56, 214 94" />
+          <path pathLength={100} className="rzh-stroke rzh-st3" d="M34 36 C 70 -2, 112 52, 150 22 S 196 6, 216 30" />
         </svg>
+        {[0, 1, 2].map((k) => (
+          <i key={k} className="rzh-dot" style={{ "--k": k } as React.CSSProperties} />
+        ))}
       </span>
     );
   return (
-    <span className="rxp-scene rxp-scene-box" aria-hidden>
-      <span className="rxp-bars">
-        {[38, 55, 44, 70, 62, 88, 100].map((h, k) => (
-          <i key={k} style={{ "--h": `${h}%`, "--k": k } as React.CSSProperties} />
+    <span className="rzh-scene" aria-hidden>
+      <svg className="rzh-gauge" viewBox="0 0 120 120" fill="none">
+        {[[52, 82], [40, 64], [28, 46]].map(([r, p], k) => (
+          <g key={k}>
+            <circle className="rzh-track" cx="60" cy="60" r={r} />
+            <circle className="rzh-arc" pathLength={100} cx="60" cy="60" r={r} style={{ "--p": p, animationDelay: `${k * 0.35}s` } as React.CSSProperties} />
+          </g>
         ))}
-      </span>
-      <svg className="rxp-spark-line" viewBox="0 0 200 80" fill="none" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="rxpLineG" x1="0" x2="1"><stop offset="0" stopColor="rgba(52,211,153,.2)" /><stop offset="1" stopColor="#6ee7b7" /></linearGradient>
-          <linearGradient id="rxpAreaG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="rgba(52,211,153,.35)" /><stop offset="1" stopColor="rgba(52,211,153,0)" /></linearGradient>
-        </defs>
-        <path className="rxp-area" d="M0 70 L25 60 L50 64 L75 44 L100 50 L130 28 L160 34 L198 8 L198 80 L0 80 Z" fill="url(#rxpAreaG)" />
-        <path className="rxp-line" pathLength={100} d="M0 70 L25 60 L50 64 L75 44 L100 50 L130 28 L160 34 L198 8" stroke="url(#rxpLineG)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        <circle className="rzh-orbit-dot" cx="60" cy="5" r="2.8" />
       </svg>
-      <i className="rxp-live" />
+      <i className="rzh-live" />
     </span>
   );
 }
@@ -427,8 +436,8 @@ function HeroActionCard({ action, index }: { action: (typeof HERO_ACTIONS)[numbe
     const py = (e.clientY - r.top) / r.height;
     el.style.setProperty("--mx", `${px * 100}%`);
     el.style.setProperty("--my", `${py * 100}%`);
-    el.style.setProperty("--ry", `${(px - 0.5) * 9}deg`);
-    el.style.setProperty("--rx", `${(0.5 - py) * 7}deg`);
+    el.style.setProperty("--ry", `${(px - 0.5) * 8}deg`);
+    el.style.setProperty("--rx", `${(0.5 - py) * 6}deg`);
   };
   const onLeave = (e: React.PointerEvent<HTMLAnchorElement>) => {
     const el = e.currentTarget;
@@ -441,120 +450,66 @@ function HeroActionCard({ action, index }: { action: (typeof HERO_ACTIONS)[numbe
       onPointerMove={onMove}
       onPointerLeave={onLeave}
       style={{ "--c": action.rgb, "--i": index } as React.CSSProperties}
-      className={`rxp-card rxp-${action.kind} group w-[82vw] shrink-0 snap-start sm:w-auto`}
+      className={`rzh-card rzh-${action.kind} group w-[78vw] max-w-[340px] shrink-0 snap-start md:w-auto md:max-w-none`}
     >
-      <span className="rxp-foil" aria-hidden />
-      <span className="rxp-grid" aria-hidden />
-      <HeroScene kind={action.kind} />
-      <span className="rxp-corner rxp-c1" aria-hidden />
-      <span className="rxp-corner rxp-c2" aria-hidden />
-      <span className="rxp-corner rxp-c3" aria-hidden />
-      <span className="rxp-corner rxp-c4" aria-hidden />
+      <span className="rzh-ticket">
+        <span className="rzh-fill" aria-hidden />
+        <span className="rzh-spot" aria-hidden />
+        <HeroScene kind={action.kind} />
 
-      <span className="rxp-icon">
-        <span className="rxp-icon-ring" aria-hidden />
-        <span className="rxp-icon-pulse" aria-hidden />
-        <HeroIcon kind={action.kind} />
-      </span>
-
-      <span className="rxp-body">
-        <span className="rxp-eyebrow">
-          <span className="rxp-eyebrow-line" aria-hidden />
-          <span className="truncate">{action.eyebrow}</span>
-          {"isNew" in action && action.isNew && <NewBadge addedAt="2026-09-06" />}
+        <span className="rzh-main">
+          <span className="rzh-medal" aria-hidden>
+            <HeroIcon kind={action.kind} />
+          </span>
+          <span className="rzh-text">
+            <span className="rzh-eyebrow">
+              <span className="truncate">{action.eyebrow}</span>
+              {"isNew" in action && action.isNew && <NewBadge addedAt="2026-09-06" />}
+            </span>
+            <span className="rzh-title">
+              <span className="rzh-t1">{action.title}</span>
+              <span className="rzh-t2" aria-hidden>{action.title}</span>
+            </span>
+          </span>
         </span>
-        <span className="rxp-title">{action.title}</span>
-      </span>
 
-      <span className="rxp-go" aria-hidden>
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
+        <span className="rzh-perf" aria-hidden />
+        <span className="rzh-stub" aria-hidden>
+          <span className="rzh-go">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </span>
+        </span>
+        <span className="rzh-sheen" aria-hidden />
       </span>
     </a>
   );
 }
 
 function AuraSwitcher({ theme, setTheme }: { theme: Theme; setTheme: (t: Theme) => void }) {
-  const [open, setOpen] = useState(false);
-  const wrap = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  const idx = THEME_ORDER.indexOf(theme);
+  const step = 360 / THEME_ORDER.length;
+  const nextTheme = () => setTheme(THEME_ORDER[(idx + 1) % THEME_ORDER.length]);
 
   return (
-    <div
-      ref={wrap}
-      style={{ "--aura": AURA_RGB[theme] } as React.CSSProperties}
-      className="fixed left-3 top-3 z-[90] sm:left-5 sm:top-5 md:left-7 md:top-6"
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-label={`Choose aura. Current: ${AURA_META[theme].label}`}
-        className={`rxa-btn ${open ? "is-open" : ""}`}
-      >
-        <span className="rxa-orb" aria-hidden>
-          <span className="rxa-orb-sat" />
-          <span className="rxa-orb-core" key={theme} />
+    <div style={{ "--aura": AURA_RGB[theme] } as React.CSSProperties}
+      className="fixed left-3 top-3 z-[90] sm:left-5 sm:top-5 md:left-7 md:top-6">
+      <button type="button" onClick={nextTheme}
+        aria-label={`Change aura theme. Current: ${AURA_META[theme].label}. Next: ${AURA_META[THEME_ORDER[(idx + 1) % THEME_ORDER.length]].label}`}
+        title={`Click to switch to ${AURA_META[THEME_ORDER[(idx + 1) % THEME_ORDER.length]].label}`}
+        className="rzs-btn">
+        <span className="rzs-dial" aria-hidden>
+          <span className="rzs-ticks" style={{ transform: `rotate(${-idx * step}deg)` }}>
+            {THEME_ORDER.map((t, i) => <i key={t} className={i === idx ? "on" : ""} style={{ "--a": `${i * step}deg` } as React.CSSProperties} />)}
+          </span>
+          <span className="rzs-planet" style={{ background: AURA_META[theme].bg }}><i /></span>
         </span>
-        <span className="rxa-btn-text">
-          <b>Aura</b>
-          <span key={theme}>{AURA_META[theme].label}</span>
+        <span className="rzs-label"><small>Aura · click to change</small><b key={theme}>{AURA_META[theme].label}</b></span>
+        <span className="rzs-caret rzs-next" aria-hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </span>
-        <svg className="rxa-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M6 9l6 6 6-6" />
-        </svg>
       </button>
-
-      <div className={`rxa-panel ${open ? "is-open" : ""}`} role="dialog" aria-label="Choose aura theme" aria-hidden={!open}>
-        <div className="rxa-panel-head">
-          <span>Choose your Aura</span>
-          <em>{THEME_ORDER.length} worlds</em>
-        </div>
-        <div className="rxa-grid">
-          {THEME_ORDER.map((t, i) => {
-            const m = AURA_META[t];
-            const active = t === theme;
-            return (
-              <button
-                key={t}
-                type="button"
-                tabIndex={open ? 0 : -1}
-                onClick={() => setTheme(t)}
-                aria-pressed={active}
-                style={{ "--c": AURA_RGB[t], "--i": i } as React.CSSProperties}
-                className={`rxa-item ${active ? "is-active" : ""}`}
-              >
-                <span className="rxa-thumb" style={{ background: m.bg }}>
-                  <span className="rxa-thumb-shine" />
-                  {m.isNew && <span className="rxa-new">New</span>}
-                  {active && (
-                    <span className="rxa-check">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-                    </span>
-                  )}
-                </span>
-                <span className="rxa-item-name">{m.label}</span>
-                <span className="rxa-item-tag">{m.tag}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }
@@ -605,6 +560,68 @@ function StarField() {
             left: `${[62, 78, 45, 90, 70][k]}%`,
             "--t": `${[5.5, 7, 6.2, 8, 6.8][k]}s`,
             "--d": `${[0, 2.4, 4.1, 1.2, 5.6][k]}s`,
+          } as React.CSSProperties}
+        />
+      ))}
+    </>
+  );
+}
+
+function PetalField() {
+  return (
+    <>
+      {Array.from({ length: 22 }).map((_, i) => (
+        <span
+          key={i}
+          className="rzt-pw"
+          style={{
+            left: `${(i * 37 + 9) % 100}%`,
+            "--t": `${11 + ((i * 5) % 9)}s`,
+            "--d": `${-((i * 7) % 19)}s`,
+            "--x": `${((i % 5) - 2) * 46}px`,
+            "--s": `${10 + (i % 4) * 4}px`,
+            "--o": 0.5 + (i % 4) * 0.12,
+          } as React.CSSProperties}
+        >
+          <i className="rzt-petal" style={{ "--r": `${(i * 53) % 360}deg`, "--v": `${3 + (i % 4)}s` } as React.CSSProperties} />
+        </span>
+      ))}
+    </>
+  );
+}
+
+function RainField() {
+  return (
+    <>
+      {Array.from({ length: 70 }).map((_, i) => (
+        <i
+          key={i}
+          className="rzt-rain"
+          style={{
+            left: `${(i * 41 + 3) % 130}%`,
+            "--h": `${44 + ((i * 13) % 46)}px`,
+            "--t": `${(0.65 + ((i * 7) % 9) * 0.07).toFixed(2)}s`,
+            "--d": `-${(((i * 11) % 17) * 0.09).toFixed(2)}s`,
+          } as React.CSSProperties}
+        />
+      ))}
+    </>
+  );
+}
+
+function DustField() {
+  return (
+    <>
+      {Array.from({ length: 34 }).map((_, i) => (
+        <i
+          key={i}
+          className="rzt-mote"
+          style={{
+            left: `${(i * 31 + 6) % 100}%`,
+            "--s": `${2 + (i % 3)}px`,
+            "--t": `${14 + ((i * 5) % 13)}s`,
+            "--d": `${-((i * 9) % 23)}s`,
+            "--x": `${((i % 7) - 3) * 22}px`,
           } as React.CSSProperties}
         />
       ))}
@@ -1935,167 +1952,191 @@ img,video,iframe{max-width:100%}
 @media (prefers-reduced-motion:reduce){.rx-cd-card::before,.rx-cd-photo,.rx-cd-glow,.rx-timer::before{animation:none!important}.rx-timer-bar i{transition:none}}
 
 /* ================================================================
-   RAAKA v4 — PORTAL HERO CARDS (rxp-) + AURA SWITCHER (rxa-)
+   RAAKA v4 — HERO TICKETS (rzh-) + AURA SWITCHER (rzs-)
 ================================================================ */
 
-/* ---------- HERO PORTAL CARDS ---------- */
-.rxp-card{--c:56,189,248;--rx:0deg;--ry:0deg;--mx:50%;--my:50%;position:relative;isolation:isolate;display:flex;align-items:center;gap:1rem;min-height:106px;padding:1rem 1.05rem;border-radius:1.5rem;overflow:hidden;text-decoration:none;color:#fff;
-  background:radial-gradient(120% 150% at 0% 0%,rgba(var(--c),.18),transparent 58%),linear-gradient(160deg,rgba(255,255,255,.06),rgba(6,6,10,.78) 58%);
-  border:1px solid rgba(255,255,255,.09);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
-  box-shadow:0 16px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.09);
-  transform:perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateZ(0);
-  transition:transform .35s cubic-bezier(.16,1,.3,1),box-shadow .5s,border-color .4s;
-  animation:rxpIn 1.1s cubic-bezier(.16,1,.3,1) backwards;animation-delay:calc(var(--i,0)*150ms + 450ms)}
-@keyframes rxpIn{from{opacity:0;transform:perspective(900px) translateY(34px) rotateX(20deg) scale(.94);filter:blur(10px)}}
-.rxp-card::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;z-index:5;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 58%,rgba(var(--c),.95) 78%,#fff 82%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.55;animation:rxAng 5s linear infinite;transition:opacity .4s}
-.rxp-card:hover,.rxp-card:focus-visible{border-color:rgba(var(--c),.35);box-shadow:0 30px 80px rgba(var(--c),.28),0 0 0 1px rgba(var(--c),.18),inset 0 0 60px rgba(var(--c),.07);outline:none}
-.rxp-card:hover::before{opacity:1;animation-duration:1.8s}
-.rxp-card:active{transform:perspective(900px) scale(.985)}
-.rxp-foil{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(300px circle at var(--mx) var(--my),rgba(255,255,255,.16),rgba(var(--c),.16) 38%,transparent 72%);mix-blend-mode:screen}
-.rxp-card:hover .rxp-foil{opacity:1}
-.rxp-grid{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;background-image:linear-gradient(rgba(var(--c),.07) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--c),.07) 1px,transparent 1px);background-size:22px 22px;-webkit-mask-image:radial-gradient(ellipse at 20% 0%,#000,transparent 70%);mask-image:radial-gradient(ellipse at 20% 0%,#000,transparent 70%)}
-.rxp-corner{position:absolute;z-index:4;width:12px;height:12px;pointer-events:none;border:0 solid rgba(var(--c),.9);opacity:0;transition:all .45s cubic-bezier(.16,1,.3,1)}
-.rxp-c1{top:10px;left:10px;border-top-width:1.5px;border-left-width:1.5px;border-top-left-radius:5px;transform:translate(6px,6px)}
-.rxp-c2{top:10px;right:10px;border-top-width:1.5px;border-right-width:1.5px;border-top-right-radius:5px;transform:translate(-6px,6px)}
-.rxp-c3{bottom:10px;left:10px;border-bottom-width:1.5px;border-left-width:1.5px;border-bottom-left-radius:5px;transform:translate(6px,-6px)}
-.rxp-c4{bottom:10px;right:10px;border-bottom-width:1.5px;border-right-width:1.5px;border-bottom-right-radius:5px;transform:translate(-6px,-6px)}
-.rxp-card:hover .rxp-corner{opacity:1;transform:none}
-
-.rxp-icon{position:relative;z-index:3;flex:none;display:flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:1.15rem;color:#fff;background:linear-gradient(145deg,rgba(var(--c),.95),rgba(var(--c),.38));box-shadow:0 10px 30px rgba(var(--c),.45),inset 0 1px 0 rgba(255,255,255,.45),inset 0 -8px 16px rgba(0,0,0,.25);transition:transform .6s cubic-bezier(.16,1,.3,1),box-shadow .5s}
-.rxp-icon svg{position:relative;z-index:2;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));transition:transform .6s cubic-bezier(.16,1,.3,1)}
-.rxp-card:hover .rxp-icon{transform:scale(1.1) rotate(-4deg);box-shadow:0 14px 44px rgba(var(--c),.7),inset 0 1px 0 rgba(255,255,255,.55)}
-.rxp-card:hover .rxp-icon svg{transform:scale(1.12) rotate(4deg)}
-.rxp-icon-ring{position:absolute;inset:-7px;border-radius:1.5rem;border:1px dashed rgba(var(--c),.55);animation:rxpSpin 14s linear infinite;pointer-events:none}
-.rxp-icon-pulse{position:absolute;inset:0;border-radius:inherit;border:1.5px solid rgba(var(--c),.7);animation:rxpPulse 2.6s ease-out infinite;pointer-events:none}
+/* ---------- HERO TICKETS (rzh-) ---------- */
 @keyframes rxpSpin{to{transform:rotate(360deg)}}
-@keyframes rxpPulse{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.7);opacity:0}}
+.rzh-card{--c:255,176,64;--rx:0deg;--ry:0deg;--mx:50%;--my:50%;--stub:58px;position:relative;display:block;container-type:inline-size;border-radius:22px;color:#fff;text-decoration:none;
+  transform:perspective(1000px) rotateX(var(--rx)) rotateY(var(--ry)) translateZ(0);
+  filter:drop-shadow(0 16px 26px rgba(0,0,0,.55)) drop-shadow(0 0 0 rgba(var(--c),0));
+  transition:transform .35s cubic-bezier(.16,1,.3,1),filter .5s;
+  animation:rzhIn 1.1s cubic-bezier(.16,1,.3,1) backwards;animation-delay:calc(var(--i,0)*140ms + 450ms)}
+@keyframes rzhIn{from{opacity:0;transform:perspective(1000px) translateY(46px) rotateX(-24deg) scale(.92);filter:drop-shadow(0 16px 26px rgba(0,0,0,.55)) drop-shadow(0 0 0 rgba(var(--c),0)) blur(8px)}}
+.rzh-card:hover,.rzh-card:focus-visible{filter:drop-shadow(0 20px 30px rgba(0,0,0,.6)) drop-shadow(0 0 26px rgba(var(--c),.38));outline:none}
+.rzh-card:active{transform:perspective(1000px) scale(.985)}
 
-.rxp-body{position:relative;z-index:3;flex:1;min-width:0;display:flex;flex-direction:column;gap:.35rem}
-.rxp-eyebrow{display:flex;align-items:center;gap:.5rem;min-width:0;font-size:8.5px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.5)}
-.rxp-eyebrow-line{flex:none;width:14px;height:1px;background:rgba(var(--c),1);box-shadow:0 0 8px rgba(var(--c),.9);transition:width .5s cubic-bezier(.16,1,.3,1)}
-.rxp-card:hover .rxp-eyebrow-line{width:26px}
-.rxp-title{font-size:clamp(1.15rem,4.6vw,1.55rem);font-weight:700;line-height:1.1;letter-spacing:-.01em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:letter-spacing .5s cubic-bezier(.16,1,.3,1)}
-.rxp-card:hover .rxp-title{letter-spacing:.015em;color:transparent;background:linear-gradient(100deg,#fff 0%,rgba(var(--c),1) 40%,#fff 60%,rgba(var(--c),1) 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;animation:rxpTitle 2.2s linear infinite}
-@keyframes rxpTitle{to{background-position:-250% 0}}
+.rzh-ticket{position:relative;isolation:isolate;display:flex;min-height:150px;overflow:hidden;border-radius:22px;
+  background:radial-gradient(130% 120% at 0% 0%,rgba(var(--c),.24),transparent 60%),linear-gradient(155deg,rgba(255,255,255,.07),rgba(7,7,11,.88) 55%),rgba(7,7,11,.9);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 1px 0 rgba(255,255,255,.16);
+  -webkit-mask-image:radial-gradient(circle 9px at calc(100% - var(--stub)) 0,transparent 8.5px,#000 9.5px),radial-gradient(circle 9px at calc(100% - var(--stub)) 100%,transparent 8.5px,#000 9.5px);
+  -webkit-mask-size:100% 51%,100% 51%;-webkit-mask-position:top,bottom;-webkit-mask-repeat:no-repeat;
+  mask-image:radial-gradient(circle 9px at calc(100% - var(--stub)) 0,transparent 8.5px,#000 9.5px),radial-gradient(circle 9px at calc(100% - var(--stub)) 100%,transparent 8.5px,#000 9.5px);
+  mask-size:100% 51%,100% 51%;mask-position:top,bottom;mask-repeat:no-repeat}
+.rzh-ticket::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;z-index:6;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 60%,rgba(var(--c),.95) 80%,#fff 84%,transparent 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.5;animation:rxAng 5.5s linear infinite;transition:opacity .4s}
+.rzh-card:hover .rzh-ticket::before,.rzh-card:focus-visible .rzh-ticket::before{opacity:1;animation-duration:2s}
 
-.rxp-go{position:relative;z-index:3;flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:999px;color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);overflow:hidden;transition:all .5s cubic-bezier(.16,1,.3,1)}
-.rxp-go svg{transition:transform .5s cubic-bezier(.16,1,.3,1)}
-.rxp-card:hover .rxp-go{color:#fff;border-color:rgba(var(--c),.9);background:rgba(var(--c),.9);box-shadow:0 0 30px rgba(var(--c),.7);transform:scale(1.1)}
-.rxp-card:hover .rxp-go svg{transform:translateX(2px) rotate(-45deg)}
+.rzh-fill{position:absolute;z-index:1;right:calc(var(--stub)/2 - 19px);top:50%;width:38px;height:38px;margin-top:-19px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(var(--c),.55),rgba(var(--c),.14) 68%);transform:scale(0);transition:transform .95s cubic-bezier(.16,1,.3,1)}
+.rzh-card:hover .rzh-fill,.rzh-card:focus-visible .rzh-fill{transform:scale(17)}
+.rzh-spot{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .4s;mix-blend-mode:screen;background:radial-gradient(240px circle at var(--mx) var(--my),rgba(255,255,255,.13),rgba(var(--c),.14) 42%,transparent 72%)}
+.rzh-card:hover .rzh-spot{opacity:1}
+.rzh-sheen{position:absolute;top:0;bottom:0;left:0;width:36%;z-index:5;pointer-events:none;opacity:0;transform:translateX(-130%) skewX(-16deg);background:linear-gradient(100deg,transparent,rgba(255,255,255,.2),rgba(var(--c),.2),transparent)}
+.rzh-card:hover .rzh-sheen{opacity:1;animation:rzhSheen 1s ease-out}
+@keyframes rzhSheen{to{transform:translateX(340%) skewX(-16deg)}}
+
+.rzh-main{position:relative;z-index:4;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:1rem;padding:1rem 0.9rem 1rem 1.1rem}
+.rzh-medal{position:relative;flex:none;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  background:radial-gradient(circle at 30% 24%,rgba(255,255,255,.38),rgba(var(--c),.88) 46%,rgba(var(--c),.34));
+  box-shadow:0 8px 24px rgba(var(--c),.45),inset 0 1px 0 rgba(255,255,255,.5),inset 0 -6px 12px rgba(0,0,0,.25);
+  transition:transform .6s cubic-bezier(.16,1,.3,1),box-shadow .5s}
+.rzh-medal svg{position:relative;z-index:2;width:22px;height:22px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));transition:transform .6s cubic-bezier(.16,1,.3,1)}
+.rzh-medal::before{content:"";position:absolute;inset:-6px;border-radius:50%;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 55%,rgba(var(--c),.95) 85%,transparent);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));animation:rxAng 3.4s linear infinite}
+.rzh-medal::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;border:1.5px solid rgba(var(--c),.7);animation:rzhPulse 2.8s ease-out infinite}
+@keyframes rzhPulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.8);opacity:0}}
+.rzh-card:hover .rzh-medal{transform:scale(1.1) rotate(-6deg);box-shadow:0 12px 36px rgba(var(--c),.7),inset 0 1px 0 rgba(255,255,255,.6)}
+.rzh-card:hover .rzh-medal svg{transform:scale(1.14) rotate(6deg)}
+.rzh-card:hover .rzh-medal::before{animation-duration:1.3s}
+
+.rzh-text{display:block;min-width:0}
+.rzh-eyebrow{display:flex;align-items:center;gap:.5rem;min-width:0;margin-bottom:.3rem;font-size:11px;font-weight:500;letter-spacing:.02em;color:rgba(255,255,255,.58)}
+.rzh-title{position:relative;display:block;overflow:hidden;padding-bottom:.1em;font-size:clamp(1.2rem,5.6vw,1.6rem);font-size:clamp(1.15rem,8.2cqw,1.7rem);font-weight:800;line-height:1.15;letter-spacing:-.02em;white-space:nowrap}
+.rzh-t1,.rzh-t2{display:block;transition:transform .65s cubic-bezier(.16,1,.3,1)}
+.rzh-t2{position:absolute;left:0;top:0;transform:translateY(108%);color:transparent;background:linear-gradient(100deg,#fff 0%,rgba(var(--c),1) 50%,#fff 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;animation:rzhTitle 2.4s linear infinite}
+@keyframes rzhTitle{to{background-position:-220% 0}}
+.rzh-card:hover .rzh-t1,.rzh-card:focus-visible .rzh-t1{transform:translateY(-108%)}
+.rzh-card:hover .rzh-t2,.rzh-card:focus-visible .rzh-t2{transform:none}
+
+.rzh-perf{position:absolute;z-index:4;top:16px;bottom:16px;right:calc(var(--stub) - 1px);width:2px;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.3) 0 5px,transparent 5px 11px)}
+.rzh-card:hover .rzh-perf{animation:rzhPerf .8s linear infinite}
+@keyframes rzhPerf{to{background-position:0 22px}}
+.rzh-stub{position:relative;z-index:4;flex:none;width:var(--stub);display:grid;place-items:center}
+.rzh-go{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;color:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.05);transition:transform .5s cubic-bezier(.16,1,.3,1),background .35s,color .35s,box-shadow .5s,border-color .35s}
+.rzh-go svg{width:16px;height:16px;transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.rzh-card:hover .rzh-go,.rzh-card:focus-visible .rzh-go{transform:scale(1.14);color:#0a0a0a;border-color:transparent;background:rgb(var(--c));box-shadow:0 0 30px rgba(var(--c),.8)}
+.rzh-card:hover .rzh-go svg{transform:rotate(-45deg)}
 
 /* scenes */
-.rxp-scene{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;border-radius:inherit}
-.rxp-scene i{position:absolute;display:block}
+.rzh-scene{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.rzh-scene i{position:absolute;display:block}
 
-/* video scene */
-.rxp-film{left:0;right:0;height:9px;opacity:.5;background:repeating-linear-gradient(90deg,rgba(var(--c),.7) 0 7px,transparent 7px 16px);-webkit-mask-image:linear-gradient(90deg,transparent,#000 35%,#000);mask-image:linear-gradient(90deg,transparent,#000 35%,#000);animation:rxpFilm 2.4s linear infinite}
-.rxp-film-t{top:7px}.rxp-film-b{bottom:7px;animation-direction:reverse}
-@keyframes rxpFilm{to{background-position:16px 0}}
-.rxp-card:hover .rxp-film{opacity:.95;animation-duration:.9s}
-.rxp-ripple{right:46px;top:50%;width:44px;height:44px;margin-top:-22px;border-radius:999px;border:1px solid rgba(var(--c),.6);opacity:0;animation:rxpRip 3.3s ease-out infinite;animation-delay:var(--d)}
-@keyframes rxpRip{0%{transform:scale(.6);opacity:.8}100%{transform:scale(4.2);opacity:0}}
-.rxp-leak{top:0;bottom:0;left:0;width:34%;opacity:0;background:linear-gradient(100deg,transparent,rgba(var(--c),.22),transparent);transform:translateX(-130%) skewX(-14deg)}
-.rxp-card:hover .rxp-leak{opacity:1;animation:rxpLeak 1.1s ease-out}
-@keyframes rxpLeak{to{transform:translateX(320%) skewX(-14deg)}}
+/* video: camera iris + film strip */
+.rzh-iris{position:absolute;right:calc(var(--stub) - 26px);top:-20px;width:clamp(110px,50cqw,170px);opacity:.62;transition:transform 1s cubic-bezier(.16,1,.3,1),opacity .5s}
+.rzh-iris-blades{transform-origin:50% 50%;animation:rxpSpin 26s linear infinite}
+.rzh-iris-blades path{fill:rgba(var(--c),.12);stroke:rgba(var(--c),.55);stroke-width:.8}
+.rzh-iris-blades path:nth-child(odd){fill:rgba(var(--c),.22)}
+.rzh-iris-rim{fill:none;stroke:rgba(var(--c),.4);stroke-width:1.2}
+.rzh-iris-eye{fill:rgba(var(--c),.55);animation:rzhEye 3s ease-in-out infinite;transform-origin:50% 50%}
+@keyframes rzhEye{50%{transform:scale(1.5);opacity:.5}}
+.rzh-card:hover .rzh-iris{opacity:1;transform:scale(1.16) rotate(30deg)}
+.rzh-card:hover .rzh-iris-blades{animation-duration:5s}
+.rzh-strip{left:0;right:var(--stub);height:8px;opacity:.4;background:repeating-linear-gradient(90deg,rgba(var(--c),.6) 0 6px,transparent 6px 14px);-webkit-mask-image:linear-gradient(90deg,transparent,#000 40%);mask-image:linear-gradient(90deg,transparent,#000 40%);animation:rzhStrip 3s linear infinite}
+.rzh-strip-t{top:7px}.rzh-strip-b{bottom:7px;animation-direction:reverse}
+@keyframes rzhStrip{to{background-position:14px 0}}
+.rzh-card:hover .rzh-strip{opacity:.9;animation-duration:.9s}
 
-/* art scene */
-.rxp-blob{filter:blur(16px);opacity:.7;animation:rxpMorph 9s ease-in-out infinite}
-.rxp-blob-1{right:-14px;top:-16px;width:96px;height:96px;background:radial-gradient(circle at 35% 35%,#fb7185,transparent 70%)}
-.rxp-blob-2{right:46px;bottom:-26px;width:84px;height:84px;background:radial-gradient(circle at 40% 40%,#a78bfa,transparent 70%);animation-delay:-3s}
-.rxp-blob-3{right:96px;top:-10px;width:70px;height:70px;background:radial-gradient(circle at 40% 40%,#fbbf24,transparent 70%);animation-delay:-6s;opacity:.5}
-@keyframes rxpMorph{0%,100%{border-radius:60% 40% 55% 45%;transform:translate(0,0) rotate(0)}33%{border-radius:40% 60% 45% 55%;transform:translate(-10px,8px) rotate(60deg)}66%{border-radius:55% 45% 60% 40%;transform:translate(8px,-6px) rotate(120deg)}}
-.rxp-card:hover .rxp-blob{opacity:1;filter:blur(12px)}
-.rxp-spark{bottom:-8px;width:9px;height:9px;background:#fff;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);opacity:0;left:calc(52% + var(--k)*9%);animation:rxpFloat 3.4s ease-in infinite;animation-delay:calc(var(--k)*.6s)}
-@keyframes rxpFloat{0%{transform:translateY(0) scale(.4) rotate(0);opacity:0}25%{opacity:1}100%{transform:translateY(-92px) scale(1.2) rotate(180deg);opacity:0}}
-.rxp-squiggle{position:absolute;right:8px;bottom:6px;width:46%;height:26px;overflow:visible}
-.rxp-squiggle path{stroke:rgba(var(--c),.9);stroke-width:2;stroke-linecap:round;stroke-dasharray:240;stroke-dashoffset:240;animation:rxpDraw 3.6s ease-in-out infinite;filter:drop-shadow(0 0 5px rgba(var(--c),.8))}
-@keyframes rxpDraw{0%{stroke-dashoffset:240}55%,80%{stroke-dashoffset:0}100%{stroke-dashoffset:-240}}
+/* art: brush strokes painting themselves */
+.rzh-strokes{position:absolute;right:calc(var(--stub) - 8px);top:0;width:72%;height:100%;overflow:visible;filter:drop-shadow(0 0 7px rgba(var(--c),.45))}
+.rzh-stroke{stroke-width:7;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;opacity:0;animation:rzhPaint 5.4s ease-in-out infinite}
+.rzh-st1{stroke:rgb(244,114,182)}.rzh-st2{stroke:rgb(251,191,36);animation-delay:.45s}.rzh-st3{stroke:rgb(167,139,250);animation-delay:.9s}
+@keyframes rzhPaint{0%{stroke-dashoffset:100;opacity:0}10%{opacity:.7}48%,78%{stroke-dashoffset:0;opacity:.7}100%{stroke-dashoffset:-100;opacity:0}}
+.rzh-card:hover .rzh-stroke{animation-duration:2.4s}
+.rzh-dot{bottom:-8px;width:7px;height:7px;border-radius:50%;background:rgb(var(--c));left:calc(46% + var(--k)*15%);opacity:0;box-shadow:0 0 10px rgba(var(--c),.9);animation:rzhFloat 3.6s ease-in infinite;animation-delay:calc(var(--k)*.9s)}
+@keyframes rzhFloat{0%{transform:translateY(0) scale(.5);opacity:0}25%{opacity:1}100%{transform:translateY(-120px) scale(1.2);opacity:0}}
 
-/* box scene */
-.rxp-bars{position:absolute;right:62px;bottom:0;display:flex;align-items:flex-end;gap:5px;height:70%}
-.rxp-bars i{position:relative;width:5px;height:var(--h);border-radius:3px 3px 0 0;background:linear-gradient(to top,rgba(var(--c),.05),rgba(var(--c),.5));transform-origin:bottom;animation:rxpBar 3.2s ease-in-out infinite;animation-delay:calc(var(--k)*.14s)}
-@keyframes rxpBar{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
-.rxp-spark-line{position:absolute;right:56px;bottom:12px;width:44%;height:54%;overflow:visible}
-.rxp-line{stroke-dasharray:100;stroke-dashoffset:100;animation:rxpLine 4s ease-in-out infinite;filter:drop-shadow(0 0 5px rgba(var(--c),.9))}
-.rxp-area{opacity:0;animation:rxpArea 4s ease-in-out infinite}
-@keyframes rxpLine{0%{stroke-dashoffset:100}55%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:-100}}
-@keyframes rxpArea{0%,15%{opacity:0}55%,85%{opacity:1}100%{opacity:0}}
-.rxp-live{top:14px;right:62px;width:7px;height:7px;border-radius:99px;background:rgb(var(--c));box-shadow:0 0 0 0 rgba(var(--c),.7);animation:rxpLive 1.6s ease-out infinite}
-@keyframes rxpLive{0%{box-shadow:0 0 0 0 rgba(var(--c),.75)}100%{box-shadow:0 0 0 12px rgba(var(--c),0)}}
+/* box office: concentric performance rings */
+.rzh-gauge{position:absolute;right:calc(var(--stub) - 24px);top:44%;width:clamp(116px,50cqw,164px);aspect-ratio:1;transform:translateY(-50%) rotate(-90deg);transition:transform 1s cubic-bezier(.16,1,.3,1)}
+.rzh-track{stroke:rgba(var(--c),.14);stroke-width:4.5}
+.rzh-arc{stroke:rgb(var(--c));stroke-width:4.5;stroke-linecap:round;stroke-dasharray:0 100;opacity:.85;animation:rzhArc 4.6s ease-in-out infinite alternate}
+@keyframes rzhArc{from{stroke-dasharray:0 100}to{stroke-dasharray:var(--p) 100}}
+.rzh-orbit-dot{fill:#fff;transform-origin:50% 50%;animation:rxpSpin 5s linear infinite;filter:drop-shadow(0 0 4px rgb(var(--c)))}
+.rzh-card:hover .rzh-gauge{transform:translateY(-50%) rotate(-90deg) scale(1.12)}
+.rzh-card:hover .rzh-orbit-dot{animation-duration:1.6s}
+.rzh-live{top:14px;right:calc(var(--stub) + 14px);width:7px;height:7px;border-radius:50%;background:rgb(var(--c));animation:rzhLive 1.6s ease-out infinite}
+@keyframes rzhLive{0%{box-shadow:0 0 0 0 rgba(var(--c),.75)}100%{box-shadow:0 0 0 12px rgba(var(--c),0)}}
 
-@media (min-width:640px){
-  .rxp-card{min-height:132px;padding:1.2rem 1.25rem;gap:1.1rem}
-  .rxp-icon{width:66px;height:66px;border-radius:1.3rem}
-  .rxp-eyebrow{font-size:9px}
+@media (min-width:768px){
+  .rzh-ticket{min-height:158px}
+  .rzh-main{padding:1.1rem 1rem 1.1rem 1.2rem}
 }
 @media (hover:none){
-  .rxp-card:hover{box-shadow:0 16px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.09)}
-  .rxp-card:hover .rxp-title{color:#fff;background:none;animation:none}
+  .rzh-card:hover .rzh-t1{transform:none}
+  .rzh-card:hover .rzh-t2{transform:translateY(108%)}
+  .rzh-card:hover .rzh-fill{transform:scale(0)}
+  .rzh-card:hover .rzh-go{transform:none;background:rgba(255,255,255,.05);color:rgba(255,255,255,.88);box-shadow:none;border-color:rgba(255,255,255,.22)}
+  .rzh-card:hover .rzh-go svg{transform:none}
 }
 
-/* ---------- AURA SWITCHER ---------- */
-.rxa-btn{--aura:255,255,255;position:relative;isolation:isolate;display:flex;align-items:center;gap:.7rem;height:48px;padding:.3rem .95rem .3rem .3rem;border-radius:999px;color:#fff;overflow:hidden;
-  background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(8,8,12,.72));border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);
-  box-shadow:0 14px 40px rgba(0,0,0,.5),0 0 28px rgba(var(--aura),.12);transition:transform .45s cubic-bezier(.16,1,.3,1),box-shadow .5s,border-color .4s}
-.rxa-btn::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;z-index:2;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 50%,rgba(var(--aura),.95) 74%,#fff 78%,transparent 90%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:rxAng 3.2s linear infinite}
-.rxa-btn::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40%;z-index:1;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(var(--aura),.22),transparent);transform:translateX(-140%) skewX(-16deg);animation:rxaBtnShine 5s ease-in-out infinite}
-@keyframes rxaBtnShine{0%,60%{transform:translateX(-140%) skewX(-16deg)}100%{transform:translateX(380%) skewX(-16deg)}}
-.rxa-btn:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 40px rgba(var(--aura),.35)}
-.rxa-btn:active{transform:scale(.97)}
-.rxa-orb{position:relative;z-index:3;flex:none;width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:conic-gradient(from var(--ang),rgba(var(--aura),1),rgba(255,255,255,.95),rgba(var(--aura),.15),rgba(var(--aura),1));animation:rxAng 4s linear infinite;box-shadow:0 0 22px rgba(var(--aura),.55)}
-.rxa-orb::after{content:"";position:absolute;inset:3.5px;border-radius:inherit;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.18),rgba(6,6,10,.96) 65%)}
-.rxa-orb-core{position:relative;z-index:2;width:11px;height:11px;border-radius:999px;background:rgb(var(--aura));box-shadow:0 0 16px rgba(var(--aura),1),0 0 4px #fff;animation:rxAuraPop .7s cubic-bezier(.16,1,.3,1)}
-.rxa-orb-sat{position:absolute;inset:-5px;z-index:3;border-radius:999px;animation:rxpSpin 3s linear infinite}
-.rxa-orb-sat::before{content:"";position:absolute;top:0;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:99px;background:#fff;box-shadow:0 0 8px rgba(var(--aura),1)}
-.rxa-btn-text{position:relative;z-index:3;display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;line-height:1;overflow:hidden}
-.rxa-btn-text b{font-size:9px;font-weight:700;letter-spacing:.38em;text-transform:uppercase}
-.rxa-btn-text span{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(var(--aura),1);animation:rxaSwap .55s cubic-bezier(.16,1,.3,1)}
-@keyframes rxaSwap{from{transform:translateY(120%);opacity:0}}
-.rxa-chev{position:relative;z-index:3;width:14px;height:14px;color:rgba(255,255,255,.6);transition:transform .5s cubic-bezier(.16,1,.3,1)}
-.rxa-btn.is-open .rxa-chev{transform:rotate(180deg)}
+/* ---------- AURA SWITCHER (rzs-) ---------- */
+.rzs-btn{--aura:255,255,255;position:relative;isolation:isolate;display:flex;align-items:center;gap:.7rem;height:60px;padding:0 1rem 0 .4rem;border-radius:20px;color:#fff;overflow:hidden;
+  background:linear-gradient(140deg,rgba(255,255,255,.1),rgba(8,8,12,.78) 60%);border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);
+  box-shadow:0 14px 40px rgba(0,0,0,.5),0 0 30px rgba(var(--aura),.14);transition:transform .45s cubic-bezier(.16,1,.3,1),box-shadow .5s}
+.rzs-btn::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;z-index:4;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 55%,rgba(var(--aura),.95) 78%,#fff 82%,transparent 94%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:rxAng 3.6s linear infinite}
+.rzs-btn:hover{transform:translateY(-2px);box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 44px rgba(var(--aura),.38)}
+.rzs-btn:active{transform:scale(.97)}
+.rzs-dial{position:relative;flex:none;width:52px;height:52px;display:grid;place-items:center}
+.rzs-ticks{position:absolute;inset:0;transition:transform .9s cubic-bezier(.16,1,.3,1)}
+.rzs-ticks i{position:absolute;left:50%;top:50%;width:2px;height:5px;margin:-25px 0 0 -1px;border-radius:2px;background:rgba(255,255,255,.28);transform-origin:1px 25px;transform:rotate(var(--a));transition:background .4s,box-shadow .4s,height .4s}
+.rzs-ticks i.on{height:8px;background:rgb(var(--aura));box-shadow:0 0 10px rgba(var(--aura),1)}
+.rzs-planet{position:relative;overflow:hidden;width:30px;height:30px;border-radius:50%;box-shadow:0 0 22px rgba(var(--aura),.6),inset -5px -6px 11px rgba(0,0,0,.6),inset 2px 2px 5px rgba(255,255,255,.35);transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.rzs-btn:hover .rzs-planet{transform:scale(1.12)}
+.rzs-planet i{position:absolute;inset:-40% -60%;background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.5) 50%,transparent 58%);transform:translateX(-60%);animation:rzsPlanet 4.2s ease-in-out infinite}
+@keyframes rzsPlanet{0%,40%{transform:translateX(-60%)}100%{transform:translateX(60%)}}
+.rzs-label{position:relative;z-index:3;display:flex;flex-direction:column;align-items:flex-start;gap:.28rem;line-height:1;overflow:hidden;text-align:left}
+.rzs-label small{font-size:10px;font-weight:500;letter-spacing:.06em;color:rgba(255,255,255,.55)}
+.rzs-label b{font-size:14px;font-weight:700;letter-spacing:-.005em;color:rgba(var(--aura),1);animation:rzsSwap .6s cubic-bezier(.16,1,.3,1)}
+@keyframes rzsSwap{from{transform:translateY(120%);opacity:0}}
+.rzs-caret{position:relative;z-index:3;width:14px;height:14px;color:rgba(255,255,255,.6);transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.rzs-btn.is-open .rzs-caret{transform:rotate(180deg)}
 
-.rxa-panel{position:absolute;top:calc(100% + 12px);left:0;width:min(88vw,368px);max-height:min(74vh,560px);overflow-y:auto;overscroll-behavior:contain;padding:.9rem;border-radius:1.7rem;
-  background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(8,8,12,.86) 40%);border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(30px) saturate(1.5);backdrop-filter:blur(30px) saturate(1.5);
-  box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 60px rgba(var(--aura),.16),inset 0 1px 0 rgba(255,255,255,.1);
-  transform-origin:top left;opacity:0;visibility:hidden;transform:translateY(-12px) scale(.94);filter:blur(8px);pointer-events:none;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent;
-  transition:opacity .35s,transform .55s cubic-bezier(.16,1,.3,1),filter .4s,visibility 0s .55s}
-.rxa-panel.is-open{opacity:1;visibility:visible;transform:none;filter:none;pointer-events:auto;transition:opacity .35s,transform .55s cubic-bezier(.16,1,.3,1),filter .4s,visibility 0s}
-.rxa-panel-head{display:flex;align-items:baseline;justify-content:space-between;padding:.2rem .35rem .8rem;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.85)}
-.rxa-panel-head em{font-style:normal;font-size:8.5px;letter-spacing:.2em;color:rgba(var(--aura),1)}
-.rxa-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}
-.rxa-item{--c:255,255,255;position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;padding:.45rem .45rem .6rem;border-radius:1.1rem;text-align:left;color:#fff;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);transition:transform .4s cubic-bezier(.16,1,.3,1),border-color .35s,box-shadow .45s,background .35s}
-.rxa-panel.is-open .rxa-item{animation:rxaItemIn .6s cubic-bezier(.16,1,.3,1) backwards;animation-delay:calc(var(--i)*45ms + 90ms)}
-@keyframes rxaItemIn{from{opacity:0;transform:translateY(16px) scale(.92)}}
-.rxa-item:hover{transform:translateY(-3px);border-color:rgba(var(--c),.6);background:rgba(var(--c),.07);box-shadow:0 14px 34px rgba(var(--c),.22)}
-.rxa-item.is-active{border-color:rgba(var(--c),.95);background:rgba(var(--c),.1);box-shadow:0 0 0 1px rgba(var(--c),.35),0 12px 36px rgba(var(--c),.3)}
-.rxa-thumb{position:relative;display:block;width:100%;height:58px;border-radius:.8rem;overflow:hidden;margin-bottom:.4rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
-.rxa-thumb-shine{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:translateX(-130%) skewX(-18deg)}
-.rxa-item:hover .rxa-thumb-shine{animation:rxaThumb .9s ease-out}
-.rxa-item.is-active .rxa-thumb-shine{animation:rxaThumb 2.8s ease-in-out infinite}
-@keyframes rxaThumb{to{transform:translateX(320%) skewX(-18deg)}}
-.rxa-item-name{padding:0 .2rem;font-size:11.5px;font-weight:600;letter-spacing:.02em}
-.rxa-item-tag{padding:0 .2rem;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45)}
-.rxa-new{position:absolute;top:5px;left:5px;padding:2px 6px;border-radius:99px;font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#000;background:linear-gradient(90deg,#fde68a,#fb923c);box-shadow:0 0 12px rgba(251,146,60,.6);animation:rxaNew 2s ease-in-out infinite}
-@keyframes rxaNew{50%{box-shadow:0 0 20px rgba(251,146,60,.95)}}
-.rxa-check{position:absolute;top:5px;right:5px;display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:99px;color:#000;background:rgb(var(--c));box-shadow:0 0 16px rgba(var(--c),.9);animation:rxAuraPop .5s cubic-bezier(.16,1,.3,1)}
-.rxa-check svg{width:11px;height:11px}
+.rzs-panel{position:absolute;top:calc(100% + 12px);left:0;width:min(92vw,440px);max-height:min(76vh,620px);overflow-y:auto;overscroll-behavior:contain;padding:1rem;border-radius:26px;
+  background:linear-gradient(165deg,rgba(255,255,255,.09),rgba(8,8,12,.92) 38%);border:1px solid rgba(255,255,255,.13);-webkit-backdrop-filter:blur(30px) saturate(1.6);backdrop-filter:blur(30px) saturate(1.6);
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent;
+  clip-path:circle(0px at 34px 0px);visibility:hidden;pointer-events:none;transition:clip-path .85s cubic-bezier(.16,1,.3,1),visibility 0s .85s}
+.rzs-panel.is-open{clip-path:circle(170% at 34px 0px);visibility:visible;pointer-events:auto;transition:clip-path .85s cubic-bezier(.16,1,.3,1),visibility 0s}
+.rzs-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;padding:.2rem .3rem .9rem}
+.rzs-head div{display:flex;flex-direction:column;gap:.35rem}
+.rzs-head b{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.rzs-head span{font-size:11px;color:rgba(var(--aura),1);animation:rzsSwap .6s cubic-bezier(.16,1,.3,1)}
+.rzs-head em{font-style:normal;font-size:11px;color:rgba(255,255,255,.45)}
+.rzs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+@media (min-width:460px){.rzs-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.rzs-item{--c:255,255,255;position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;padding:.4rem .4rem .6rem;border-radius:1.1rem;text-align:left;color:#fff;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);transition:transform .45s cubic-bezier(.16,1,.3,1),border-color .35s,box-shadow .45s,background .35s}
+.rzs-panel.is-open .rzs-item{animation:rzsItemIn .7s cubic-bezier(.16,1,.3,1) backwards;animation-delay:calc(var(--i)*40ms + 160ms)}
+@keyframes rzsItemIn{from{opacity:0;transform:translateY(18px) scale(.9)}}
+.rzs-item:hover{transform:translateY(-3px);border-color:rgba(var(--c),.6);background:rgba(var(--c),.08);box-shadow:0 14px 34px rgba(var(--c),.25)}
+.rzs-item.is-active{border-color:transparent;background:rgba(var(--c),.1);box-shadow:0 12px 36px rgba(var(--c),.3)}
+.rzs-item.is-active::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;z-index:3;pointer-events:none;background:conic-gradient(from var(--ang),rgba(var(--c),.15),rgba(var(--c),1) 30%,#fff 36%,rgba(var(--c),.15) 60%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:rxAng 3s linear infinite}
+.rzs-thumb{position:relative;display:block;width:100%;height:68px;border-radius:.8rem;overflow:hidden;margin-bottom:.4rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.rzs-fx{position:absolute;inset:0;opacity:.9}
+.rzs-shine{position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:translateX(-130%) skewX(-18deg)}
+.rzs-item:hover .rzs-shine{animation:rzsShine .9s ease-out}
+.rzs-item.is-active .rzs-shine{animation:rzsShine 2.8s ease-in-out infinite}
+@keyframes rzsShine{to{transform:translateX(320%) skewX(-18deg)}}
+.rzs-name{padding:0 .2rem;font-size:12px;font-weight:600}
+.rzs-tag{padding:0 .2rem;font-size:10px;color:rgba(255,255,255,.5)}
+.rzs-new{position:absolute;top:5px;left:5px;padding:2px 7px;border-radius:99px;font-size:9px;font-weight:700;color:#000;background:linear-gradient(90deg,#fde68a,#fb923c);box-shadow:0 0 12px rgba(251,146,60,.6);animation:rzsNew 2s ease-in-out infinite}
+@keyframes rzsNew{50%{box-shadow:0 0 20px rgba(251,146,60,.95)}}
+.rzs-check{position:absolute;top:5px;right:5px;display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:99px;color:#000;background:rgb(var(--c));box-shadow:0 0 16px rgba(var(--c),.9);animation:rxAuraPop .5s cubic-bezier(.16,1,.3,1)}
+.rzs-check svg{width:11px;height:11px}
+
+/* mini live previews inside the picker */
+.rzs-item[data-t="ember"] .rzs-fx{background:radial-gradient(circle,#ffb347 0 1.5px,transparent 2.5px) 0 0/20px 24px;animation:rzsRise 2.6s linear infinite}
+.rzs-item[data-t="frost"] .rzs-fx,.rzs-item[data-t="sakura"] .rzs-fx{background:radial-gradient(circle,rgba(255,255,255,.95) 0 1.5px,transparent 2.5px) 0 0/22px 26px;animation:rzsFall 3s linear infinite}
+.rzs-item[data-t="sakura"] .rzs-fx{background:radial-gradient(ellipse 3px 2px,#ffd1e6 0 100%,transparent 100%) 0 0/24px 28px}
+.rzs-item[data-t="meteor"] .rzs-fx{background:linear-gradient(115deg,transparent 46%,rgba(255,255,255,.9) 50%,transparent 52%) 0 0/90px 90px;animation:rzsMeteor 2.6s linear infinite}
+.rzs-item[data-t="thunder"] .rzs-fx{background:radial-gradient(ellipse at 40% 0,rgba(220,235,255,.85),transparent 65%);opacity:0;animation:rzsFlash 3.2s linear infinite}
+.rzs-item[data-t="dawn"] .rzs-fx{background:repeating-conic-gradient(from 150deg at 50% -10%,rgba(255,225,170,.5) 0deg 3deg,transparent 3deg 9deg);animation:rzsSway 4s ease-in-out infinite alternate;transform-origin:50% 0}
+@keyframes rzsRise{to{background-position:0 -24px}}
+@keyframes rzsFall{to{background-position:8px 26px}}
+@keyframes rzsMeteor{to{background-position:-90px 90px}}
+@keyframes rzsFlash{0%,70%,100%{opacity:0}74%{opacity:.9}77%{opacity:.15}80%{opacity:1}86%{opacity:0}}
+@keyframes rzsSway{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
 
 /* ---------- NEW THEMES: shared ---------- */
 .rxa-layer:not(.is-on) *{animation-play-state:paused!important}
 .rxa-drift{animation:rxaDrift 16s ease-in-out infinite}
 .rxa-drift-2{animation-duration:21s;animation-direction:reverse}
 @keyframes rxaDrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,-30px) scale(1.12)}}
-
-/* NEON GRID */
-.rxa-neon-sun{position:absolute;left:50%;top:15%;width:clamp(220px,34vw,380px);aspect-ratio:1;margin-left:calc(clamp(220px,34vw,380px)/-2);border-radius:999px;background:linear-gradient(to bottom,#fde047 0%,#fb7185 48%,#c026d3 100%);opacity:.8;filter:drop-shadow(0 0 60px rgba(232,60,255,.55));
-  -webkit-mask-image:linear-gradient(#000,#000),repeating-linear-gradient(to bottom,#000 0 11px,transparent 11px 16px);-webkit-mask-size:100% 48%,100% 52%;-webkit-mask-position:top,bottom;-webkit-mask-repeat:no-repeat;
-  mask-image:linear-gradient(#000,#000),repeating-linear-gradient(to bottom,#000 0 11px,transparent 11px 16px);mask-size:100% 48%,100% 52%;mask-position:top,bottom;mask-repeat:no-repeat;animation:rxaSun 6s ease-in-out infinite}
-@keyframes rxaSun{50%{opacity:.95;transform:translateY(-8px)}}
-.rxa-neon-horizon{position:absolute;left:0;right:0;top:56%;height:2px;background:linear-gradient(90deg,transparent,#22d3ee,#e83cff,#22d3ee,transparent);box-shadow:0 0 28px 6px rgba(232,60,255,.55);opacity:.9}
-.rxa-neon-floor{position:absolute;left:-60%;right:-60%;top:56%;bottom:-6%;transform:perspective(380px) rotateX(64deg);transform-origin:50% 0;
-  background-image:linear-gradient(rgba(232,60,255,.7) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(34,211,238,.6) 1.5px,transparent 1.5px);background-size:64px 64px;animation:rxaGrid 1.5s linear infinite;
-  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 30%);mask-image:linear-gradient(to bottom,transparent,#000 30%)}
-@keyframes rxaGrid{to{background-position:0 64px,0 0}}
 
 /* FROST */
 .rxa-frost-sheen{position:absolute;inset:-20% -40%;background:linear-gradient(115deg,transparent 40%,rgba(186,230,253,.07) 50%,transparent 60%);animation:rxaSheen 11s ease-in-out infinite}
@@ -2110,13 +2151,70 @@ img,video,iframe{max-width:100%}
 .rxa-meteor::after{content:"";position:absolute;right:-1px;top:-2px;width:5px;height:5px;border-radius:99px;background:#fff;box-shadow:0 0 12px 3px rgba(196,181,253,.9)}
 @keyframes rxaMeteor{0%{transform:rotate(-35deg) translateX(0);opacity:0}4%{opacity:1}14%{transform:rotate(-35deg) translateX(-620px);opacity:0}100%{transform:rotate(-35deg) translateX(-620px);opacity:0}}
 
+/* SAKURA — moonlit petals */
+.rzt-moon{position:absolute;right:11%;top:10%;width:clamp(110px,15vw,210px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 36% 34%,#fff4f9,#fbcfe8 48%,#f472b6);opacity:.5;box-shadow:0 0 90px 30px rgba(244,114,182,.28);animation:rztMoon 8s ease-in-out infinite}
+@keyframes rztMoon{50%{opacity:.62;transform:scale(1.04)}}
+.rzt-branch{position:absolute;left:-2vw;top:-1vh;width:min(62vw,720px);opacity:.95;transform-origin:0 0;filter:drop-shadow(0 0 14px rgba(244,114,182,.28));animation:rztSway 9s ease-in-out infinite alternate}
+@keyframes rztSway{from{transform:rotate(-.8deg)}to{transform:rotate(1.4deg)}}
+.rzt-bloom{animation:rztBloom 4.5s ease-in-out infinite;animation-delay:calc(var(--k)*-.6s)}
+@keyframes rztBloom{50%{transform:scale(1.2);opacity:.7}}
+.rzt-pw{position:absolute;top:-6vh;width:var(--s);height:var(--s);opacity:var(--o);animation:rztFall var(--t) linear infinite;animation-delay:var(--d);will-change:transform}
+@keyframes rztFall{0%{transform:translate3d(0,0,0)}25%{transform:translate3d(var(--x),28vh,0)}50%{transform:translate3d(calc(var(--x)*-.7),58vh,0)}75%{transform:translate3d(calc(var(--x)*.8),86vh,0)}100%{transform:translate3d(calc(var(--x)*-.4),114vh,0)}}
+.rzt-petal{display:block;width:100%;height:70%;border-radius:150% 0 150% 0;background:linear-gradient(135deg,#ffe4ef,#f9a8d4 55%,#ec4899);box-shadow:0 0 10px rgba(244,114,182,.45);transform:rotate(var(--r));animation:rztTumble var(--v) ease-in-out infinite alternate}
+@keyframes rztTumble{from{transform:rotate(var(--r)) rotateX(0) rotateY(0)}to{transform:rotate(calc(var(--r) + 140deg)) rotateX(70deg) rotateY(50deg)}}
+.rzt-mist{position:absolute;left:-20%;right:-20%;bottom:-6%;height:38%;filter:blur(24px);background:radial-gradient(ellipse at 30% 100%,rgba(244,114,182,.18),transparent 60%),radial-gradient(ellipse at 75% 100%,rgba(168,85,247,.15),transparent 60%);animation:rxaDrift 18s ease-in-out infinite}
+
+/* THUNDER — rain, clouds, lightning */
+.rzt-cloud{position:absolute;border-radius:50%;filter:blur(70px);background:rgba(71,98,140,.3);animation:rztCloud 26s ease-in-out infinite alternate}
+.rzt-cloud-1{left:-10%;top:-12%;width:60vw;height:36vh}
+.rzt-cloud-2{right:-12%;top:2%;width:55vw;height:30vh;background:rgba(51,78,120,.34);animation-duration:32s;animation-direction:alternate-reverse}
+.rzt-cloud-3{left:24%;top:-18%;width:50vw;height:28vh;background:rgba(32,52,92,.55);animation-duration:38s}
+@keyframes rztCloud{to{transform:translateX(12vw)}}
+.rzt-flash{position:absolute;inset:0;opacity:0;background:radial-gradient(ellipse at var(--fx,40%) 0%,rgba(220,235,255,.55),rgba(140,180,255,.14) 45%,transparent 75%);animation:rztFlash var(--ft,11s) linear infinite;animation-delay:var(--fd,0s)}
+@keyframes rztFlash{0%,88%,100%{opacity:0}89%{opacity:.55}90%{opacity:.1}91.5%{opacity:1}94%{opacity:.18}96%{opacity:0}}
+.rzt-bolt{position:absolute;top:0;height:62vh;width:auto;opacity:0;stroke:#eaf2ff;filter:drop-shadow(0 0 8px rgba(160,200,255,.95)) drop-shadow(0 0 22px rgba(120,170,255,.7));animation:rztBolt var(--ft,11s) linear infinite;animation-delay:var(--fd,0s)}
+@keyframes rztBolt{0%,88%,100%{opacity:0}89%{opacity:.9}90%{opacity:.15}91.5%{opacity:1}94%{opacity:.25}95.5%{opacity:0}}
+.rzt-rain{position:absolute;top:-12vh;width:1px;height:var(--h);background:linear-gradient(to bottom,transparent,rgba(190,215,255,.55));animation:rztRain var(--t) linear infinite;animation-delay:var(--d);will-change:transform}
+@keyframes rztRain{from{transform:translate3d(0,0,0) rotate(10deg)}to{transform:translate3d(-24vh,125vh,0) rotate(10deg)}}
+.rzt-fog{position:absolute;left:-10%;right:-10%;bottom:-8%;height:34%;filter:blur(30px);background:radial-gradient(ellipse at 50% 100%,rgba(96,140,210,.22),transparent 65%);animation:rxaDrift 14s ease-in-out infinite}
+
+/* DIVINE DAWN — god rays + golden dust */
+.rzt-sun{position:absolute;left:50%;top:-14vh;width:clamp(260px,46vw,720px);aspect-ratio:1;margin-left:calc(clamp(260px,46vw,720px)/-2);border-radius:50%;background:radial-gradient(circle,rgba(255,236,190,.95) 0,rgba(255,196,120,.5) 18%,rgba(255,150,80,.16) 42%,transparent 68%);animation:rztSun 7s ease-in-out infinite}
+@keyframes rztSun{50%{transform:scale(1.08);opacity:.85}}
+.rzt-rays{position:absolute;left:-20vw;top:0;width:140vw;height:100vh;transform-origin:50% 0;background:repeating-conic-gradient(from 150deg at 50% 0,rgba(255,220,160,.2) 0deg 1.4deg,transparent 1.4deg 5deg);-webkit-mask-image:linear-gradient(to bottom,#000,transparent 82%);mask-image:linear-gradient(to bottom,#000,transparent 82%);filter:blur(1.5px);animation:rztSwing 14s ease-in-out infinite alternate}
+.rzt-rays-2{background:repeating-conic-gradient(from 153deg at 50% 0,rgba(255,196,130,.14) 0deg 2.6deg,transparent 2.6deg 7.3deg);filter:blur(3px);animation-duration:19s;animation-direction:alternate-reverse}
+@keyframes rztSwing{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+.rzt-mote{position:absolute;bottom:-3vh;width:var(--s);height:var(--s);border-radius:99px;background:#ffe2b0;box-shadow:0 0 10px 2px rgba(255,200,120,.6);opacity:0;animation:rztMote var(--t) linear infinite;animation-delay:var(--d);will-change:transform}
+@keyframes rztMote{0%{transform:translate3d(0,0,0);opacity:0}15%{opacity:.9}85%{opacity:.7}100%{transform:translate3d(var(--x),-108vh,0);opacity:0}}
+
 @media (prefers-reduced-motion:reduce){
-  .rxp-card,.rxp-card::before,.rxp-icon-ring,.rxp-icon-pulse,.rxp-film,.rxp-ripple,.rxp-blob,.rxp-spark,.rxp-squiggle path,.rxp-bars i,.rxp-line,.rxp-area,.rxp-live,
-  .rxa-btn::before,.rxa-btn::after,.rxa-orb,.rxa-orb-sat,.rxa-new,.rxa-drift,.rxa-neon-sun,.rxa-neon-floor,.rxa-frost-sheen,.rxa-snow,.rxa-star,.rxa-meteor{animation:none!important}
-  .rxp-line{stroke-dashoffset:0}.rxp-area{opacity:1}.rxp-squiggle path{stroke-dashoffset:0}
+  .rzh-card,.rzh-ticket::before,.rzh-medal::before,.rzh-medal::after,.rzh-strip,.rzh-iris-blades,.rzh-iris-eye,.rzh-stroke,.rzh-arc,.rzh-orbit-dot,.rzh-live,.rzh-t2,.rzh-dot,
+  .rzs-btn::before,.rzs-planet i,.rzs-new,.rzs-item::before,.rzs-fx,
+  .rxa-drift,.rxa-frost-sheen,.rxa-snow,.rxa-star,.rxa-meteor,
+  .rzt-pw,.rzt-petal,.rzt-rain,.rzt-flash,.rzt-bolt,.rzt-cloud,.rzt-mote,.rzt-rays,.rzt-sun,.rzt-moon,.rzt-branch,.rzt-bloom,.rzt-mist,.rzt-fog{animation:none!important}
+  .rzh-stroke{stroke-dashoffset:0;opacity:.6}.rzh-arc{stroke-dasharray:var(--p) 100}
 }
 
+
+        /* HERO CARDS — restrained premium finish */
+        .rzh-card{filter:drop-shadow(0 10px 18px rgba(0,0,0,.32))!important;transform:none!important;animation:rzhIn .55s ease-out backwards!important;transition:filter .22s ease,transform .22s ease!important}
+        .rzh-card:hover,.rzh-card:focus-visible{filter:drop-shadow(0 13px 24px rgba(0,0,0,.42))!important;transform:translateY(-3px)!important}
+        .rzh-ticket{background:linear-gradient(135deg,rgba(var(--c),.11),rgba(13,15,21,.96) 52%,rgba(5,6,10,.98))!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)!important;-webkit-mask-image:none!important;mask-image:none!important}
+        .rzh-ticket::before,.rzh-medal::before,.rzh-medal::after,.rzh-fill,.rzh-perf,.rzh-sheen{display:none!important}
+        .rzh-spot{opacity:0!important}
+        .rzh-medal{width:44px!important;height:44px!important;background:rgba(var(--c),.15)!important;border:1px solid rgba(var(--c),.48)!important;box-shadow:none!important}
+        .rzh-card:hover .rzh-medal{transform:translateY(-1px)!important}
+        .rzh-t1,.rzh-t2{transition:none!important}.rzh-t2{display:none!important}
+        .rzh-card:hover .rzh-t1,.rzh-card:focus-visible .rzh-t1{transform:none!important}
+        .rzh-go{width:34px!important;height:34px!important;box-shadow:none!important}
+        .rzh-card:hover .rzh-go{transform:translateX(2px)!important;background:rgba(var(--c),.18)!important;color:#fff!important;border-color:rgba(var(--c),.55)!important}
+        .rzh-iris,.rzh-gauge{opacity:.25!important}
+        .rzh-iris-blades,.rzh-orbit-dot,.rzh-arc,.rzh-strip,.rzh-stroke,.rzh-dot,.rzh-live{animation:none!important}
+        .rzs-btn{cursor:pointer}.rzs-caret{transform:none!important}.rzs-next svg{width:14px;height:14px}
+        @media(prefers-reduced-motion:reduce){.rzh-card,.rzh-card *{animation:none!important;transition:none!important}}
+
       `}
+
 </style>
 
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
@@ -2239,18 +2337,6 @@ img,video,iframe{max-width:100%}
           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(0,0,0,0.88))]" />
         </div>
 
-        {/* NEON GRID — synthwave sun + moving grid floor */}
-        <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "neon" ? "is-on opacity-100" : "opacity-0"}`}>
-          <div className="absolute inset-0 bg-[#05010f]" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#12012b_0%,#2a0540_42%,#05010f_70%)]" />
-          <div className="rxa-neon-sun" />
-          <div className="absolute left-[-10%] top-[10%] h-[460px] w-[560px] rounded-full bg-fuchsia-600/[0.14] blur-[140px] rxa-drift" />
-          <div className="absolute right-[-8%] top-[26%] h-[420px] w-[520px] rounded-full bg-cyan-400/[0.10] blur-[140px] rxa-drift rxa-drift-2" />
-          <div className="rxa-neon-horizon" />
-          <div className="rxa-neon-floor" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_55%,rgba(5,1,15,0.78))]" />
-        </div>
-
         {/* FROST — glacier blue + falling snow */}
         <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "frost" ? "is-on opacity-100" : "opacity-0"}`}>
           <div className="absolute inset-0 bg-[#030b16]" />
@@ -2270,6 +2356,63 @@ img,video,iframe{max-width:100%}
           <div className="absolute bottom-[-14%] left-1/3 h-[420px] w-[760px] rounded-full bg-fuchsia-700/[0.08] blur-[160px]" />
           <StarField />
           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_45%,rgba(2,3,10,0.85))]" />
+        </div>
+
+        {/* SAKURA — moonlit blossom branch + drifting petals */}
+        <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "sakura" ? "is-on opacity-100" : "opacity-0"}`}>
+          <div className="absolute inset-0 bg-[#0d0510]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#26102c_0%,#14061a_52%,#07020a_100%)]" />
+          <div className="rzt-moon" />
+          <div className="absolute left-[-10%] top-[8%] h-[480px] w-[620px] rounded-full bg-pink-500/[0.10] blur-[150px] rxa-drift" />
+          <div className="absolute bottom-[-10%] right-[-8%] h-[460px] w-[640px] rounded-full bg-purple-600/[0.12] blur-[150px] rxa-drift rxa-drift-2" />
+          <svg className="rzt-branch" viewBox="0 0 600 260" fill="none" aria-hidden>
+            <path d="M-10 36 C 110 52 190 14 300 78 S 470 126 610 92" stroke="#12060f" strokeWidth="9" strokeLinecap="round" />
+            <path d="M190 30 C 220 70 210 110 246 150" stroke="#12060f" strokeWidth="5" strokeLinecap="round" />
+            <path d="M390 108 C 410 150 400 190 430 226" stroke="#12060f" strokeWidth="5" strokeLinecap="round" />
+            {[[70, 42], [130, 40], [200, 22], [250, 60], [300, 78], [350, 100], [420, 112], [490, 112], [560, 96], [225, 118], [244, 150], [412, 170], [432, 224], [160, 36], [330, 92]].map(([x, y], k) => (
+              <g key={k} className="rzt-bloom" style={{ "--k": k, transformOrigin: `${x}px ${y}px` } as React.CSSProperties}>
+                <circle cx={x} cy={y} r={9 + (k % 3) * 2} fill="#f9a8d4" opacity=".85" />
+                <circle cx={x} cy={y} r={3} fill="#fff1f7" />
+              </g>
+            ))}
+          </svg>
+          <PetalField />
+          <div className="rzt-mist" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_45%,rgba(7,2,10,0.82))]" />
+        </div>
+
+        {/* THUNDER — heavy rain, drifting clouds, lightning strikes */}
+        <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "thunder" ? "is-on opacity-100" : "opacity-0"}`}>
+          <div className="absolute inset-0 bg-[#030610]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#0d1a30_0%,#060b18_58%,#02040a_100%)]" />
+          <div className="rzt-cloud rzt-cloud-1" />
+          <div className="rzt-cloud rzt-cloud-2" />
+          <div className="rzt-cloud rzt-cloud-3" />
+          <div className="rzt-flash" style={{ "--fx": "32%", "--ft": "11s", "--fd": "-2s" } as React.CSSProperties} />
+          <div className="rzt-flash" style={{ "--fx": "74%", "--ft": "15s", "--fd": "-9s" } as React.CSSProperties} />
+          <svg className="rzt-bolt" style={{ left: "26%", "--ft": "11s", "--fd": "-2s" } as React.CSSProperties} viewBox="0 0 120 400" fill="none" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" aria-hidden>
+            <path d="M70 0 L48 118 L74 128 L36 248 L62 258 L20 400" />
+            <path d="M62 258 L96 306 L84 330" strokeWidth="1.6" />
+          </svg>
+          <svg className="rzt-bolt" style={{ left: "70%", "--ft": "15s", "--fd": "-9s" } as React.CSSProperties} viewBox="0 0 120 400" fill="none" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" aria-hidden>
+            <path d="M54 0 L78 104 L50 116 L86 236 L58 248 L98 400" />
+            <path d="M50 116 L18 162 L28 188" strokeWidth="1.6" />
+          </svg>
+          <RainField />
+          <div className="rzt-fog" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_40%,rgba(2,4,10,0.82))]" />
+        </div>
+
+        {/* DIVINE DAWN — sun, god rays, rising golden dust */}
+        <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "dawn" ? "is-on opacity-100" : "opacity-0"}`}>
+          <div className="absolute inset-0 bg-[#07111c]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#14324d_0%,#16283d_32%,#0a1522_70%,#050a12_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_112%,rgba(255,170,90,0.20),transparent_55%)]" />
+          <div className="rzt-sun" />
+          <div className="rzt-rays" />
+          <div className="rzt-rays rzt-rays-2" />
+          <DustField />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_55%,rgba(5,10,18,0.8))]" />
         </div>
 
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_18%,rgba(0,0,0,0.72)_100%)]" />
@@ -2476,7 +2619,7 @@ img,video,iframe{max-width:100%}
               </p>
 
               {/* Action rail — horizontal scroll on mobile, grid on desktop */}
-              <div className="mt-8 -mx-5 flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-5 pb-4 pt-3 [scrollbar-width:none] [perspective:1200px] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-3">
+              <div className="mt-8 -mx-5 flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-5 pb-7 pt-3 [scrollbar-width:none] [perspective:1200px] md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 md:pt-0">
                 {HERO_ACTIONS.map((action, i) => (
                   <HeroActionCard key={action.title} action={action} index={i} />
                 ))}
