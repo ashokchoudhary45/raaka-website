@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import NewBadge from "@/components/NewBadge";
 import Link from "next/link";
@@ -99,9 +99,9 @@ const RELEASE_LANGUAGES = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "
 const CAST = [
   { name: "Allu Arjun", image: "/images/actor3.jpg", href: "/allu-arjun" },
   { name: "Mrunal Thakur", image: "/images/mrunal.jpg" },
+  { name: "Deepika Padukone", image: "/images/actor2.jpg" },
   { name: "Rashmika Mandanna", image: "/images/rashmika.jpg" },
   { name: "Janhvi Kapoor", image: "/images/janhavi.jpg" },
-  { name: "Deepika Padukone", image: "/images/actor2.jpg" },
 ];
 
 const CREW = [
@@ -475,36 +475,22 @@ function HeroActionCard({ action, index }: { action: (typeof HERO_ACTIONS)[numbe
 }
 
 function AuraSwitcher({ theme, setTheme }: { theme: Theme; setTheme: (t: Theme) => void }) {
-  const [open, setOpen] = useState(false);
-  const wrap = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  // Click on the Aura button = instantly jump to the next theme (no dropdown)
+  const nextTheme = () => {
+    const next = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];
+    startTransition(() => setTheme(next));
+  };
 
   return (
     <div
-      ref={wrap}
       style={{ "--aura": AURA_RGB[theme] } as React.CSSProperties}
       className="fixed left-3 top-3 z-[90] sm:left-5 sm:top-5 md:left-7 md:top-6"
     >
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-label={`Choose aura. Current: ${AURA_META[theme].label}`}
-        className={`rxa-btn ${open ? "is-open" : ""}`}
+        onClick={nextTheme}
+        aria-label={`Change aura. Current: ${AURA_META[theme].label}`}
+        className="rxa-btn"
       >
         <span className="rxa-orb" aria-hidden>
           <span className="rxa-orb-sat" />
@@ -514,46 +500,7 @@ function AuraSwitcher({ theme, setTheme }: { theme: Theme; setTheme: (t: Theme) 
           <b>Aura</b>
           <span key={theme}>{AURA_META[theme].label}</span>
         </span>
-        <svg className="rxa-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M6 9l6 6 6-6" />
-        </svg>
       </button>
-
-      <div className={`rxa-panel ${open ? "is-open" : ""}`} role="dialog" aria-label="Choose aura theme" aria-hidden={!open}>
-        <div className="rxa-panel-head">
-          <span>Choose your Aura</span>
-          <em>{THEME_ORDER.length} worlds</em>
-        </div>
-        <div className="rxa-grid">
-          {THEME_ORDER.map((t, i) => {
-            const m = AURA_META[t];
-            const active = t === theme;
-            return (
-              <button
-                key={t}
-                type="button"
-                tabIndex={open ? 0 : -1}
-                onClick={() => setTheme(t)}
-                aria-pressed={active}
-                style={{ "--c": AURA_RGB[t], "--i": i } as React.CSSProperties}
-                className={`rxa-item ${active ? "is-active" : ""}`}
-              >
-                <span className="rxa-thumb" style={{ background: m.bg }}>
-                  <span className="rxa-thumb-shine" />
-                  {m.isNew && <span className="rxa-new">New</span>}
-                  {active && (
-                    <span className="rxa-check">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-                    </span>
-                  )}
-                </span>
-                <span className="rxa-item-name">{m.label}</span>
-                <span className="rxa-item-tag">{m.tag}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }
@@ -688,6 +635,63 @@ function ExploreCard({ href, eyebrow, meta, title, copy, index, featured }: { hr
   );
 }
 
+// Countdown lives in its own component so the 1s tick only re-renders this
+// small grid instead of the whole page.
+function CountdownGrid() {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio("/sounds/tick111.mp3");
+    audioRef.current.volume = 0.35;
+  }, []);
+
+  useEffect(() => {
+    const targetDate = new Date("2026-08-15T00:00:00+05:30").getTime();
+    const startTime = Date.now();
+
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      // First 10 seconds: no tick sound
+      if (Date.now() - startTime >= 10000 && audioRef.current) {
+        audioRef.current.currentTime = 7;
+        audioRef.current.play().catch(() => {});
+      }
+
+      setTimeLeft({
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / (1000 * 60)) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      });
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="rx-timer-grid mt-10 grid w-full grid-cols-4 gap-2 sm:gap-3 md:mt-14 md:gap-4">
+      {[
+        { label: "Days", value: timeLeft.days, pct: Math.min(timeLeft.days / 365, 1) * 100 },
+        { label: "Hours", value: timeLeft.hours, pct: (timeLeft.hours / 24) * 100 },
+        { label: "Minutes", value: timeLeft.minutes, pct: (timeLeft.minutes / 60) * 100 },
+        { label: "Seconds", value: timeLeft.seconds, pct: (timeLeft.seconds / 60) * 100, glow: true },
+      ].map((unit) => (
+        <TimerUnit key={unit.label} {...unit} />
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [intro, setIntro] = useState(true);
@@ -778,6 +782,24 @@ export default function Home() {
     localStorage.setItem("raaka-theme", theme);
   }, [theme]);
 
+  // While the user is scrolling, pause the heavy decorative loops (they are
+  // restored ~120ms after scrolling stops) -> buttery scroll on phone & laptop.
+  useEffect(() => {
+    const root = document.documentElement;
+    let t: number | undefined;
+    const onScroll = () => {
+      if (!root.classList.contains("rx-scrolling")) root.classList.add("rx-scrolling");
+      window.clearTimeout(t);
+      t = window.setTimeout(() => root.classList.remove("rx-scrolling"), 120);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(t);
+      root.classList.remove("rx-scrolling");
+    };
+  }, []);
+
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
@@ -785,70 +807,6 @@ export default function Home() {
     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
   }, [menuOpen]);
 
-  // ==============================
-  // COUNTDOWN
-  // ==============================
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
-
-  // ==============================
-  // COUNTDOWN TICK AUDIO
-  // ==============================
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    audioRef.current = new Audio("/sounds/tick111.mp3");
-    audioRef.current.volume = 0.35;
-  }, []);
-
-  // ==============================
-  // COUNTDOWN TIMER
-  // ==============================
-  useEffect(() => {
-    const targetDate = new Date("2026-08-15T00:00:00+05:30").getTime();
-
-    // Website load hone ka exact time
-    const startTime = Date.now();
-
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const difference = targetDate - now;
-
-      if (difference <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-
-      // ==================================
-      // FIRST 10 SECONDS: NO TICK SOUND
-      // ==================================
-      if (Date.now() - startTime >= 10000 && audioRef.current) {
-        audioRef.current.currentTime = 7;
-        audioRef.current.play().catch(() => {});
-      }
-
-      setTimeLeft({
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / (1000 * 60)) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
-      });
-    };
-
-    // Immediately calculate countdown
-    updateCountdown();
-
-    // Every 1 second
-    const timer = setInterval(updateCountdown, 1000);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
 
   useEffect(() => {
     const audio = new Audio("/sounds/king.mp3");
@@ -2115,6 +2073,21 @@ img,video,iframe{max-width:100%}
   .rxp-line{stroke-dashoffset:0}.rxp-area{opacity:1}.rxp-squiggle path{stroke-dashoffset:0}
 }
 
+/* ---------- PERF: smooth scroll pass ---------- */
+html.rx-scrolling .rxa-btn::before,
+html.rx-scrolling .rxa-btn::after,
+html.rx-scrolling .rxa-orb,
+html.rx-scrolling .rx-action::before,
+html.rx-scrolling .rx-cd-card::before,
+html.rx-scrolling .rxp-card::before,
+html.rx-scrolling .rxp-blob,
+html.rx-scrolling .rx-logo-stage,
+html.rx-scrolling .rx-logo-halo{animation-play-state:paused!important}
+@media (max-width:767px){
+  .rx-reveal{filter:none!important}
+  .rxa-btn,.rxp-card,.raaka-music-premium,.raaka-menu-premium,.raaka-footer-core{-webkit-backdrop-filter:blur(8px)!important;backdrop-filter:blur(8px)!important}
+}
+
       `}
 </style>
 
@@ -2162,7 +2135,7 @@ img,video,iframe{max-width:100%}
       ================================== */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-black">
         {/* OBSIDIAN — pure black cinematic */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "obsidian" ? "opacity-100" : "opacity-0"}`}>
+        <div className={`absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "obsidian" ? "opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 bg-[#020202]" />
           <div className="absolute left-1/2 top-[8%] h-[620px] w-[900px] -translate-x-1/2 rounded-full bg-white/[0.025] blur-[150px]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,rgba(255,255,255,0.045),transparent_42%)]" />
@@ -2170,7 +2143,7 @@ img,video,iframe{max-width:100%}
         </div>
 
         {/* EMBER — RAAKA fire atmosphere */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "ember" ? "opacity-100" : "opacity-0"}`}>
+        <div className={`absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "ember" ? "opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 animate-raaka-bg-1 bg-cover bg-center" style={{ backgroundImage: "url('/images/raakabg.jpg')" }} />
           <div className="absolute inset-0 animate-raaka-bg-2 bg-cover bg-center" style={{ backgroundImage: "url('/images/raakabg1.jpg')" }} />
           <div className="absolute inset-0 animate-raaka-bg-3 bg-cover bg-center" style={{ backgroundImage: "url('/images/raakabg2.jpg')" }} />
@@ -2180,7 +2153,7 @@ img,video,iframe{max-width:100%}
         </div>
 
         {/* COSMIC — deep space / divine warrior atmosphere */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "cosmic" ? "opacity-100" : "opacity-0"}`}>
+        <div className={`absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "cosmic" ? "opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 bg-[#02040b]" />
           <div className="absolute left-[18%] top-[8%] h-[520px] w-[520px] rounded-full bg-indigo-700/[0.10] blur-[150px]" />
           <div className="absolute right-[8%] top-[28%] h-[460px] w-[460px] rounded-full bg-violet-700/[0.08] blur-[145px]" />
@@ -2190,7 +2163,7 @@ img,video,iframe{max-width:100%}
         </div>
 
         {/* GRAPHITE SILVER — premium dark */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "graphite" ? "opacity-100" : "opacity-0"}`}>
+        <div className={`absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "graphite" ? "opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 bg-[#111214]" />
           <div className="absolute left-[-10%] top-[-18%] h-[700px] w-[700px] rounded-full bg-white/[0.055] blur-[120px]" />
           <div className="absolute right-[-8%] top-[8%] h-[600px] w-[600px] rounded-full bg-zinc-400/[0.07] blur-[130px]" />
@@ -2201,7 +2174,7 @@ img,video,iframe{max-width:100%}
         </div>
 
         {/* ONYX GOLD — luxury black + metallic gold */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "onyx" ? "opacity-100" : "opacity-0"}`}>
+        <div className={`absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "onyx" ? "opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 bg-[#070706]" />
           <div className="absolute left-1/2 top-[-14%] h-[680px] w-[920px] -translate-x-1/2 rounded-full bg-amber-500/[0.06] blur-[155px]" />
           <div className="absolute left-[-8%] top-[34%] h-[500px] w-[500px] rounded-full bg-yellow-700/[0.04] blur-[145px]" />
@@ -2212,7 +2185,7 @@ img,video,iframe{max-width:100%}
         </div>
 
         {/* AURORA — northern lights */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "aurora" ? "opacity-100" : "opacity-0"}`}>
+        <div className={`absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "aurora" ? "opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 bg-[#020807]" />
           <div className="absolute left-[-10%] top-[-10%] h-[560px] w-[760px] rounded-full bg-teal-500/[0.11] blur-[140px]" />
           <div className="absolute right-[-8%] top-[22%] h-[520px] w-[620px] rounded-full bg-emerald-500/[0.08] blur-[150px]" />
@@ -2221,7 +2194,7 @@ img,video,iframe{max-width:100%}
         </div>
 
         {/* CRIMSON — blood moon */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "crimson" ? "opacity-100" : "opacity-0"}`}>
+        <div className={`absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "crimson" ? "opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 bg-[#0a0204]" />
           <div className="absolute left-1/2 top-[-12%] h-[640px] w-[900px] -translate-x-1/2 rounded-full bg-rose-600/[0.12] blur-[150px]" />
           <div className="absolute bottom-[-10%] right-[-6%] h-[500px] w-[560px] rounded-full bg-red-800/[0.10] blur-[150px]" />
@@ -2230,7 +2203,7 @@ img,video,iframe{max-width:100%}
         </div>
 
         {/* SUNSET — dusk gradient */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${theme === "sunset" ? "opacity-100" : "opacity-0"}`}>
+        <div className={`absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "sunset" ? "opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 bg-[#0b0510]" />
           <div className="absolute left-[-8%] top-[-8%] h-[560px] w-[700px] rounded-full bg-fuchsia-600/[0.12] blur-[150px]" />
           <div className="absolute right-[-8%] top-[18%] h-[520px] w-[640px] rounded-full bg-orange-500/[0.10] blur-[150px]" />
@@ -2239,7 +2212,7 @@ img,video,iframe{max-width:100%}
         </div>
 
         {/* NEON GRID — synthwave sun + moving grid floor */}
-        <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "neon" ? "is-on opacity-100" : "opacity-0"}`}>
+        <div className={`rxa-layer absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "neon" ? "is-on opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 bg-[#05010f]" />
           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#12012b_0%,#2a0540_42%,#05010f_70%)]" />
           <div className="rxa-neon-sun" />
@@ -2251,7 +2224,7 @@ img,video,iframe{max-width:100%}
         </div>
 
         {/* FROST — glacier blue + falling snow */}
-        <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "frost" ? "is-on opacity-100" : "opacity-0"}`}>
+        <div className={`rxa-layer absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "frost" ? "is-on opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 bg-[#030b16]" />
           <div className="absolute left-[-12%] top-[-14%] h-[640px] w-[820px] rounded-full bg-sky-400/[0.13] blur-[150px] rxa-drift" />
           <div className="absolute right-[-10%] top-[24%] h-[540px] w-[700px] rounded-full bg-cyan-300/[0.09] blur-[150px] rxa-drift rxa-drift-2" />
@@ -2262,7 +2235,7 @@ img,video,iframe{max-width:100%}
         </div>
 
         {/* STARDUST — twinkling stars + shooting meteors */}
-        <div className={`rxa-layer absolute inset-0 transition-opacity duration-1000 ${theme === "meteor" ? "is-on opacity-100" : "opacity-0"}`}>
+        <div className={`rxa-layer absolute inset-0 transition-[opacity,visibility] duration-1000 ${theme === "meteor" ? "is-on opacity-100 visible" : "opacity-0 invisible"}`}>
           <div className="absolute inset-0 bg-[#02030a]" />
           <div className="absolute left-[10%] top-[-8%] h-[560px] w-[680px] rounded-full bg-violet-700/[0.14] blur-[150px] rxa-drift" />
           <div className="absolute right-[-6%] top-[30%] h-[480px] w-[600px] rounded-full bg-indigo-600/[0.12] blur-[150px] rxa-drift rxa-drift-2" />
@@ -2564,16 +2537,7 @@ img,video,iframe{max-width:100%}
                 <span className="h-px w-8 bg-amber-100/40 md:w-20" />
               </div>
 
-              <div className="rx-timer-grid mt-10 grid w-full grid-cols-4 gap-2 sm:gap-3 md:mt-14 md:gap-4">
-                {[
-                  { label: "Days", value: timeLeft.days, pct: Math.min(timeLeft.days / 365, 1) * 100 },
-                  { label: "Hours", value: timeLeft.hours, pct: (timeLeft.hours / 24) * 100 },
-                  { label: "Minutes", value: timeLeft.minutes, pct: (timeLeft.minutes / 60) * 100 },
-                  { label: "Seconds", value: timeLeft.seconds, pct: (timeLeft.seconds / 60) * 100, glow: true },
-                ].map((unit) => (
-                  <TimerUnit key={unit.label} {...unit} />
-                ))}
-              </div>
+              <CountdownGrid />
 
               <div className="mt-10 flex items-center justify-center gap-3 md:mt-14 md:gap-4">
                 <span className="h-px w-6 bg-amber-100/30 md:w-16" />
