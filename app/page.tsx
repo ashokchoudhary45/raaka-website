@@ -102,6 +102,12 @@ const CAST = [
   { name: "Deepika Padukone", image: "/images/actor2.jpg" },
   { name: "Rashmika Mandanna", image: "/images/rashmika.jpg" },
   { name: "Janhvi Kapoor", image: "/images/janhavi.jpg" },
+{ name: "Femina George", image: "/images/Femina.jpg" },
+{ name: "Yogi Babu", image: "/images/yogi.jpg" },
+{ name: "Jim Sarbh", image: "/images/jim.jpg" },
+{ name: "Ramya Krishnan", image: "/images/ramya.jpg" },
+{ name: "Karan Mehta", image: "/images/karan.jpg" },
+
 ];
 
 const CREW = [
