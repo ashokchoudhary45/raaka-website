@@ -14,7 +14,14 @@ const cssVars = (o: Record<string, string | number>) => o as unknown as CSSPrope
 type Plate = { no: string; title: string; date: string; src: string; alt: string };
 
 const PLATES: Plate[] = [
-  { no: "001", title: "First Look", date: "08 APRIL 2026", src: "/images/RAAKAFL.jpg", alt: "RAAKA First Look poster" },
+  { no: "001", title: "First Look — English", date: "08 APRIL 2026", src: "/images/raaka-about-1.jpg", alt: "RAAKA First Look poster in English" },
+  { no: "002", title: "First Look — Hindi", date: "08 APRIL 2026", src: "/images/raaka-about-2.jpg", alt: "RAAKA First Look poster in Hindi" },
+  { no: "003", title: "First Look — Telugu", date: "08 APRIL 2026", src: "/images/raaka-about-3.jpg", alt: "RAAKA First Look poster in Telugu" },
+  { no: "004", title: "First Look — Tamil", date: "08 APRIL 2026", src: "/images/raaka-about-4.jpg", alt: "RAAKA First Look poster in Tamil" },
+  { no: "005", title: "First Look — Malayalam", date: "08 APRIL 2026", src: "/images/raaka-about-5.jpg", alt: "RAAKA First Look poster in Malayalam" },
+  { no: "006", title: "First Look — Kannada", date: "08 APRIL 2026", src: "/images/raaka-about-6.jpg", alt: "RAAKA First Look poster in Kannada" },
+  { no: "007", title: "First Look — Arabic", date: "08 APRIL 2026", src: "/images/raaka-about-7.jpg", alt: "RAAKA First Look poster in Arabic" },
+  { no: "008", title: "First Look — Bengali", date: "08 APRIL 2026", src: "/images/raaka-about-8.jpg", alt: "RAAKA First Look poster in Bengali" },
 ];
 
 const FACTS: [string, string][] = [
