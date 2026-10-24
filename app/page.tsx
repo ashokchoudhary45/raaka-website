@@ -96,6 +96,18 @@ const HERO_ACTIONS = [
 
 const RELEASE_LANGUAGES = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "Bengali", "Arabic", "English"];
 
+// About Raaka image carousel. Uses raaka-about-1.jpg through raaka-about-8.jpg.
+const ABOUT_RAAKA_IMAGES = [
+  { src: "/images/raaka-about-1.jpg", alt: "Raaka gallery image 1" },
+  { src: "/images/raaka-about-2.jpg", alt: "Raaka gallery image 2" },
+  { src: "/images/raaka-about-3.jpg", alt: "Raaka gallery image 3" },
+  { src: "/images/raaka-about-4.jpg", alt: "Raaka gallery image 4" },
+  { src: "/images/raaka-about-5.jpg", alt: "Raaka gallery image 5" },
+  { src: "/images/raaka-about-6.jpg", alt: "Raaka gallery image 6" },
+  { src: "/images/raaka-about-7.jpg", alt: "Raaka gallery image 7" },
+  { src: "/images/raaka-about-8.jpg", alt: "Raaka gallery image 8" },
+];
+
 
 // Allu Arjun only: one portrait per calendar day (India/local browser date).
 // Add these image files under public/images/. Keep arjun2.jpg as the first image.
@@ -714,6 +726,8 @@ function CountdownGrid() {
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dailyAlluImage, setDailyAlluImage] = useState("/images/arjun2.jpg");
+  const [aboutRaakaImageIndex, setAboutRaakaImageIndex] = useState(0);
+  const aboutRaakaTouchStartX = useRef<number | null>(null);
 
   // Rotate Allu Arjun's image once per India calendar day.
   // Day 1 starts on 24 Oct 2026 with arjun2.jpg, then repeats every 5 days.
@@ -2499,8 +2513,45 @@ html.rx-scrolling .rx-logo-halo{animation-play-state:paused!important}
           <SectionHeading eyebrow="The Movie" title="About Raaka" />
 
           <div className="grid gap-10 md:grid-cols-[minmax(0,340px)_1fr] md:gap-16">
-            <div className="raaka-explore-card relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 md:max-w-[340px]">
-              <Image src="/images/RAAKAFL.jpg" alt="Raaka First Look" width={800} height={1200} className="h-full w-full object-cover" />
+            <div
+              className="raaka-explore-card group relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 md:max-w-[340px]"
+              onTouchStart={(event) => { aboutRaakaTouchStartX.current = event.touches[0]?.clientX ?? null; }}
+              onTouchEnd={(event) => {
+                const startX = aboutRaakaTouchStartX.current;
+                const endX = event.changedTouches[0]?.clientX;
+                if (startX !== null && endX !== undefined && Math.abs(endX - startX) > 45) {
+                  setAboutRaakaImageIndex((current) => (current + (endX < startX ? 1 : -1) + ABOUT_RAAKA_IMAGES.length) % ABOUT_RAAKA_IMAGES.length);
+                }
+                aboutRaakaTouchStartX.current = null;
+              }}
+              aria-label="About Raaka image gallery. Swipe to change images."
+            >
+              <Image
+                key={ABOUT_RAAKA_IMAGES[aboutRaakaImageIndex].src}
+                src={ABOUT_RAAKA_IMAGES[aboutRaakaImageIndex].src}
+                alt={ABOUT_RAAKA_IMAGES[aboutRaakaImageIndex].alt}
+                width={800}
+                height={1200}
+                priority={aboutRaakaImageIndex === 0}
+                className="h-full w-full object-cover transition-opacity duration-300"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10" />
+              <button
+                type="button"
+                aria-label="Previous Raaka image"
+                onClick={() => setAboutRaakaImageIndex((current) => (current - 1 + ABOUT_RAAKA_IMAGES.length) % ABOUT_RAAKA_IMAGES.length)}
+                className="absolute left-3 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-3xl font-light text-white shadow-lg backdrop-blur-md transition hover:scale-105 hover:border-orange-300/60 hover:bg-black/80 md:flex"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                aria-label="Next Raaka image"
+                onClick={() => setAboutRaakaImageIndex((current) => (current + 1) % ABOUT_RAAKA_IMAGES.length)}
+                className="absolute right-3 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-3xl font-light text-white shadow-lg backdrop-blur-md transition hover:scale-105 hover:border-orange-300/60 hover:bg-black/80 md:flex"
+              >
+                ›
+              </button>
             </div>
 
             <div className="flex flex-col justify-center">
