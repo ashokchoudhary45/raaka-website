@@ -11,17 +11,17 @@ const cssVars = (o: Record<string, string | number>) => o as unknown as CSSPrope
    To add a new poster later, append one object to PLATES. Everything
    (plate counter, plate rail, viewer arrows, keyboard) switches on by itself.
    ===================================================================== */
-type Plate = { no: string; title: string; date: string; src: string; alt: string };
+type Plate = { no: string; title: string; native: string; lang: string; date: string; src: string; alt: string };
 
 const PLATES: Plate[] = [
-  { no: "001", title: "First Look — English", date: "08 APRIL 2026", src: "/images/raaka-about-1.jpg", alt: "RAAKA First Look poster in English" },
-  { no: "002", title: "First Look — Hindi", date: "08 APRIL 2026", src: "/images/raaka-about-2.jpg", alt: "RAAKA First Look poster in Hindi" },
-  { no: "003", title: "First Look — Telugu", date: "08 APRIL 2026", src: "/images/raaka-about-3.jpg", alt: "RAAKA First Look poster in Telugu" },
-  { no: "004", title: "First Look — Tamil", date: "08 APRIL 2026", src: "/images/raaka-about-4.jpg", alt: "RAAKA First Look poster in Tamil" },
-  { no: "005", title: "First Look — Malayalam", date: "08 APRIL 2026", src: "/images/raaka-about-5.jpg", alt: "RAAKA First Look poster in Malayalam" },
-  { no: "006", title: "First Look — Kannada", date: "08 APRIL 2026", src: "/images/raaka-about-6.jpg", alt: "RAAKA First Look poster in Kannada" },
-  { no: "007", title: "First Look — Arabic", date: "08 APRIL 2026", src: "/images/raaka-about-7.jpg", alt: "RAAKA First Look poster in Arabic" },
-  { no: "008", title: "First Look — Bengali", date: "08 APRIL 2026", src: "/images/raaka-about-8.jpg", alt: "RAAKA First Look poster in Bengali" },
+  { no: "001", title: "First Look — English", native: "English", lang: "en", date: "08 APRIL 2026", src: "/images/raaka-about-1.jpg", alt: "RAAKA First Look poster in English" },
+  { no: "002", title: "First Look — Hindi", native: "हिन्दी", lang: "hi", date: "08 APRIL 2026", src: "/images/raaka-about-2.jpg", alt: "RAAKA First Look poster in Hindi" },
+  { no: "003", title: "First Look — Telugu", native: "తెలుగు", lang: "te", date: "08 APRIL 2026", src: "/images/raaka-about-3.jpg", alt: "RAAKA First Look poster in Telugu" },
+  { no: "004", title: "First Look — Tamil", native: "தமிழ்", lang: "ta", date: "08 APRIL 2026", src: "/images/raaka-about-4.jpg", alt: "RAAKA First Look poster in Tamil" },
+  { no: "005", title: "First Look — Malayalam", native: "മലയാളം", lang: "ml", date: "08 APRIL 2026", src: "/images/raaka-about-5.jpg", alt: "RAAKA First Look poster in Malayalam" },
+  { no: "006", title: "First Look — Kannada", native: "ಕನ್ನಡ", lang: "kn", date: "08 APRIL 2026", src: "/images/raaka-about-6.jpg", alt: "RAAKA First Look poster in Kannada" },
+  { no: "007", title: "First Look — Bengali", native: "বাংলা", lang: "bn", date: "08 APRIL 2026", src: "/images/raaka-about-8.jpg", alt: "RAAKA First Look poster in Bengali" },
+  { no: "008", title: "First Look — Arabic", native: "العربية", lang: "ar", date: "08 APRIL 2026", src: "/images/raaka-about-7.jpg", alt: "RAAKA First Look poster in Arabic" },
 ];
 
 const FACTS: [string, string][] = [
@@ -56,6 +56,7 @@ export default function RaakaPosterPage() {
   const [leaving, setLeaving] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   const [year, setYear] = useState(2026);
+  const [touched, setTouched] = useState(false);
 
   const heroRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -128,7 +129,9 @@ export default function RaakaPosterPage() {
     setLeaving(true);
     window.setTimeout(() => { setViewer(false); setLeaving(false); setZoomed(false); lastFocus.current?.focus(); }, 380);
   };
-  const stepPlate = (d: number) => setPlateIdx((i) => (i + d + PLATES.length) % PLATES.length);
+  const pick = (i: number) => { setTouched(true); setPlateIdx(i); };
+  const stepPlate = (d: number) => { setTouched(true); setPlateIdx((i) => (i + d + PLATES.length) % PLATES.length); };
+  const openAt = (i: number) => { pick(i); openViewer(); };
 
   useEffect(() => { document.body.style.overflow = viewer ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [viewer]);
   useEffect(() => {
@@ -164,6 +167,7 @@ export default function RaakaPosterPage() {
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="progress" ref={progRef} aria-hidden="true" />
       <div className="grain" aria-hidden="true" />
+      <div className={"bars" + (go ? " go" : "")} aria-hidden="true"><i /><i /></div>
 
       {/* ============ NAV (logo, use 1 of 2) ============ */}
       <header className={"nav" + (scrolled ? " s" : "") + (go ? " go" : "")}>
@@ -190,12 +194,13 @@ export default function RaakaPosterPage() {
           <aside className="col l" aria-label="Plate">
             <div className="co plate-no" style={cssVars({ "--i": 0 })}>
               <small>Plate</small>
-              <b className="xp">{plate.no}</b>
-              <em>{plate.title}</em>
+              <b key={"n" + plate.no} className="xp swap">{plate.no}</b>
+              <em key={"t" + plate.no} className="swap">{plate.title}</em>
+              <span key={"l" + plate.no} className="nat swap" lang={plate.lang} dir={plate.lang === "ar" ? "rtl" : undefined}>{plate.native}</span>
               {multi && (
                 <div className="rail" role="group" aria-label="Posters">
                   {PLATES.map((p, i) => (
-                    <button key={p.no} type="button" className={i === plateIdx ? "on" : ""} onClick={() => setPlateIdx(i)} aria-label={`Poster ${p.no}: ${p.title}`} aria-pressed={i === plateIdx}>{p.no}</button>
+                    <button key={p.no} type="button" className={i === plateIdx ? "on" : ""} onClick={() => pick(i)} aria-label={`Poster ${p.no}: ${p.title}`} aria-pressed={i === plateIdx}>{p.no}</button>
                   ))}
                 </div>
               )}
@@ -206,7 +211,7 @@ export default function RaakaPosterPage() {
           <div className="wrap-p">
             <div className="tilt">
               <button type="button" className="frame" onClick={openViewer} aria-label="Open RAAKA poster full screen">
-                <Image src={plate.src} alt={plate.alt} fill priority sizes="(max-width: 900px) 72vw, 460px" className="p-img" onLoad={ready} />
+                <Image key={plate.src} src={plate.src} alt={plate.alt} fill priority sizes="(max-width: 900px) 72vw, 460px" className={"p-img" + (touched ? " sw" : "")} onLoad={ready} />
                 <span className="sheen" aria-hidden="true" />
                 <span className="foil" aria-hidden="true" />
                 <span className="dev-bar" aria-hidden="true" />
@@ -267,6 +272,31 @@ export default function RaakaPosterPage() {
         </div>
       </section>
 
+      {/* ============ ARCHIVE: all plates, in order ============ */}
+      <section id="archive" className="arc" aria-labelledby="arc-h">
+        <div className="wrap">
+          <p className="kk" data-r="up">The Collection / {String(PLATES.length).padStart(3, "0")} Plates</p>
+          <h2 id="arc-h" className="h2 xp">
+            <span data-r="line"><span>One Film.</span></span>
+            <span data-r="line" className="dim"><span style={cssVars({ "--l": 1 })}>{PLATES.length} Languages.</span></span>
+          </h2>
+          <ol className="strip">
+            {PLATES.map((p, i) => (
+              <li key={p.no} data-r="up" style={cssVars({ "--i": i % 4 })}>
+                <button type="button" className={"card" + (i === plateIdx ? " on" : "")} onClick={() => openAt(i)} aria-label={`Open poster ${p.no}: ${p.title}`}>
+                  <span className="card-img"><Image src={p.src} alt={p.alt} fill sizes="(max-width: 700px) 46vw, (max-width: 1100px) 30vw, 20vw" className="object-cover" /></span>
+                  <span className="card-m">
+                    <small className="tnum">{p.no}</small>
+                    <b>{p.title.replace("First Look — ", "")}</b>
+                    <em lang={p.lang} dir={p.lang === "ar" ? "rtl" : undefined}>{p.native}</em>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
       {/* ============ CLOSING (logo, use 2 of 2) ============ */}
       <section className="end" aria-label="RAAKA">
         <div className="end-shaft" aria-hidden="true" />
@@ -308,7 +338,7 @@ export default function RaakaPosterPage() {
 }
 
 const CSS = `
-@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Noto+Sans+Bengali:wght@400;700&family=Noto+Sans+Arabic:wght@400;700&display=swap");
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#030304}
 .pp{--ink:#030304;--moon:#E8ECF3;--steel:#8A93A3;--ember:#E5303A;--line:rgba(232,236,243,.12);--ease:cubic-bezier(.2,.7,.2,1);--cine:cubic-bezier(.77,0,.18,1);position:relative;min-height:100vh;overflow-x:hidden;background:var(--ink);color:var(--moon);font-family:"Archivo",ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .pp button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}.pp a{color:inherit;text-decoration:none}
@@ -455,8 +485,31 @@ const CSS = `
 .vw-nav{position:absolute;top:50%;width:3rem;height:3rem;margin-top:-1.5rem;border:1px solid var(--line)!important;border-radius:50%;transition:border-color .3s}.vw-nav:hover{border-color:var(--moon)!important}.vw-nav.p{left:1rem}.vw-nav.n{right:1rem}
 
 @media(max-width:600px){.mq-t{font-size:1.4rem}.h-tag{font-size:1.4rem}.logo-s{height:26px}}
+/* cinematic letterbox */
+.bars{position:fixed;inset:0;z-index:80;pointer-events:none}.bars i{position:absolute;left:0;right:0;height:15vh;background:#000}.bars i:first-child{top:0}.bars i:last-child{bottom:0}
+.bars.go i:first-child{animation:barT 1.7s var(--cine) 2.3s forwards}.bars.go i:last-child{animation:barB 1.7s var(--cine) 2.3s forwards}
+@keyframes barT{to{transform:translateY(-100%)}}@keyframes barB{to{transform:translateY(100%)}}
+/* poster switch */
+.hero.go .p-img.sw{animation:develop 1.5s var(--ease) both}
+.swap{animation:swap .8s var(--ease) both}@keyframes swap{from{opacity:0;transform:translateY(12px);filter:blur(6px)}}
+.nat{display:block;margin-top:.5rem;font:400 1.05rem "Instrument Serif","Noto Sans Bengali","Noto Sans Arabic",serif;letter-spacing:.04em;color:var(--steel)}
+/* archive */
+.arc{padding:6rem 0 7rem;border-top:1px solid var(--line);background:radial-gradient(ellipse at 85% 0,rgba(229,48,58,.07),transparent 50%)}@media(min-width:768px){.arc{padding:9rem 0 10rem}}
+.arc .h2{margin-top:1.4rem}
+.strip{list-style:none;margin:4rem 0 0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem}@media(min-width:700px){.strip{grid-template-columns:repeat(3,1fr)}}@media(min-width:1100px){.strip{grid-template-columns:repeat(4,1fr);gap:1.6rem}}
+.card{display:block;width:100%;text-align:left}
+.card-img{position:relative;display:block;aspect-ratio:2/3;overflow:hidden;background:#0a0a0d;box-shadow:0 0 0 1px var(--line);transition:transform .6s var(--ease),box-shadow .4s}
+.card-img img{filter:grayscale(.85) brightness(.7);transform:scale(1.04);transition:filter .7s var(--ease),transform 1.1s var(--ease)}
+.card:hover .card-img,.card:focus-visible .card-img,.card.on .card-img{transform:translateY(-6px);box-shadow:0 0 0 1px rgba(232,236,243,.55),0 30px 60px -20px rgba(0,0,0,.9)}
+.card:hover .card-img img,.card:focus-visible .card-img img,.card.on .card-img img{filter:none;transform:scale(1)}
+.card-m{display:grid;grid-template-columns:auto 1fr;gap:.2rem .8rem;align-items:baseline;margin-top:.9rem}
+.card-m small{font:500 .6rem "DM Mono",monospace;letter-spacing:.22em;color:var(--ember)}
+.card-m b{font-size:.8rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.card-m em{grid-column:2;font:400 1.1rem "Instrument Serif","Noto Sans Bengali","Noto Sans Arabic",serif;font-style:normal;color:var(--steel)}
+
 @media (prefers-reduced-motion:reduce){
-html{scroll-behavior:auto}.grain,.shaft,.dev-bar{display:none}
+html{scroll-behavior:auto}.grain,.shaft,.dev-bar,.bars{display:none}
+.swap,.hero .p-img.sw{animation:none!important}
 .hero .frame{clip-path:none!important;animation:none!important}.hero .p-img{filter:none!important;transform:none!important;animation:none!important}
 .hero .lt,.hero .co,.hero .h-bar,.nav,.amb,.mq-t,.tilt,.sheen,.logo-l,.end-shaft{animation:none!important}
 .lt{transform:none!important}.co,.h-bar,.nav,.amb{opacity:1!important}.amb{opacity:.35!important}
