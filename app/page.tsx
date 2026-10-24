@@ -96,6 +96,17 @@ const HERO_ACTIONS = [
 
 const RELEASE_LANGUAGES = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "Bengali", "Arabic", "English"];
 
+
+// Allu Arjun only: one portrait per calendar day (India/local browser date).
+// Add these image files under public/images/. Keep arjun2.jpg as the first image.
+const ALLU_ARJUN_DAILY_IMAGES = [
+  "/images/arjun2.jpg",
+  "/images/arjun3.jpg",
+  "/images/arjun4.jpg",
+  "/images/arjun5.jpg",
+  "/images/arjun6.jpg",
+];
+
 const CAST = [
   { name: "Allu Arjun", image: "/images/arjun2.jpg", href: "/allu-arjun" },
   { name: "Mrunal Thakur", image: "/images/mrunal.jpg" },
@@ -702,6 +713,24 @@ function CountdownGrid() {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dailyAlluImage, setDailyAlluImage] = useState("/images/arjun2.jpg");
+
+  // Rotate Allu Arjun's image once per India calendar day.
+  // Day 1 starts on 24 Oct 2026 with arjun2.jpg, then repeats every 5 days.
+  useEffect(() => {
+    const indiaDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    const [year, month, day] = indiaDate.split("-").map(Number);
+    const todayNumber = Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+    const startNumber = Math.floor(Date.UTC(2026, 9, 24) / 86400000);
+    const cycleIndex = ((todayNumber - startNumber) % ALLU_ARJUN_DAILY_IMAGES.length + ALLU_ARJUN_DAILY_IMAGES.length) % ALLU_ARJUN_DAILY_IMAGES.length;
+    setDailyAlluImage(ALLU_ARJUN_DAILY_IMAGES[cycleIndex]);
+  }, []);
+
   const [intro, setIntro] = useState(true);
   const [ticketsOpen, setTicketsOpen] = useState(false);
   const [musicPlaying, setMusicPlaying] = useState(false);
@@ -2563,11 +2592,17 @@ html.rx-scrolling .rx-logo-halo{animation-play-state:paused!important}
             <div className="cast-crew-carousel relative">
               <button type="button" aria-label="Scroll cast left" onClick={() => scrollCastCrew(castTrackRef, -1)} className="cast-crew-arrow cast-crew-arrow-left" >‹</button>
               <div ref={castTrackRef} className="cast-crew-track -mx-5 flex w-[calc(100%+2.5rem)] flex-nowrap justify-start gap-4 overflow-x-auto overscroll-x-contain px-5 pb-5 pt-1 snap-x snap-mandatory scroll-smooth touch-pan-x sm:-mx-6 sm:w-[calc(100%+3rem)] sm:gap-5 sm:px-6 md:-mx-10 md:w-[calc(100%+5rem)] md:gap-6 md:px-10">
-                {CAST.map((person, i) => (
-                  <Reveal key={person.name} delay={i * 120} className="cast-crew-item w-[78%] max-w-[290px] shrink-0 snap-start sm:w-[42%] sm:max-w-[300px] md:w-[31%] lg:w-[22%]">
-                    <PersonCard {...person} size="large" index={i} />
-                  </Reveal>
-                ))}
+                {CAST.map((person, i) => {
+                  const castPerson =
+                    person.name === "Allu Arjun"
+                      ? { ...person, image: dailyAlluImage }
+                      : person;
+                  return (
+                    <Reveal key={person.name} delay={i * 120} className="cast-crew-item w-[78%] max-w-[290px] shrink-0 snap-start sm:w-[42%] sm:max-w-[300px] md:w-[31%] lg:w-[22%]">
+                      <PersonCard {...castPerson} size="large" index={i} />
+                    </Reveal>
+                  );
+                })}
               </div>
               <button type="button" aria-label="Scroll cast right" onClick={() => scrollCastCrew(castTrackRef, 1)} className="cast-crew-arrow cast-crew-arrow-right" >›</button>
             </div>
