@@ -398,7 +398,7 @@ export async function GET(request: Request) {
     const filter = buildFilter(since, until, url.searchParams);
 
     const baseQuery = `
-      query Analytics($zoneTag: string, $filter: filter) {
+      query Analytics($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
         viewer {
           zones(filter: { zoneTag: $zoneTag }) {
             httpRequestsAdaptiveGroups(
@@ -420,7 +420,7 @@ export async function GET(request: Request) {
     `;
 
     const countryQuery = `
-      query CountryAnalytics($zoneTag: string, $filter: filter) {
+      query CountryAnalytics($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
         viewer {
           zones(filter: { zoneTag: $zoneTag }) {
             httpRequestsAdaptiveGroups(
@@ -442,7 +442,7 @@ export async function GET(request: Request) {
     `;
 
     const hostnameQuery = `
-      query HostAnalytics($zoneTag: string, $filter: filter) {
+      query HostAnalytics($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
         viewer {
           zones(filter: { zoneTag: $zoneTag }) {
             httpRequestsAdaptiveGroups(
@@ -464,7 +464,7 @@ export async function GET(request: Request) {
     `;
 
     const pathQuery = `
-      query PathAnalytics($zoneTag: string, $filter: filter) {
+      query PathAnalytics($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
         viewer {
           zones(filter: { zoneTag: $zoneTag }) {
             httpRequestsAdaptiveGroups(
@@ -486,7 +486,7 @@ export async function GET(request: Request) {
     `;
 
     const deviceQuery = `
-      query DeviceAnalytics($zoneTag: string, $filter: filter) {
+      query DeviceAnalytics($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
         viewer {
           zones(filter: { zoneTag: $zoneTag }) {
             httpRequestsAdaptiveGroups(
@@ -508,7 +508,7 @@ export async function GET(request: Request) {
     `;
 
     const referrerQuery = `
-      query ReferrerAnalytics($zoneTag: string, $filter: filter) {
+      query ReferrerAnalytics($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
         viewer {
           zones(filter: { zoneTag: $zoneTag }) {
             httpRequestsAdaptiveGroups(
@@ -530,7 +530,7 @@ export async function GET(request: Request) {
     `;
 
     const userAgentQuery = `
-      query UserAgentAnalytics($zoneTag: string, $filter: filter) {
+      query UserAgentAnalytics($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
         viewer {
           zones(filter: { zoneTag: $zoneTag }) {
             httpRequestsAdaptiveGroups(
@@ -552,7 +552,7 @@ export async function GET(request: Request) {
     `;
 
     const coloQuery = `
-      query ColoAnalytics($zoneTag: string, $filter: filter) {
+      query ColoAnalytics($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
         viewer {
           zones(filter: { zoneTag: $zoneTag }) {
             httpRequestsAdaptiveGroups(
@@ -586,7 +586,7 @@ export async function GET(request: Request) {
      * while cutting the external analytics requests from 9 -> 2.
      */
     const combinedQuery = `
-      query AnalyticsDashboard($zoneTag: string, $filter: filter) {
+      query AnalyticsDashboard($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
         viewer {
           zones(filter: { zoneTag: $zoneTag }) {
             hourly: httpRequestsAdaptiveGroups(
