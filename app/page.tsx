@@ -102,7 +102,9 @@ const CAST = [
   { name: "Deepika Padukone", image: "/images/actor2.jpg" },
   { name: "Rashmika Mandanna", image: "/images/rashmika.jpg" },
   { name: "Janhvi Kapoor", image: "/images/janhavi.jpg" },
+{ name: "Siri Hanumanthu", image: "/images/siri.jpg" },
 { name: "Femina George", image: "/images/Femina.jpg" },
+{ name: "Naila Grrewal", image: "/images/naila.jpg" },
 { name: "Yogi Babu", image: "/images/yogi.jpg" },
 { name: "Jim Sarbh", image: "/images/jim.jpg" },
 { name: "Ramya Krishnan", image: "/images/ramya.jpg" },
@@ -157,7 +159,7 @@ const BOX_OFFICE_LANGS: [string, string][] = [
 const BOX_OFFICE_STATS = ["Opening Day", "First Weekend", "India Net", "Highest Day"];
 
 const CREW_CREDITS: { department: string; names: string[] }[] = [
-  { department: "Cast", names: ["Allu Arjun", "Mrunal Thakur", "Rashmika Mandanna", "Janhvi Kapoor", "Deepika Padukone"] },
+  { department: "Cast", names: ["Allu Arjun", "Mrunal Thakur", "Rashmika Mandanna", "Janhvi Kapoor", "Deepika Padukone", "Femina George", "Siri Hanumanthu", "Naila Grrewal", "Karan Mehta", "Ramya Krishnan", "Jim Sarbh", "Yogi Babu"] },
   { department: "Musician", names: ["Sai Abhyankar"] },
   { department: "Cinematography", names: ["G.K. Vishnu"] },
   { department: "Editor", names: ["Antony L. Ruben"] },
