@@ -113,7 +113,8 @@ function buildFilter(
   if (hostname) filter.clientRequestHTTPHost = hostname;
   if (path) filter.clientRequestPath = path;
   if (device) filter.clientDeviceType = device;
-  if (referrer) filter.clientRefererHost = referrer;
+  // Cloudflare's current GraphQL permissions/schema for this zone reject
+  // clientRefererHost. Do not add it to the filter; it makes the whole query fail.
   if (userAgent) filter.userAgent_like = `%${userAgent}%`;
 
   return filter;
@@ -507,28 +508,6 @@ export async function GET(request: Request) {
       }
     `;
 
-    const referrerQuery = `
-      query ReferrerAnalytics($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
-        viewer {
-          zones(filter: { zoneTag: $zoneTag }) {
-            httpRequestsAdaptiveGroups(
-              limit: 250
-              filter: $filter
-            ) {
-              count
-              sum {
-                visits
-                edgeResponseBytes
-              }
-              dimensions {
-                clientRefererHost
-              }
-            }
-          }
-        }
-      }
-    `;
-
     const userAgentQuery = `
       query UserAgentAnalytics($zoneTag: string, $filter: ZoneHttpRequestsAdaptiveGroupsFilter) {
         viewer {
@@ -634,15 +613,6 @@ export async function GET(request: Request) {
               dimensions { clientDeviceType }
             }
 
-            referrer: httpRequestsAdaptiveGroups(
-              limit: 250
-              filter: $filter
-            ) {
-              count
-              sum { visits edgeResponseBytes }
-              dimensions { clientRefererHost }
-            }
-
             userAgent: httpRequestsAdaptiveGroups(
               limit: 250
               filter: $filter
@@ -731,7 +701,9 @@ export async function GET(request: Request) {
     const hostnameGroups = combinedResult ? getAliasedGroups("hostname") : [];
     const pathGroups = combinedResult ? getAliasedGroups("path") : [];
     const deviceGroups = combinedResult ? getAliasedGroups("device") : [];
-    const referrerGroups = combinedResult ? getAliasedGroups("referrer") : [];
+    // Referrer host breakdown is omitted because Cloudflare returns an authz
+    // error for clientRefererHost on this zone. Keep the response shape stable.
+    const referrerGroups: AnalyticsGroup[] = [];
     const userAgentGroups = combinedResult ? getAliasedGroups("userAgent") : [];
     const coloGroups = combinedResult ? getAliasedGroups("colo") : [];
 
