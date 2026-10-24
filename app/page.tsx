@@ -97,9 +97,9 @@ const HERO_ACTIONS = [
 const RELEASE_LANGUAGES = ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam", "Bengali", "Arabic", "English"];
 
 const CAST = [
-  { name: "Allu Arjun", image: "/images/actor3.jpg", href: "/allu-arjun" },
+  { name: "Allu Arjun", image: "/images/arjun2.jpg", href: "/allu-arjun" },
   { name: "Mrunal Thakur", image: "/images/mrunal.jpg" },
-  { name: "Deepika Padukone", image: "/images/actor2.jpg" },
+  { name: "Deepika Padukone", image: "/images/deepika.jpg" },
   { name: "Rashmika Mandanna", image: "/images/rashmika.jpg" },
   { name: "Janhvi Kapoor", image: "/images/janhavi.jpg" },
 { name: "Siri Hanumanthu", image: "/images/siri.jpg" },
