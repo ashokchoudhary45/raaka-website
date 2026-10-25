@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
+  // Keep the Turso WebSocket compatibility package out of the OpenNext bundle.
+  serverExternalPackages: ["@libsql/isomorphic-ws"],
   // ⚡ Better production performance
   poweredByHeader: false,
 
