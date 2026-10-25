@@ -1,12 +1,13 @@
 "use client";
 
 import {
-  memo, useCallback, useEffect, useRef, useState,
+  memo, useCallback, useEffect, useLayoutEffect, useRef, useState,
   type ChangeEvent, type MutableRefObject, type PointerEvent as RPE,
 } from "react";
 
 /* ================= DATA ================= */
 const AUDIO_SRC = "/sounds/king.mp3"; // change here if your file is king.mp4
+const LOGO_SRC = "/images/raaka-logo.png"; // public/images/raaka-logo.png
 const SONG_DURATION = 115.08; // fallback until the audio reports its real length
 
 type LyricSegment = { start: number | null; end: number | null; text: string; needs_timing?: boolean };
@@ -69,6 +70,7 @@ const fmt = (v: number) => {
 const isHero = (t: string) => /raaka|make way for the king/i.test(t);
 const sizeOf = (t: string) => (t.length > 34 ? "s" : t.length > 18 ? "m" : "l");
 const MODES = ["ignite", "warp", "scan", "ignite"] as const;
+const TITLE_WORDS = ["MAKE", "WAY", "FOR", "THE", "KING"];
 
 const BANDS = 32;
 type FX = { e: number; flash: number; spec: Float32Array; playing: boolean; burstId: number; burstPow: number };
@@ -82,6 +84,15 @@ const IC = {
 const Icon = ({ n }: { n: keyof typeof IC }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d={IC[n]} /></svg>
 );
+
+/* ================= LOGO (falls back to text if the png is missing) ================= */
+function Logo({ ok, onFail, cls }: { ok: boolean; onFail: () => void; cls: string }) {
+  if (!ok) return <h2 className="mol logo">RAAKA</h2>;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img className={cls} src={LOGO_SRC} alt="RAAKA" draggable={false} onError={onFail} />
+  );
+}
 
 /* ================= WEBGL FIRE (real-time fbm plasma, driven by audio level) ================= */
 const VS = "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
@@ -271,13 +282,38 @@ const Overlay = memo(function Overlay({ fx, vars }: { fx: MutableRefObject<FX>; 
   return <canvas ref={ref} className="spk" aria-hidden="true" />;
 });
 
-/* ================= LYRIC LINE ================= */
+/* ================= LYRIC LINE (auto-fits: never leaves the screen) ================= */
 function Line({ seg, i, state }: { seg: Timed; i: number; state: "in" | "out" }) {
+  const ref = useRef<HTMLParagraphElement>(null);
   const hero = isHero(seg.text);
   const mode = hero ? "slam" : MODES[i % MODES.length];
   const text = hero ? seg.text.toUpperCase() : seg.text;
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const host = el?.parentElement;
+    if (!el || !host) return;
+    const fit = () => {
+      el.style.fontSize = "";
+      const maxW = host.clientWidth * 0.9; // 10% spare for the slow camera push-in
+      const maxH = host.clientHeight * 0.92;
+      let fs = parseFloat(getComputedStyle(el).fontSize) || 40;
+      const words = Array.from(el.querySelectorAll<HTMLElement>(".w"));
+      for (let n = 0; n < 20; n++) {
+        const widest = words.reduce((m, w) => Math.max(m, w.offsetWidth), 0);
+        if (widest <= maxW && el.offsetWidth <= maxW && el.offsetHeight <= maxH) break;
+        fs *= 0.92; el.style.fontSize = `${fs.toFixed(1)}px`;
+      }
+    };
+    fit();
+    let cancelled = false;
+    void document.fonts?.ready.then(() => { if (!cancelled) fit(); });
+    window.addEventListener("resize", fit);
+    return () => { cancelled = true; window.removeEventListener("resize", fit); };
+  }, [text]);
+
   return (
-    <p className={`ln ${state} ${mode} ${sizeOf(seg.text)}${hero ? " hero" : ""}`} data-text={text} aria-hidden="true">
+    <p ref={ref} className={`ln ${state} ${mode} ${sizeOf(seg.text)}${hero ? " hero" : ""}`} data-text={text} aria-hidden="true">
       {text.split(" ").map((w, k) => (
         <span key={k}>{k > 0 && " "}<span className="w" style={{ ["--d" as string]: `${k * 45}ms` }}>{w}</span></span>
       ))}
@@ -290,6 +326,7 @@ export default function RaakaFireLyricsPage() {
   const rootRef = useRef<HTMLElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const lbRef = useRef<HTMLDivElement>(null);
   const varsRef = useRef<HTMLDivElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const anRef = useRef<AnalyserNode | null>(null);
@@ -300,6 +337,9 @@ export default function RaakaFireLyricsPage() {
   const uiTick = useRef(0);
 
   const [started, setStarted] = useState(false);
+  const [introGone, setIntroGone] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [logoOk, setLogoOk] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
   const [time, setTime] = useState(0);
@@ -308,6 +348,22 @@ export default function RaakaFireLyricsPage() {
   const [leaving, setLeaving] = useState(-1);
   const [shock, setShock] = useState(0);
   const [err, setErr] = useState("");
+
+  const failLogo = useCallback(() => setLogoOk(false), []);
+
+  // Opening sequence timing: the Ignite button unlocks once the title card has played.
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const id = setTimeout(() => setReady(true), reduce ? 50 : 3600);
+    return () => clearTimeout(id);
+  }, []);
+
+  // After ignition, let the zoom-through finish and then remove the intro layer.
+  useEffect(() => {
+    if (!started) return;
+    const id = setTimeout(() => setIntroGone(true), 1600);
+    return () => clearTimeout(id);
+  }, [started]);
 
   const applyActive = useCallback((i: number) => {
     activeRef.current = i; setActive(i);
@@ -322,6 +378,13 @@ export default function RaakaFireLyricsPage() {
           [{ transform: "translate3d(0,0,0)" }, { transform: "translate3d(-9px,5px,0)" }, { transform: "translate3d(8px,-6px,0)" },
             { transform: "translate3d(-5px,-3px,0)" }, { transform: "translate3d(3px,2px,0)" }, { transform: "translate3d(0,0,0)" }],
           { duration: 480, easing: "ease-out" },
+        );
+        // letterbox bars clamp down on every hero hit
+        lbRef.current?.querySelectorAll<HTMLElement>(".lb").forEach((b) =>
+          b.animate(
+            [{ transform: "scaleY(1)" }, { transform: "scaleY(1.7)", offset: 0.18 }, { transform: "scaleY(1)" }],
+            { duration: 950, easing: "cubic-bezier(.2,.8,.2,1)" },
+          ),
         );
       }
     }
@@ -451,6 +514,7 @@ export default function RaakaFireLyricsPage() {
   const onSeek = (e: ChangeEvent<HTMLInputElement>) => seekTo(Number(e.target.value));
   const cur = active >= 0 ? TIMED[active] : null;
   const pct = duration ? Math.min(100, (time / duration) * 100) : 0;
+  const logoVar = { ["--logo" as string]: `url(${LOGO_SRC})` };
 
   return (
     <main ref={rootRef} className={`rk${started ? " go" : ""}`} onPointerMove={onMove}>
@@ -472,7 +536,11 @@ export default function RaakaFireLyricsPage() {
       <div className="scrim" aria-hidden="true" />
       <div className="vig" aria-hidden="true" />
 
+      {/* cinematic letterbox */}
+      <div className="lbw" ref={lbRef} aria-hidden="true"><i className="lb t" /><i className="lb b" /></div>
+
       <div className="fxv" ref={varsRef} aria-hidden="true">
+        <div className="rays" />
         <div className="rv">
           <div className="rings">
             <div className="ring r1" /><div className="ring r2" /><div className="ring r3" /><div className="ring r4" /><div className="core" />
@@ -481,33 +549,65 @@ export default function RaakaFireLyricsPage() {
         <div className="flare" /><div className="flare b" />
         <i className="br tl" /><i className="br tr" /><i className="br bl" /><i className="br brr" />
         <div className="top">
-          <span className="wm"><span className="dot" />RAAKA</span>
+          {logoOk
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img className="hl" src={LOGO_SRC} alt="" draggable={false} onError={failLogo} />
+            : <span className="wm"><span className="dot" />RAAKA</span>}
           <span className="mtr"><b /></span>
           <span className="tc">{fmt(time)}</span>
         </div>
       </div>
 
       <Overlay fx={fx} vars={varsRef} />
-      {shock > 0 && <div key={shock} className="shock" aria-hidden="true"><i /><b /></div>}
+      {shock > 0 && (
+        <div key={shock} className="shock" aria-hidden="true">
+          <i /><b />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {logoOk && <img src={LOGO_SRC} alt="" draggable={false} />}
+        </div>
+      )}
 
       <div className="stage" ref={stageRef} aria-live="polite" aria-atomic="true">
         <span className="sr">{cur ? cur.text : ""}</span>
         {leaving >= 0 && leaving !== active && <Line key={`o${leaving}`} seg={TIMED[leaving]} i={leaving} state="out" />}
         {active >= 0 && <Line key={`i${active}`} seg={TIMED[active]} i={active} state="in" />}
+        {active < 0 && leaving < 0 && introGone && !ended && logoOk && (
+          <div className="emb" key="emb" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={LOGO_SRC} alt="" draggable={false} />
+          </div>
+        )}
       </div>
 
+      <div className="scr" aria-hidden="true" />
+      <div className="flk" aria-hidden="true" />
       <div className="grain" aria-hidden="true" />
 
-      {!started && (
-        <div className="intro">
-          <h2 className="mol logo">RAAKA</h2>
-          <p className="tag">MAKE WAY FOR THE KING</p>
+      {!introGone && (
+        <div className={`intro${started ? " launch" : ""}${ready ? " rdy" : ""}`}>
+          <i className="cur a" /><i className="cur b" />
+          <i className="ivl" />
+          <i className="ir" />
+          <div className="lgw" style={logoVar}>
+            <Logo ok={logoOk} onFail={failLogo} cls="lgi" />
+            {logoOk && <i className="swp" />}
+          </div>
+          <p className="pre">RAAKA PRESENTS</p>
+          <p className="ttl" aria-label="Make way for the king">
+            {TITLE_WORDS.map((w, k) => (
+              <span key={w} style={{ ["--k" as string]: k }}>{w}</span>
+            ))}
+          </p>
           <button className="start" onClick={() => void toggle()} aria-label="Play song">Ignite</button>
+          <i className="fl" />
         </div>
       )}
       {ended && !playing && (
-        <div className="intro out">
-          <h2 className="mol logo">RAAKA</h2>
+        <div className="endc">
+          <div className="lgw" style={logoVar}>
+            <Logo ok={logoOk} onFail={failLogo} cls="lgi" />
+            {logoOk && <i className="swp" />}
+          </div>
           <button className="start" onClick={() => void toggle()} aria-label="Play again">Ignite again</button>
         </div>
       )}
@@ -531,8 +631,9 @@ export default function RaakaFireLyricsPage() {
 /* ================= STYLES ================= */
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Oxanium:wght@500;700&display=swap');
-.rk{--hot:#ff5a14;--ion:#4fb6ff;position:fixed;inset:0;overflow:hidden;background:#030305;color:#ffd9b0;font-family:Oxanium,'Segoe UI',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+.rk{--hot:#ff5a14;--ion:#4fb6ff;position:fixed;inset:0;overflow:hidden;background:#030305;color:#ffd9b0;font-family:Oxanium,'Segoe UI',system-ui,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .rk *{box-sizing:border-box}
+.rk img{-webkit-user-drag:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .bg{position:absolute;inset:0;background:radial-gradient(ellipse 95% 55% at 50% 112%,rgba(255,80,10,.38),transparent 70%),radial-gradient(ellipse 70% 60% at 50% 40%,#0b0d16,#030305 75%)}
 .floor{position:absolute;left:-40%;right:-40%;bottom:0;height:46%;overflow:hidden;transform:perspective(520px) rotateX(66deg);transform-origin:50% 100%;-webkit-mask-image:linear-gradient(to top,#000 0%,transparent 85%);mask-image:linear-gradient(to top,#000 0%,transparent 85%);opacity:.5}
@@ -540,7 +641,16 @@ const CSS = `
 .fire{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:screen}
 .scrim{position:absolute;inset:0;background:radial-gradient(ellipse 65% 42% at 50% 46%,rgba(2,2,6,.62),transparent 70%)}
 .vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 42%,rgba(0,0,0,.85) 100%)}
+
+/* letterbox */
+.lbw{position:absolute;inset:0;pointer-events:none}
+.lb{position:absolute;left:0;right:0;background:#000;transform:scaleY(0);will-change:transform;box-shadow:0 0 40px 12px #000}
+.lb.t{top:0;height:calc(max(46px,5.5vh) + env(safe-area-inset-top));transform-origin:top}
+.lb.b{bottom:0;height:calc(max(30px,4vh) + env(safe-area-inset-bottom));transform-origin:bottom}
+.go .lb{animation:lbo 1.8s cubic-bezier(.2,.8,.2,1) .2s forwards}
+
 .fxv{--e:0;position:absolute;inset:0;pointer-events:none}
+.rays{position:absolute;left:50%;top:46%;width:120vmax;height:120vmax;margin:-60vmax 0 0 -60vmax;background:repeating-conic-gradient(from 0deg,rgba(255,150,60,0) 0deg 8deg,rgba(255,170,80,.2) 10deg,rgba(255,150,60,0) 13deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 40%);mask:radial-gradient(circle,#000 0,transparent 40%);opacity:calc(.08 + var(--e)*.5);mix-blend-mode:screen;animation:sz 70s linear infinite;will-change:transform}
 .rv{position:absolute;inset:0;display:grid;place-items:center;perspective:1000px}
 .rings{position:relative;width:min(82vmin,780px);aspect-ratio:1;transform-style:preserve-3d;opacity:calc(.22 + var(--e)*.55);transform:rotateX(calc(var(--py,0)*-14deg)) rotateY(calc(var(--px,0)*18deg));transition:transform .5s cubic-bezier(.2,.8,.2,1)}
 .ring{position:absolute;inset:0;border-radius:50%;transform-style:preserve-3d;will-change:transform}
@@ -556,8 +666,9 @@ const CSS = `
 .tr{top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));border-left:0;border-bottom:0}
 .bl{bottom:max(12px,env(safe-area-inset-bottom));left:max(12px,env(safe-area-inset-left));border-right:0;border-top:0}
 .brr{bottom:max(12px,env(safe-area-inset-bottom));right:max(12px,env(safe-area-inset-right));border-left:0;border-top:0}
-.top{position:absolute;top:max(22px,calc(env(safe-area-inset-top) + 10px));left:max(56px,calc(env(safe-area-inset-left) + 44px));right:max(56px,calc(env(safe-area-inset-right) + 44px));display:flex;align-items:center;justify-content:space-between;gap:14px;font:700 13px Oxanium,sans-serif;letter-spacing:.34em;color:#ffb27a;opacity:0;transition:opacity 1.2s ease .5s}
+.top{position:absolute;top:max(14px,calc(env(safe-area-inset-top) + 8px));left:max(56px,calc(env(safe-area-inset-left) + 44px));right:max(56px,calc(env(safe-area-inset-right) + 44px));display:flex;align-items:center;justify-content:space-between;gap:14px;font:700 13px Oxanium,sans-serif;letter-spacing:.34em;color:#ffb27a;opacity:0;transition:opacity 1.4s ease 1s}
 .go .top{opacity:1}
+.hl{display:block;height:30px;width:auto;max-width:42vw;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,100,20,.85)) drop-shadow(0 0 22px rgba(255,60,0,.45))}
 .dot{display:inline-block;width:7px;height:7px;margin-right:10px;border-radius:50%;background:var(--hot);box-shadow:0 0 12px var(--hot);animation:bk 1.4s infinite}
 .mtr{flex:1;max-width:260px;height:3px;background:rgba(255,140,60,.18)}
 .mtr b{display:block;height:100%;background:linear-gradient(90deg,var(--hot),#ffe0a8);box-shadow:0 0 12px var(--hot);transform-origin:left;transform:scaleX(calc(.04 + var(--e)))}
@@ -566,13 +677,16 @@ const CSS = `
 .shock{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .shock i{position:absolute;left:50%;top:46%;width:30vmin;height:30vmin;margin:-15vmin 0 0 -15vmin;border-radius:50%;border:2px solid rgba(255,200,140,.95);box-shadow:0 0 40px 6px rgba(255,100,20,.7),inset 0 0 40px rgba(255,100,20,.5);animation:sk .9s cubic-bezier(.1,.7,.3,1) both}
 .shock b{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,rgba(255,220,170,.55),rgba(255,90,20,.18) 40%,transparent 70%);animation:fh .7s ease-out both}
-.stage{position:absolute;inset:0 0 120px 0;display:grid;place-items:center;padding:0 5vw;perspective:900px;pointer-events:none;transform:translate3d(calc(var(--px,0)*-10px),calc(var(--py,0)*-7px),0)}
-.ln{grid-area:1/1;position:relative;margin:0;max-width:min(92vw,1400px);text-align:center;text-wrap:balance;font-family:Unbounded,'Segoe UI',system-ui,sans-serif;font-weight:800;line-height:1.1;letter-spacing:-.01em;will-change:transform,opacity;filter:drop-shadow(0 0 2px rgba(255,205,130,.9)) drop-shadow(0 0 18px rgba(255,110,20,.75)) drop-shadow(0 0 60px rgba(255,60,0,.45)) drop-shadow(0 18px 22px rgba(0,0,0,.9))}
-.ln.l{font-size:clamp(38px,9.4vw,150px)}.ln.m{font-size:clamp(26px,6vw,92px)}.ln.s{font-size:clamp(21px,4.1vw,62px)}
-.ln.hero{letter-spacing:.02em}.ln.hero.l{font-size:clamp(46px,12vw,190px)}.ln.hero.m{font-size:clamp(30px,7.6vw,120px)}
+.shock img{position:absolute;left:50%;top:46%;width:min(70vw,420px);max-height:34vh;object-fit:contain;mix-blend-mode:screen;animation:sl 1s cubic-bezier(.1,.7,.3,1) both}
+
+/* lyrics stage: sits between the top letterbox and the player bar */
+.stage{position:absolute;left:0;right:0;top:calc(max(46px,5.5vh) + env(safe-area-inset-top));bottom:120px;display:grid;place-items:center;padding:0 3vw;perspective:900px;pointer-events:none;transform:translate3d(calc(var(--px,0)*-10px),calc(var(--py,0)*-7px),0)}
+.ln{grid-area:1/1;position:relative;margin:0;max-width:94vw;text-align:center;text-wrap:balance;font-family:Unbounded,'Segoe UI',system-ui,sans-serif;font-weight:800;line-height:1.12;letter-spacing:-.01em;will-change:transform,opacity;filter:drop-shadow(0 0 2px rgba(255,205,130,.9)) drop-shadow(0 0 18px rgba(255,110,20,.75)) drop-shadow(0 0 60px rgba(255,60,0,.45)) drop-shadow(0 18px 22px rgba(0,0,0,.9))}
+.ln.l{font-size:clamp(40px,9.4vw,150px)}.ln.m{font-size:clamp(28px,6vw,92px)}.ln.s{font-size:clamp(22px,4.1vw,62px)}
+.ln.hero{letter-spacing:.02em}.ln.hero.l{font-size:clamp(48px,12vw,190px)}.ln.hero.m{font-size:clamp(32px,7.6vw,120px)}
 .mol,.w{display:inline-block;background:linear-gradient(180deg,#fffaf0 0%,#ffe2a0 28%,#ff9a2e 60%,#e8420a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
 .w{padding:.07em .03em}
-.ln.in{animation:li .25s ease-out both}
+.ln.in{animation:li .25s ease-out both,dl 8s linear .25s both}
 .ln.out{animation:lo .55s cubic-bezier(.5,0,1,.6) both}
 .ln.in.ignite .w{animation:wi .75s cubic-bezier(.2,.9,.2,1) var(--d) both}
 .ln.in.warp .w{animation:ww .8s cubic-bezier(.16,1,.3,1) var(--d) both}
@@ -581,13 +695,51 @@ const CSS = `
 .ln::before,.ln::after{content:attr(data-text);position:absolute;inset:0;pointer-events:none;opacity:0;mix-blend-mode:screen;text-align:center;-webkit-text-fill-color:currentColor}
 .ln::before{color:#3fc6ff}.ln::after{color:#ff2d2d}
 .ln.in::before{animation:c1 .65s steps(1) both}.ln.in::after{animation:c2 .65s steps(1) both}
-.intro{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:24px 24px 120px;background:radial-gradient(circle,rgba(3,3,6,.3),rgba(2,2,4,.86));animation:fi .9s ease-out both}
-.intro.out{background:rgba(2,2,4,.7)}
-.logo{margin:0;font:800 clamp(64px,19vw,270px)/1 Unbounded,sans-serif;letter-spacing:-.01em;padding:.06em .04em;filter:drop-shadow(0 0 20px rgba(255,100,20,.8)) drop-shadow(0 0 70px rgba(255,60,0,.5)) drop-shadow(0 14px 18px #000)}
-.tag{margin:0;font:700 clamp(12px,1.8vw,18px) Oxanium,sans-serif;letter-spacing:.6em;padding-left:.6em;color:#ffb27a}
-.rk .start{margin-top:10px;padding:16px 48px;border:1px solid var(--hot);background:linear-gradient(180deg,rgba(255,90,20,.25),rgba(120,20,0,.25));color:#fff0dc;font:700 16px Oxanium,sans-serif;letter-spacing:.34em;cursor:pointer;clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);transition:background .25s,transform .25s;animation:pl 2.4s ease-in-out infinite}
+
+/* logo emblem shown during instrumental gaps */
+.emb{grid-area:1/1;width:min(66vw,400px);animation:embin 1s ease-out .6s both}
+.emb img{display:block;width:100%;height:auto;max-height:30vh;object-fit:contain;filter:drop-shadow(0 0 22px rgba(255,100,20,.85)) drop-shadow(0 0 70px rgba(255,60,0,.55));animation:pl 2.4s ease-in-out infinite}
+
+/* film layers */
+.scr{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent 12%,rgba(255,235,200,.18) 12.12%,transparent 12.3%,transparent 71%,rgba(255,235,200,.12) 71.1%,transparent 71.25%);opacity:0;animation:scr 2.6s steps(1) infinite}
+.flk{position:absolute;inset:0;pointer-events:none;background:#000;opacity:0;animation:flk 4.7s steps(1) infinite}
+.grain{position:absolute;inset:-50%;opacity:.07;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .8  0 0 0 0 .6  0 0 0 .9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");animation:gr .9s steps(6) infinite}
+
+/* ===== opening title sequence ===== */
+.intro{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2.2vh,22px);text-align:center;padding:24px 20px 110px;perspective:1000px;overflow:hidden;background:radial-gradient(circle at 50% 46%,rgba(3,3,6,.2),rgba(2,2,4,.88))}
+.intro>*{position:relative;z-index:1}
+.intro>.cur{position:absolute;z-index:3;left:0;right:0;height:50.6%;background:#000;animation:cu 1.4s cubic-bezier(.77,0,.18,1) 1s both}
+.cur.a{top:0;--d:-1;border-bottom:1px solid #ffd2a0;box-shadow:0 6px 44px 4px rgba(255,100,20,.75)}
+.cur.b{bottom:0;--d:1;border-top:1px solid #ffd2a0;box-shadow:0 -6px 44px 4px rgba(255,100,20,.75)}
+.intro>.ivl{position:absolute;z-index:4;left:50%;top:50%;height:2px;width:0;margin-top:-1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#ffd9a0,#fff,#ffd9a0,transparent);box-shadow:0 0 30px 6px rgba(255,120,30,.85);animation:ivl 1.6s cubic-bezier(.2,.8,.2,1) .15s both}
+.intro>.ir{position:absolute;z-index:0;left:50%;top:46%;width:120vmax;height:120vmax;margin:-60vmax 0 0 -60vmax;background:repeating-conic-gradient(from 0deg,rgba(255,150,60,0) 0deg 9deg,rgba(255,180,90,.24) 11deg,rgba(255,150,60,0) 14deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 38%);mask:radial-gradient(circle,#000 0,transparent 38%);mix-blend-mode:screen;opacity:0;animation:ro 2.4s ease 1.7s both,sz 60s linear 1.7s infinite}
+.lgw{position:relative;transform:rotateX(calc(var(--py,0)*-16deg)) rotateY(calc(var(--px,0)*22deg));transition:transform .5s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 0 22px rgba(255,100,20,.85)) drop-shadow(0 0 80px rgba(255,60,0,.55)) drop-shadow(0 14px 18px #000)}
+.lgi{display:block;width:min(80vw,560px);height:auto;max-height:34vh;object-fit:contain;opacity:0;animation:lg 2.4s cubic-bezier(.16,1,.3,1) 1.5s both,pl 3s ease-in-out 4s infinite}
+.swp{position:absolute;inset:0;pointer-events:none;-webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.95) 50%,transparent 58%) 0 0/250% 100% no-repeat;opacity:0;animation:sw 2.8s ease-in-out 3.5s infinite}
+.logo{margin:0;font:800 clamp(64px,19vw,270px)/1 Unbounded,sans-serif;letter-spacing:-.01em;padding:.06em .04em;opacity:0;animation:lg 2.4s cubic-bezier(.16,1,.3,1) 1.5s both}
+.pre{margin:0;font:700 clamp(11px,1.6vw,15px) Oxanium,sans-serif;color:#ffb27a;padding-left:.3em;opacity:0;animation:pre 1.8s cubic-bezier(.2,.8,.2,1) 2.7s both}
+.ttl{margin:0;display:flex;flex-wrap:wrap;justify-content:center;gap:.2em .9em;max-width:92vw;font:700 clamp(15px,3.6vw,26px) Oxanium,sans-serif;color:#ffe3bd;text-shadow:0 0 18px rgba(255,100,20,.8)}
+.ttl span{opacity:0;display:inline-block;letter-spacing:.34em;margin-right:-.34em;animation:tw 1.1s cubic-bezier(.2,.8,.2,1) calc(3s + var(--k)*.17s) both}
+.rk .start{margin-top:8px;padding:16px 52px;border:1px solid var(--hot);background:linear-gradient(180deg,rgba(255,90,20,.25),rgba(120,20,0,.25));color:#fff0dc;font:700 16px Oxanium,sans-serif;letter-spacing:.34em;padding-left:calc(52px + .34em);cursor:pointer;clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);transition:background .25s,transform .25s;opacity:0;animation:bi 1s ease 3.6s both,pl 2.4s ease-in-out 4.7s infinite}
+.intro:not(.rdy) .start{pointer-events:none}
 .rk .start:hover{background:rgba(255,100,30,.45);transform:scale(1.05)}
 .rk button:focus-visible,.rk input:focus-visible{outline:2px solid #ffd9a0;outline-offset:3px}
+.intro>.fl{position:absolute;z-index:6;inset:0;opacity:0;pointer-events:none;background:radial-gradient(circle at 50% 46%,#fff4dc,rgba(255,140,40,.85) 35%,rgba(255,60,0,.2) 70%,transparent)}
+
+/* ignition: logo punches through the camera */
+.intro.launch{pointer-events:none;animation:il 1.6s cubic-bezier(.6,0,.2,1) both}
+.intro.launch .lgw,.intro.launch .logo{animation:lz 1.3s cubic-bezier(.7,0,.2,1) both}
+.intro.launch .lgi{animation:none;opacity:1}
+.intro.launch .swp,.intro.launch .pre,.intro.launch .ttl,.intro.launch .start,.intro.launch .ir{animation:none;opacity:0;transition:opacity .3s}
+.intro.launch>.cur,.intro.launch>.ivl{display:none}
+.intro.launch>.fl{animation:fl 1.2s ease-out both}
+
+/* end card */
+.endc{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:24px 24px 120px;perspective:1000px;background:radial-gradient(circle at 50% 46%,rgba(2,2,4,.5),rgba(2,2,4,.92));animation:fi 1.2s ease both}
+.endc .lgi,.endc .logo{animation:lg 1.8s cubic-bezier(.16,1,.3,1) .2s both,pl 3s ease-in-out 2.2s infinite}
+.endc .swp{animation-delay:1.8s}
+.endc .start{animation:bi 1s ease 1.3s both,pl 2.4s ease-in-out 2.4s infinite}
+
 .err{position:absolute;z-index:8;left:50%;top:max(60px,calc(env(safe-area-inset-top) + 50px));transform:translateX(-50%);margin:0;max-width:92vw;padding:10px 18px;border:1px solid #ff6a6a;background:rgba(40,6,6,.94);color:#ffd0d0;font:600 14px Oxanium,sans-serif;text-align:center}
 .bar{position:absolute;z-index:6;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:12px;padding:22px max(22px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left));background:linear-gradient(to top,rgba(2,2,4,.95),rgba(2,2,4,.55) 70%,transparent)}
 .seek{position:absolute;left:0;right:0;top:8px;width:100%;height:18px;margin:0;appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer}
@@ -599,15 +751,16 @@ const CSS = `
 .rk .ib:hover{background:rgba(255,100,30,.35);color:#fff}
 .rk .ib.main{width:58px;height:58px;color:#fff0dc;background:rgba(255,90,20,.3)}
 .tm{position:absolute;right:max(22px,env(safe-area-inset-right));bottom:max(30px,calc(env(safe-area-inset-bottom) + 12px));font:700 14px Oxanium,sans-serif;letter-spacing:.14em;color:#ffb27a;font-variant-numeric:tabular-nums}
-.grain{position:absolute;inset:-50%;opacity:.07;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .8  0 0 0 0 .6  0 0 0 .9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");animation:gr .9s steps(6) infinite}
+
 @keyframes fi{from{opacity:0}to{opacity:1}}
 @keyframes gm{to{transform:translateY(64px)}}
 @keyframes sx{to{transform:rotateX(360deg)}}@keyframes sy{to{transform:rotateY(360deg)}}@keyframes sz{to{transform:rotate(360deg)}}
 @keyframes st{from{transform:rotateX(68deg) rotateZ(0)}to{transform:rotateX(68deg) rotateZ(360deg)}}
-@keyframes pl{0%,100%{opacity:.7;filter:brightness(.9)}50%{opacity:1;filter:brightness(1.35)}}
+@keyframes pl{0%,100%{opacity:.8;filter:brightness(.92)}50%{opacity:1;filter:brightness(1.35)}}
 @keyframes bk{50%{opacity:.25}}
 @keyframes gr{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}60%{transform:translate(-2%,-1%)}80%{transform:translate(3%,3%)}100%{transform:translate(0,0)}}
 @keyframes li{from{opacity:0}to{opacity:1}}
+@keyframes dl{from{transform:scale(1)}to{transform:scale(1.06)}}
 @keyframes lo{to{opacity:0;transform:scale(1.12) translateY(-3%)}}
 @keyframes wi{from{opacity:0;transform:translateY(70%) scale(.85);clip-path:inset(100% 0 0 0)}to{opacity:1;transform:none;clip-path:inset(0)}}
 @keyframes ww{from{opacity:0;transform:scale(2.4)}to{opacity:1;transform:none}}
@@ -617,7 +770,54 @@ const CSS = `
 @keyframes c2{0%{opacity:.8;transform:translate(7px,0);clip-path:inset(55% 0 10% 0)}25%{clip-path:inset(15% 0 60% 0);transform:translate(-5px,0)}50%{clip-path:inset(40% 0 30% 0);transform:translate(4px,1px)}70%{opacity:.5;clip-path:inset(75% 0 0 0)}100%{opacity:0}}
 @keyframes sk{from{opacity:1;transform:scale(.1)}to{opacity:0;transform:scale(6)}}
 @keyframes fh{from{opacity:1}to{opacity:0}}
-@media (max-width:640px){.br{width:24px;height:24px}.top{left:44px;right:44px;font-size:11px;letter-spacing:.24em}.mtr{max-width:90px}.stage{inset:0 0 150px 0}.bar{gap:10px;padding-top:28px}.tm{position:static;font-size:12px;margin-left:2px}.rk .ib{width:44px;height:44px}.rk .ib.main{width:54px;height:54px}.rk .start{padding:14px 34px}.tag{letter-spacing:.35em}}
-@media (max-height:480px) and (orientation:landscape){.stage{inset:0 0 90px 0}.logo{font-size:clamp(48px,14vw,150px)}.intro{gap:12px;padding-bottom:90px}}
-@media (prefers-reduced-motion:reduce){.ring,.floor i,.grain,.core,.rk .start{animation:none}.ln.in,.ln.out,.ln.in .w{animation-duration:.01ms;animation-delay:0s}.ln::before,.ln::after{display:none}.shock{display:none}}
+@keyframes sl{from{opacity:.6;transform:translate(-50%,-50%) scale(.6)}to{opacity:0;transform:translate(-50%,-50%) scale(1.9)}}
+@keyframes lbo{to{transform:scaleY(1)}}
+@keyframes embin{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+@keyframes scr{0%{opacity:0}8%{opacity:.7;transform:translateX(0)}12%{opacity:0}40%{opacity:.5;transform:translateX(38vw)}44%{opacity:0}72%{opacity:.6;transform:translateX(-22vw)}76%{opacity:0}100%{opacity:0}}
+@keyframes flk{0%,100%{opacity:0}12%{opacity:.07}13%{opacity:0}47%{opacity:.1}48%{opacity:0}49%{opacity:.05}50%{opacity:0}83%{opacity:.08}84%{opacity:0}}
+/* intro keyframes */
+@keyframes cu{to{transform:translateY(calc(var(--d)*101%))}}
+@keyframes ivl{0%{width:0;opacity:1}55%{width:100vw;opacity:1}100%{width:100vw;opacity:0}}
+@keyframes ro{from{opacity:0}to{opacity:1}}
+@keyframes lg{0%{opacity:0;transform:scale(1.5);filter:blur(22px) brightness(4)}30%{opacity:1;filter:blur(8px) brightness(2.6)}46%{opacity:.25}52%{opacity:1}58%{opacity:.4}64%{opacity:1}100%{opacity:1;transform:none;filter:blur(0) brightness(1)}}
+@keyframes sw{0%{opacity:1;background-position:0 0}55%,100%{opacity:1;background-position:100% 0}}
+@keyframes pre{from{opacity:0;letter-spacing:.1em;filter:blur(6px)}to{opacity:1;letter-spacing:.62em;filter:blur(0)}}
+@keyframes tw{from{opacity:0;transform:translateY(14px) scale(1.25);filter:blur(10px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes bi{from{opacity:0;transform:translateY(16px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes il{0%,60%{opacity:1}100%{opacity:0}}
+@keyframes lz{0%{transform:scale(1);opacity:1;filter:brightness(1)}60%{opacity:1}100%{transform:scale(7);opacity:0;filter:brightness(3) blur(10px)}}
+@keyframes fl{0%{opacity:0}22%{opacity:1}100%{opacity:0}}
+
+@media (max-width:640px){
+  .br{width:24px;height:24px}
+  .top{left:44px;right:44px;font-size:11px;letter-spacing:.24em}
+  .hl{height:24px}
+  .mtr{max-width:90px}
+  .stage{bottom:150px;padding:0 2.5vw}
+  .ln{max-width:95vw}
+  .ln.l{font-size:16.5vw}.ln.m{font-size:11.5vw}.ln.s{font-size:8.8vw}
+  .ln.hero.l{font-size:19vw}.ln.hero.m{font-size:12.8vw}
+  .bar{gap:10px;padding-top:28px}
+  .tm{position:static;font-size:12px;margin-left:2px}
+  .rk .ib{width:44px;height:44px}
+  .rk .ib.main{width:54px;height:54px}
+  .rk .start{padding:14px 38px;padding-left:calc(38px + .34em)}
+  .pre{letter-spacing:.4em}
+  .ttl{gap:.2em .7em}
+  .intro,.endc{padding-bottom:150px}
+}
+@media (max-height:480px) and (orientation:landscape){
+  .stage{bottom:90px}
+  .lgi{max-height:30vh;width:min(44vw,380px)}
+  .intro{gap:8px;padding-bottom:90px}
+  .endc{padding-bottom:90px}
+}
+@media (prefers-reduced-motion:reduce){
+  .ring,.floor i,.grain,.core,.rays,.scr,.flk,.emb img{animation:none}
+  .ln.in,.ln.out,.ln.in .w{animation-duration:.01ms;animation-delay:0s}
+  .ln::before,.ln::after{display:none}
+  .shock{display:none}
+  .intro *,.endc *{animation-duration:.01ms!important;animation-delay:0s!important}
+  .intro>.cur,.intro>.ivl{display:none}
+}
 `;
