@@ -1,0 +1,212 @@
+{
+  "title": "Make Way for the King (RAAKA)",
+  "note": "User-supplied timestamps added to the first nine opening lyric lines. Other lines with null timestamps still need timing; existing Whisper-derived timestamped sections are preserved.",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 4.0,
+      "text": "Ye yaaaiyee yooo"
+    },
+    {
+      "start": 4.0,
+      "end": 8.0,
+      "text": "Say my name, my name"
+    },
+    {
+      "start": 8.0,
+      "end": 11.0,
+      "text": "Ye yaaaiyee yooo"
+    },
+    {
+      "start": 11.0,
+      "end": 13.0,
+      "text": "Say my name, my name"
+    },
+    {
+      "start": 14.0,
+      "end": 15.0,
+      "text": "Raaka"
+    },
+    {
+      "start": 17.0,
+      "end": 19.0,
+      "text": "Move side to side"
+    },
+    {
+      "start": 19.0,
+      "end": 21.0,
+      "text": "Side to side"
+    },
+    {
+      "start": 21.0,
+      "end": 24.0,
+      "text": "Ye ye ye"
+    },
+    {
+      "start": 24.0,
+      "end": 27.0,
+      "text": "Say my name"
+    },
+    {
+      "start": 30.0,
+      "end": 31.64,
+      "text": "I'm making the crowd move when I strike"
+    },
+    {
+      "start": 31.64,
+      "end": 33.36,
+      "text": "I'm making a typhoon when I fight"
+    },
+    {
+      "start": 33.36,
+      "end": 34.96,
+      "text": "You know how the crown move when I might"
+    },
+    {
+      "start": 34.96,
+      "end": 36.8,
+      "text": "I'm making the night move with the right tool"
+    },
+    {
+      "start": 36.8,
+      "end": 38.4,
+      "text": "Crown on my walk, not a thing you can buy"
+    },
+    {
+      "start": 38.4,
+      "end": 40.16,
+      "text": "Got every scar that I wear with pride"
+    },
+    {
+      "start": 40.16,
+      "end": 41.8,
+      "text": "Name in their mouth like it's part of the prayer"
+    },
+    {
+      "start": 41.8,
+      "end": 43.28,
+      "text": "I lit the fire, let smoke in the air"
+    },
+    {
+      "start": 43.28,
+      "end": 45.08,
+      "text": "Make way for the king"
+    },
+    {
+      "start": 45.08,
+      "end": 46.76,
+      "text": "Back up, let me breathe"
+    },
+    {
+      "start": 46.76,
+      "end": 48.4,
+      "text": "I bled for this throne"
+    },
+    {
+      "start": 48.4,
+      "end": 50.16,
+      "text": "You just watched from the seats"
+    },
+    {
+      "start": 50.16,
+      "end": 51.76,
+      "text": "Make way for the king"
+    },
+    {
+      "start": 51.76,
+      "end": 53.48,
+      "text": "Every door, every key"
+    },
+    {
+      "start": 53.48,
+      "end": 55.16,
+      "text": "I took it, I claimed it"
+    },
+    {
+      "start": 55.16,
+      "end": 56.88,
+      "text": "Now the ground moves under me"
+    },
+    {
+      "start": 56.88,
+      "end": 58.88,
+      "text": "Make way for the king"
+    },
+    {
+      "start": 82.16,
+      "end": 85.68,
+      "text": "Say my name, my name, my name, my name, my name, my name"
+    },
+    {
+      "start": 85.68,
+      "end": 87.32,
+      "text": "Make way for the king"
+    },
+    {
+      "start": 87.32,
+      "end": 89.04,
+      "text": "Make way for the king"
+    },
+    {
+      "start": 89.04,
+      "end": 90.64,
+      "text": "I bled for this throne"
+    },
+    {
+      "start": 90.64,
+      "end": 92.4,
+      "text": "You just watched from the seats"
+    },
+    {
+      "start": 92.4,
+      "end": 94.0,
+      "text": "Make way for the king"
+    },
+    {
+      "start": 94.0,
+      "end": 96.0,
+      "text": "Every door, every key"
+    },
+    {
+      "start": 99.12,
+      "end": 101.12,
+      "text": "Make way for the king"
+    },
+    {
+      "start": null,
+      "end": null,
+      "text": "Ayy",
+      "needs_timing": true
+    },
+    {
+      "start": null,
+      "end": null,
+      "text": "Heads down",
+      "needs_timing": true
+    },
+    {
+      "start": null,
+      "end": null,
+      "text": "It's arrival time",
+      "needs_timing": true
+    },
+    {
+      "start": null,
+      "end": null,
+      "text": "Ye ye ye ye",
+      "needs_timing": true
+    },
+    {
+      "start": null,
+      "end": null,
+      "text": "Make way for the king",
+      "needs_timing": true
+    },
+    {
+      "start": null,
+      "end": null,
+      "text": "Make way for the king",
+      "needs_timing": true
+    }
+  ]
+}
