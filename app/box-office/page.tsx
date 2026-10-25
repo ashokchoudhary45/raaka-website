@@ -65,9 +65,10 @@ function useInView<T extends HTMLElement>(threshold = 0.35) {
   return [ref, shown] as const;
 }
 
-/** Rolling odometer. Digits roll up to their value when scrolled into view. */
+/** Collection display. Render the full formatted figure to avoid clipped/misaligned digit reels. */
 function Odometer({ value, className = "" }: { value: Figure; className?: string }) {
   const [ref, shown] = useInView<HTMLSpanElement>();
+
   if (value === null) {
     return (
       <span className={`bo-await ${className}`} aria-label="Awaiting official figure">
@@ -75,19 +76,16 @@ function Odometer({ value, className = "" }: { value: Figure; className?: string
       </span>
     );
   }
+
   return (
-    <span ref={ref} className={`bo-odo ${className}`} aria-label={value}>
-      {[...value].map((c, i) =>
-        /\d/.test(c) ? (
-          <span key={i} className="bo-reel" aria-hidden>
-            <span className="bo-reel-col" style={{ transform: shown ? `translateY(-${Number(c) * 10}%)` : "translateY(0)", transitionDelay: `${i * 90}ms` }}>
-              {Array.from({ length: 10 }, (_, d) => <b key={d}>{d}</b>)}
-            </span>
-          </span>
-        ) : (
-          <span key={i} className="bo-sym" aria-hidden>{c === " " ? "\u00A0" : c}</span>
-        )
-      )}
+    <span
+      ref={ref}
+      className={`bo-odo ${className}`}
+      aria-label={value}
+      title={value}
+      data-visible={shown ? "true" : "false"}
+    >
+      {value}
     </span>
   );
 }
