@@ -1,14 +1,17 @@
-import "server-only";
-import { createClient } from "@libsql/client";
 
-const url = process.env.TURSO_DATABASE_URL;
-const authToken = process.env.TURSO_AUTH_TOKEN;
+import "server-only";
+import { createClient } from "@libsql/client/web";
+
+const url = process.env.TURSO_DATABASE_URL?.trim();
+const authToken = process.env.TURSO_AUTH_TOKEN?.trim();
 
 if (!url || !authToken) {
-  console.warn("Turso env missing: configure TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.");
+  throw new Error(
+    "Missing TURSO_DATABASE_URL or TURSO_AUTH_TOKEN environment variable"
+  );
 }
 
 export const turso = createClient({
-  url: url || "file:boxoffice-local.db",
-  authToken: authToken || undefined,
+  url,
+  authToken,
 });
