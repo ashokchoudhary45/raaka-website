@@ -41,7 +41,10 @@ const TERRITORIES: { name: string; gross: Figure }[] = [
 ];
 
 // poster: put an image path (e.g. "/images/box-office/day1.jpg") to show the official poster on the ticket
-const DAYS: { day: number; poster: string | null; gross: Figure }[] = Array.from({ length: 7 }, (_, i) => ({ day: i + 1, poster: null, gross: null }));
+const DAYS: { day: number; poster: string | null; gross: Figure }[] = Array.from(
+  { length: 7 },
+  (_, i) => ({ day: i + 1, poster: null, gross: null })
+);
 
 const NAV = [
   ["worldwide", "Worldwide"],
@@ -80,7 +83,7 @@ function Odometer({ value, className = "" }: { value: Figure; className?: string
   return (
     <span
       ref={ref}
-      className={`bo-odo ${className}`}
+      className={`bo-odo ${className} ${["BLOCKBUSTER", "SUPER HIT", "HIT", "FLOP"].includes(value) ? "bo-verdict-text" : ""}`}
       aria-label={value}
       title={value}
       data-visible={shown ? "true" : "false"}
@@ -451,10 +454,10 @@ const CSS = String.raw`
 @keyframes boScan{0%{transform:translateY(-110%)}60%,100%{transform:translateY(260%)}}
 
 /* ----- odometer ----- */
-.bo-big{font-size:clamp(1.9rem,5.2vw,3rem);line-height:1}
-.bo-mid{font-size:1.45rem;line-height:1}
-.bo-huge{font-size:clamp(2.8rem,7vw,4.6rem);line-height:1}
-.bo-odo{display:inline-flex;align-items:flex-end;line-height:1;background:linear-gradient(180deg,#fff7e1 25%,#f2c46d);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bo-big{font-size:clamp(1.65rem,3.6vw,2.65rem);line-height:1.12;letter-spacing:-.035em;overflow-wrap:normal;word-break:normal}
+.bo-mid{font-size:clamp(1rem,2vw,1.35rem);line-height:1.15;letter-spacing:-.02em;overflow-wrap:normal;word-break:normal}
+.bo-huge{font-size:clamp(2rem,4.5vw,3.4rem);line-height:1.12;letter-spacing:-.035em;overflow-wrap:normal;word-break:normal}
+.bo-odo{display:inline-block;max-width:100%;white-space:nowrap;vertical-align:bottom;line-height:1;background:linear-gradient(180deg,#fff7e1 25%,#f2c46d);-webkit-background-clip:text;background-clip:text;color:transparent}
 .bo-reel{display:inline-block;height:1em;overflow:hidden;line-height:1}
 .bo-reel-col{display:flex;flex-direction:column;transition:transform 2.1s cubic-bezier(.16,1,.3,1)}
 .bo-reel-col b{display:block;height:1em;font-weight:inherit;text-align:center}
@@ -510,7 +513,12 @@ const CSS = String.raw`
 .bo-seal{position:relative;width:150px;height:150px}
 .bo-seal-ring{position:absolute;inset:0;width:100%;height:100%;animation:boSpin 28s linear infinite}
 
-@media (max-width:640px){.bo-curtain{width:50%}.bo-bulbs{padding:9px;background-size:22px 22px}.bo-bulbs-b{background-position:11px 11px}}
+@media (max-width:640px){.bo-big{font-size:clamp(1.35rem,6vw,2rem)}.bo-huge{font-size:clamp(1.8rem,7vw,2.6rem)}.bo-panel{min-width:0}.bo-curtain{width:50%}.bo-bulbs{padding:9px;background-size:22px 22px}.bo-bulbs-b{background-position:11px 11px}}
+/* Verdict labels must fit inside the stat card. */
+.bo-verdict-text{display:inline-block;max-width:100%;white-space:normal;overflow-wrap:anywhere;font-size:clamp(1.1rem,2.8vw,2.2rem);line-height:1.15;letter-spacing:-.025em}
+.bo-panel .bo-big{min-width:0;overflow-wrap:anywhere}
+.bo-panel .bo-big .bo-odo{max-width:100%}
+
 @media (prefers-reduced-motion:reduce){
   .bo-curtain{display:none}.bo-beam{opacity:1}
   .bo-dust,.bo-bulbs,.bo-beam,.bo-logo-stage,.bo-logo-shine,.bo-logo-halo,.bo-scan::after,.bo-await i,.bo-live,.bo-dial-dash,.bo-seal-ring,.bo-title,.bo-fade,.bo-logo-wrap,.bo-switch,.bo-in{animation:none!important}
