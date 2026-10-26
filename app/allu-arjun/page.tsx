@@ -109,20 +109,6 @@ const Word = ({ w, o = 0 }: { w: string; o?: number }) => (
   </span>
 );
 
-const ROW_WORDS = ["Allu Arjun", "Icon Star", "Pushpa", "Arya", "Race Gurram", "Raaka"];
-
-function Rows() {
-  return (
-    <>
-      {ROW_WORDS.map((w, r) => (
-        <div key={r} className="aa-trow" style={cssVars({ "--sp": `${70 + r * 9}s` })}>
-          {Array.from({ length: 6 }).map((_, i) => <span key={i}>{w}<em>/</em></span>)}
-        </div>
-      ))}
-    </>
-  );
-}
-
 export default function AlluArjunPage() {
   const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [bday, setBday] = useState(false);
@@ -243,7 +229,7 @@ export default function AlluArjunPage() {
       <header className={"aa-nav fixed inset-x-0 top-0 z-50 px-4 md:px-8" + (scrolled ? " s" : "")}>
         <div className="mx-auto max-w-7xl">
           <div className="flex h-16 items-center justify-between gap-4">
-            <a href="#home" aria-label="Allu Arjun — home" className="flex items-center"><img src="/images/allu-logo.png" alt="Allu Arjun" className="h-9 w-auto object-contain sm:h-10" /></a>
+            <a href="#home" aria-label="Allu Arjun — home" className="flex items-center"><img src="/images/12.png" alt="Allu Arjun" className="h-9 w-auto object-contain sm:h-10" /></a>
             <nav className="hidden items-center gap-8 lg:flex" aria-label="Sections">{navLinks("")}</nav>
             <a href="#contact" className="aa-btn aa-btn-solid !px-5 !py-2.5 !text-sm">Contact</a>
           </div>
@@ -253,8 +239,6 @@ export default function AlluArjunPage() {
 
       {/* ============ HERO — a dark stage, one moving spotlight ============ */}
       <section id="home" ref={heroRef} className="aa-stage">
-        <div className="aa-rows aa-rows-base" aria-hidden="true"><Rows /></div>
-        <div className="aa-rows aa-rows-lit" aria-hidden="true"><Rows /></div>
         <div className="aa-halo" aria-hidden="true" />
         <div className="aa-beam" aria-hidden="true" />
 
@@ -262,7 +246,7 @@ export default function AlluArjunPage() {
           <div className="aa-logo-wrap relative w-[min(66vw,380px)]">
             <span className="aa-logo-glow" aria-hidden="true" />
             <span className="aa-logo-stage relative block">
-              <img src="/images/allu-logo.png" alt="Allu Arjun official logo" className="block h-auto w-full object-contain" />
+              <img src="/images/12.png" alt="Allu Arjun official logo" className="block h-auto w-full object-contain" />
               <span className="aa-logo-shine" aria-hidden="true" />
             </span>
           </div>
@@ -512,7 +496,7 @@ export default function AlluArjunPage() {
       <footer className="aa-foot">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
-            <img src="/images/allu-logo.png" alt="Allu Arjun" className="h-10 w-auto object-contain" />
+            <img src="/images/12.png" alt="Allu Arjun" className="h-10 w-auto object-contain" />
             <p className="max-w-[16rem] text-sm text-[color:var(--steel)]">An independent fan-made digital archive.</p>
           </div>
           <div className="flex flex-wrap gap-6 text-sm"><a href="#home" className="aa-nl">Top</a><a href="#about" className="aa-nl">About</a><a href="#filmography" className="aa-nl">Filmography</a><a href="#contact" className="aa-nl">Contact</a></div>
@@ -549,14 +533,6 @@ html{scroll-behavior:smooth}
 
 /* ---------- hero: the stage ---------- */
 .aa-stage{position:relative;min-height:100svh;overflow:hidden;--sx:50%;--sy:46%;--rad:290px;background:radial-gradient(ellipse at 50% 125%,rgba(194,72,31,.28),transparent 60%),var(--ink)}
-.aa-rows{position:absolute;inset:-4% 0;display:flex;flex-direction:column;justify-content:space-around;pointer-events:none;user-select:none}
-.aa-trow{display:flex;width:max-content;white-space:nowrap;font-family:var(--fd);font-weight:900;text-transform:uppercase;font-size:clamp(4.4rem,14vw,11rem);line-height:.92;animation:aaDrift var(--sp,70s) linear infinite}
-.aa-trow:nth-child(even){animation-direction:reverse}
-.aa-trow span{padding-right:.35em}.aa-trow em{font-style:normal;padding-left:.35em;opacity:.5}
-@keyframes aaDrift{to{transform:translateX(-50%)}}
-.aa-rows-base .aa-trow{color:transparent;-webkit-text-stroke:1px rgba(240,232,216,.085)}
-.aa-rows-lit{-webkit-mask-image:radial-gradient(circle var(--rad) at var(--sx) var(--sy),#000 0,rgba(0,0,0,.7) 42%,transparent 100%);mask-image:radial-gradient(circle var(--rad) at var(--sx) var(--sy),#000 0,rgba(0,0,0,.7) 42%,transparent 100%)}
-.aa-rows-lit .aa-trow{background:linear-gradient(90deg,var(--saffron),#fff2cf 38%,var(--rust) 75%,var(--saffron));background-size:60% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.92}
 .aa-halo{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(circle calc(var(--rad)*1.35) at var(--sx) var(--sy),rgba(255,196,120,.16),transparent 70%)}
 .aa-beam{position:absolute;left:50%;top:0;width:min(52vw,460px);height:78%;pointer-events:none;transform:translateX(-50%) scaleY(0);transform-origin:top;opacity:0;background:linear-gradient(180deg,rgba(255,238,196,.34),rgba(255,200,120,.09) 68%,transparent);clip-path:polygon(41% 0,59% 0,100% 100%,0 100%);animation:aaBeam 1.5s cubic-bezier(.2,.7,.2,1) .3s forwards,aaFlick 7s ease-in-out 2s infinite}
 @keyframes aaBeam{to{transform:translateX(-50%) scaleY(1);opacity:1}}
@@ -694,7 +670,7 @@ a.aa-dc-main:hover{color:var(--saffron)}
 @media(max-width:640px){.aa-mq-t{font-size:1.8rem}.aa-row{gap:1rem}.aa-row span{width:3.2rem}.aa-hint{bottom:1rem}}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}.aa-grain{display:none}
-  .aa-trow,.aa-beam,.aa-logo-wrap,.aa-logo-glow,.aa-logo-shine,.aa-letter,.aa-rise,.aa-hint,.aa-mq-t,.aa-end>div,.aa-confetti i,.aa-tick,.aa-poster,.aa-year,.aa-ftitle,.aa-aw{animation:none!important}
+  .aa-beam,.aa-logo-wrap,.aa-logo-glow,.aa-logo-shine,.aa-letter,.aa-rise,.aa-hint,.aa-mq-t,.aa-end>div,.aa-confetti i,.aa-tick,.aa-poster,.aa-year,.aa-ftitle,.aa-aw{animation:none!important}
   .aa-beam{opacity:1;transform:translateX(-50%)}
   [data-r],.aa-ln>span,.aa-kk,.aa-lead,.aa-frame{opacity:1!important;transform:none!important;transition:none!important}
 }
