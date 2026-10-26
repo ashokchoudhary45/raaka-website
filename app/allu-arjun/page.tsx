@@ -523,7 +523,7 @@ html{scroll-behavior:smooth}
 .aa-name-flare::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;transform:translate(-50%,-50%) rotate(45deg);background:#fff1c4;box-shadow:0 0 12px 4px rgba(255,190,88,.7)}
 @media(max-width:640px){.aa-hero-lockup{margin-top:clamp(13rem,43vh,23rem);padding-inline:.25rem}.aa-hero-title{font-size:clamp(3.15rem,14vw,5.8rem)}.aa-icon-star{letter-spacing:.25rem}.aa-icon-star span{width:1.5rem}}
 /* Laptop and desktop only: move the ICON STAR + Allu Arjun lockup slightly lower. */
-@media (min-width: 1024px){.aa-hero-lockup{margin-top:calc(clamp(15rem,49vh,30rem) + 0rem);position:relative;left:clamp(-650px,-50vw,-450px)}}
+@media (min-width: 1024px){.aa-hero-lockup{margin-top:calc(clamp(15rem,49vh,30rem) + 2rem);position:relative;top:30px;left:clamp(-450px,-50vw,-450px)}}
 
 .aa-letter{display:inline-block;background:linear-gradient(180deg,#fff 8%,#e9ddc5 58%,#b6a07a);-webkit-background-clip:text;background-clip:text;color:transparent;animation:aaLetterIn 1.2s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(1.5s + var(--i)*.08s)}
 @keyframes aaLetterIn{from{opacity:0;filter:blur(16px);transform:translateY(36px) scale(1.1)}to{opacity:1;filter:none;transform:none}}
