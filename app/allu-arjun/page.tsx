@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 
 const cssVars = (o: Record<string, string | number>) => o as unknown as CSSProperties;
 
-const NAV: [string, string][] = [["home", "Home"], ["about", "About"], ["filmography", "Filmography"], ["awards", "Awards"], ["birthday", "Birthday"], ["social", "Connect"]];
+const NAV: [string, string][] = [["home", "Home"], ["about", "About"], ["filmography", "Filmography"], ["birthday", "Birthday"], ["social", "Connect"]];
 
 const MOVIES: [string, string, string][] = [
   ["2003", "Gangotri", "movie1a.jpg"], ["2004", "Arya", "movie2.jpg"], ["2005", "Bunny", "movie3.jpg"], ["2006", "Happy", "movie41.jpg"],
@@ -17,7 +17,7 @@ const MOVIES: [string, string, string][] = [
 ];
 const CAMEOS: [string, string, string][] = [["2007", "Shankar Dada Zindabad", "cameo1.jpg"], ["2014", "Yevadu", "cameo3.jpg"]];
 const CHILD: [string, string][] = [["1985", "Vijetha"], ["1986", "Swathi Muthyam"], ["2001", "Daddy"]];
-const FACTS: [string, string][] = [["Profession", "Actor & Performer"], ["Industry", "Indian Cinema"], ["Debut", "Gangotri · 2003"], ["Known for", "Film · Dance · Style"]];
+const FACTS: [string, string][] = [["Profession", "Actor"], ["Industry", "Indian Cinema"], ["Debut", "Gangotri"], ["Known for", "Style"]];
 
 const AWARDS: [string, string[]][] = [
   ["Gangotri", ["CineMAA Award – Best Male Debut", "Nandi Award – Special Jury Award", "Santosham Film Award – Best Male Debut"]],
@@ -39,13 +39,16 @@ const AWARDS: [string, string[]][] = [
 
 const LATEST: [string, string, string][] = [["2024", "Pushpa 2: The Rule", "movie21.jpg"], ["2021", "Pushpa: The Rise", "movie20.jpg"], ["2020", "Ala Vaikunthapurramuloo", "movie19.jpg"], ["2016", "Sarrainodu", "movie16.jpg"]];
 const SOCIAL: [string, string, string][] = [["Instagram", "Follow", "https://www.instagram.com/alluarjunonline/"], ["Facebook", "Follow", "https://www.facebook.com/AlluArjun"], ["X", "Follow", "https://x.com/alluarjun"], ["YouTube", "Watch", "https://www.youtube.com/@alluarjun"]];
+const SOCIAL_AVATARS: Record<string, string> = {
+  Instagram: "https://unavatar.io/instagram/alluarjunonline",
+  Facebook: "https://unavatar.io/facebook/AlluArjun",
+  X: "https://unavatar.io/x/alluarjun",
+  YouTube: "https://unavatar.io/youtube/alluarjun",
+};
 
 const EMAIL = "worldofraakaverse@gmail.com";
 const X_URL = "https://x.com/cricvizanalys";
 const TOPICS = ["Feedback", "Correction", "Collaboration", "General enquiry"];
-const BODIES = ["All", "National", "Filmfare", "SIIMA", "Nandi", "CineMAA", "Others"] as const;
-const bodyOf = (a: string) =>
-  a.startsWith("National Film Award") ? "National" : a.startsWith("Filmfare") ? "Filmfare" : a.startsWith("SIIMA") ? "SIIMA" : a.startsWith("Nandi") ? "Nandi" : a.startsWith("CineMAA") ? "CineMAA" : "Others";
 const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 const awardsFor = (title: string) => {
   const t = squash(title);
@@ -115,8 +118,8 @@ export default function AlluArjunPage() {
   const [bday, setBday] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("home");
+  const [homeBackgroundIndex, setHomeBackgroundIndex] = useState(0);
   const [sel, setSel] = useState(MOVIES.findIndex((m) => m[1] === "Pushpa 2: The Rule"));
-  const [body, setBody] = useState<string>("All");
   const [name, setName] = useState("");
   const [topic, setTopic] = useState(TOPICS[0]);
   const [msg, setMsg] = useState("");
@@ -197,16 +200,10 @@ export default function AlluArjunPage() {
   const released = MOVIES.filter((x) => x[0] !== "Coming Soon").length;
   const years = new Date().getFullYear() - 2003;
   const honours = AWARDS.reduce((s, [, l]) => s + l.length, 0);
-  const bodyCount = (b: string) => (b === "All" ? honours : AWARDS.reduce((s, [, l]) => s + l.filter((a) => bodyOf(a) === b).length, 0));
-  const shownAwards = useMemo(
-    () => AWARDS.map(([film, list]) => [film, body === "All" ? list : list.filter((a) => bodyOf(a) === body)] as [string, string[]]).filter(([, l]) => l.length),
-    [body]
-  );
-
   const navLinks = (cls: string) => NAV.map(([id, l]) => (
     <a
       key={id}
-      href={id === "awards" ? "/allu-arjun/awards" : "#" + id}
+      href={"#" + id}
       className={"aa-nl " + cls}
       aria-current={active === id ? "true" : undefined}
     >
@@ -246,6 +243,25 @@ export default function AlluArjunPage() {
 
       {/* ============ HERO — a dark stage, one moving spotlight ============ */}
       <section id="home" ref={heroRef} className="aa-stage">
+        <div className="aa-stage-backgrounds" aria-hidden="true">
+          {(() => {
+            // Keep exactly one hero background per device. The previous CSS
+            // also painted these images on .aa-stage, causing the double-image effect.
+            const desktopSrc = "/images/16.png";
+            const mobileSrc = "/images/17.png";
+            return (
+              <div
+                key={desktopSrc}
+                className="aa-stage-background"
+                style={cssVars({
+                  "--desktop-bg": `url("${desktopSrc}")`,
+                  "--mobile-bg": `url("${mobileSrc}")`,
+                })}
+              />
+            );
+          })()}
+        </div>
+        <div className="aa-stage-shade" aria-hidden="true" />
         <div className="aa-halo" aria-hidden="true" />
 
         <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-6xl flex-col items-center justify-center px-6 pb-16 pt-32 text-center">
@@ -257,7 +273,7 @@ export default function AlluArjunPage() {
             </h1>
             <span className="aa-name-flare" aria-hidden="true" />
           </div>
-          <p className="aa-hint" aria-hidden="true"><span className="aa-hint-pc">Move your cursor to light the stage</span><span className="aa-hint-touch">The light roams on its own</span></p>
+          <p className="aa-hint" aria-hidden="true"><span className="aa-hint-pc"></span><span className="aa-hint-touch"> </span></p>
         </div>
       </section>
 
@@ -271,7 +287,7 @@ export default function AlluArjunPage() {
           <figure className="aa-frame" data-r>
             <div className="aa-frame-in"><Image src="/images/movie21.jpg" alt="Pushpa 2: The Rule" fill sizes="(max-width:1024px) 90vw, 40vw" className="object-cover" /></div>
             <i className="c1" /><i className="c2" /><i className="c3" /><i className="c4" />
-            <figcaption>Pushpa 2: The Rule · 2024</figcaption>
+            <figcaption> </figcaption>
           </figure>
           <div>
             <Head k="Profile" lines={["A career", "in motion."]} />
@@ -287,6 +303,25 @@ export default function AlluArjunPage() {
           </div>
         </div>
       </section>
+
+      {/* ============ BIRTHDAY ============ */}
+      <section id="birthday" className="aa-sec aa-bday">
+        <span className="aa-ghost" aria-hidden="true">8 April</span>
+        <div className="relative mx-auto max-w-7xl">
+          <Head k="8 April" lines={bday ? ["Happy birthday,", "Icon Star."] : ["Until the next", "birthday."]} text={bday ? "Today is the day. Wishing Allu Arjun a very happy birthday." : "Counting down to Allu Arjun's next birthday."} />
+          {bday && <div className="aa-confetti" aria-hidden="true">{Array.from({ length: 28 }).map((_, i) => <i key={i} style={cssVars({ "--x": `${(i * 37) % 100}%`, "--d": `${3 + (i % 5) * 0.6}s`, "--dl": `${(i % 7) * 0.4}s`, "--c": i % 3 })} />)}</div>}
+          <div className="aa-clock">
+            {([["Days", time.days, 365], ["Hours", time.hours, 24], ["Minutes", time.minutes, 60], ["Seconds", time.seconds, 60]] as [string, number, number][]).map(([label, v, max]) => (
+              <div key={label}>
+                <p className={label === "Seconds" ? "hot" : ""}><span key={v} className="aa-tick">{fmt(v)}</span></p>
+                <span className="aa-bar"><i style={{ width: `${(v / max) * 100}%`, transition: v === 0 ? "none" : undefined }} /></span>
+                <small>{label}</small>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
 
       {/* ============ FILMOGRAPHY — projector + film strip ============ */}
       <section id="filmography" className="aa-sec">
@@ -373,60 +408,20 @@ export default function AlluArjunPage() {
         </div>
       </section>
 
-      {/* ============ BIRTHDAY ============ */}
-      <section id="birthday" className="aa-sec aa-bday">
-        <span className="aa-ghost" aria-hidden="true">8 April</span>
-        <div className="relative mx-auto max-w-7xl">
-          <Head k="8 April" lines={bday ? ["Happy birthday,", "Icon Star."] : ["Until the next", "birthday."]} text={bday ? "Today is the day. Wishing Allu Arjun a very happy birthday." : "Counting down to Allu Arjun's next birthday."} />
-          {bday && <div className="aa-confetti" aria-hidden="true">{Array.from({ length: 28 }).map((_, i) => <i key={i} style={cssVars({ "--x": `${(i * 37) % 100}%`, "--d": `${3 + (i % 5) * 0.6}s`, "--dl": `${(i % 7) * 0.4}s`, "--c": i % 3 })} />)}</div>}
-          <div className="aa-clock">
-            {([["Days", time.days, 365], ["Hours", time.hours, 24], ["Minutes", time.minutes, 60], ["Seconds", time.seconds, 60]] as [string, number, number][]).map(([label, v, max]) => (
-              <div key={label}>
-                <p className={label === "Seconds" ? "hot" : ""}><span key={v} className="aa-tick">{fmt(v)}</span></p>
-                <span className="aa-bar"><i style={{ width: `${(v / max) * 100}%`, transition: v === 0 ? "none" : undefined }} /></span>
-                <small>{label}</small>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ============ AWARDS ============ */}
-      <section id="awards" className="aa-sec aa-awards">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid items-end gap-10 lg:grid-cols-2">
-            <Head k="Achievements" lines={["Awards", "& recognition."]} />
-            <div className="mb-14 flex gap-12" data-r>
-              <div><p className="aa-bign"><CountUp to={AWARDS.length} /></p><small className="aa-sm">Honoured films</small></div>
-              <div><p className="aa-bign">2023</p><small className="aa-sm">National Film Award</small></div>
-            </div>
-          </div>
-
-          <div className="aa-chips" role="group" aria-label="Filter awards by body">
-            {BODIES.map((b) => (
-              <button key={b} type="button" aria-pressed={body === b} onClick={() => setBody(b)} className="aa-fchip">{b}<sup>{bodyCount(b)}</sup></button>
-            ))}
-          </div>
-
-          <div className="aa-aw-grid" key={body}>
-            {shownAwards.map(([film, list], i) => (
-              <article key={film} className="aa-aw" style={cssVars({ "--i": i % 6 })}>
-                <h3>{film}</h3>
-                <ul>{list.map((a) => (<li key={a} className={a.startsWith("National Film Award") ? "nat" : ""}>{a}</li>))}</ul>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ============ SOCIAL ============ */}
+      {/* ============ CONNECT — ALLU ARJUN SOCIAL CHANNELS ============ */}
       <section id="social" className="aa-sec">
         <div className="mx-auto max-w-7xl">
-          <Head k="Connect" lines={["Follow the journey"]} />
-          <div>
-            {SOCIAL.map(([n, a, href]) => (
-              <a key={n} href={href} target="_blank" rel="noopener noreferrer" className="aa-soc">
-                <span>{n}</span><span className="aa-soc-a">{a} <i>↗</i></span>
+          <Head k="Connect" lines={["Follow the journey"]} text="Find Allu Arjun across his social platforms. These links lead to the listed public profiles." />
+          <div className="aa-social-profiles">
+            <p className="aa-social-kicker">ALLU ARJUN · SOCIAL CHANNELS</p>
+            {SOCIAL.map(([platform, action, href]) => (
+              <a key={platform} href={href} target="_blank" rel="noopener noreferrer" className="aa-profile-link">
+                <span className="aa-avatar-wrap">
+                  <img src={SOCIAL_AVATARS[platform]} alt={`${platform} profile picture`} loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                  <span className="aa-avatar-fallback">{platform === "X" ? "𝕏" : platform === "YouTube" ? "▶" : platform === "Instagram" ? "◎" : "f"}</span>
+                </span>
+                <span className="aa-profile-copy"><strong>{platform}</strong><small>{platform === "Instagram" ? "@alluarjunonline" : platform === "Facebook" ? "Allu Arjun" : "@alluarjun"}</small></span>
+                <span className="aa-profile-action">{action} ↗</span>
               </a>
             ))}
           </div>
@@ -467,11 +462,13 @@ export default function AlluArjunPage() {
                 <a href={`mailto:${EMAIL}`} className="aa-dc-main">{EMAIL}</a>
                 <button type="button" onClick={copyMail} className="aa-copy" aria-live="polite">{copied ? "Copied ✓" : "Copy address"}</button>
               </div>
-              <a href={X_URL} target="_blank" rel="noopener noreferrer" className="aa-dc aa-dc-link">
-                <p>General enquiries on X</p><span className="aa-dc-main">@cricvizanalys <i>↗</i></span>
+              <a href="https://x.com/cricvizanalys" target="_blank" rel="noopener noreferrer" className="aa-dc aa-dc-link aa-contact-profile">
+                <span className="aa-contact-pfp aa-contact-fallback" aria-hidden="true">𝕏</span><img className="aa-contact-pfp" src="https://unavatar.io/x/cricvizanalys" alt="@cricvizanalys profile picture" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                <span className="aa-contact-profile-copy"><p>YOUR X / TWITTER</p><span className="aa-dc-main">@cricvizanalys <i>↗</i></span><small>Open profile</small></span>
               </a>
-              <a href="#social" className="aa-dc aa-dc-link">
-                <p>Allu Arjun&apos;s social channels</p><span className="aa-dc-main">View all channels <i>↗</i></span>
+              <a href="https://www.instagram.com/45_.editz/" target="_blank" rel="noopener noreferrer" className="aa-dc aa-dc-link aa-contact-profile">
+                <span className="aa-contact-pfp aa-contact-fallback" aria-hidden="true">◎</span><img className="aa-contact-pfp" src="https://unavatar.io/instagram/45_.editz" alt="@45_.editz Instagram profile picture" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                <span className="aa-contact-profile-copy"><p>YOUR INSTAGRAM</p><span className="aa-dc-main">@45_.editz <i>↗</i></span><small>Open profile</small></span>
               </a>
             </div>
           </div>
@@ -525,7 +522,12 @@ html{scroll-behavior:smooth}
 .aa-btn-line{border:1px solid rgba(255,177,46,.5);color:var(--saffron)}.aa-btn-line:hover{background:var(--saffron);color:#1b0f00}
 
 /* ---------- hero: the stage ---------- */
-.aa-stage{position:relative;min-height:100svh;overflow:hidden;--sx:50%;--sy:46%;--rad:290px;background:radial-gradient(ellipse at 50% 125%,rgba(194,72,31,.28),transparent 60%),var(--ink)}
+.aa-stage{position:relative;isolation:isolate;min-height:100svh;overflow:hidden;--sx:50%;--sy:46%;--rad:290px;background:var(--ink)}
+.aa-stage-backgrounds{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.aa-stage-background{position:absolute;inset:0;background-image:var(--desktop-bg);background-size:cover;background-position:center 35%;background-repeat:no-repeat;opacity:1;transition:none;will-change:auto}
+.aa-stage-shade{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(7,6,5,.38),rgba(7,6,5,.25) 45%,rgba(7,6,5,.78)),radial-gradient(ellipse at 50% 45%,transparent 20%,rgba(7,6,5,.55) 100%)}
+.aa-stage>.aa-halo{z-index:2}
+@media(max-width:640px){.aa-stage-background{background-image:var(--mobile-bg);background-position:center center;background-size:cover}.aa-stage-shade{background:linear-gradient(180deg,rgba(7,6,5,.42),rgba(7,6,5,.24) 42%,rgba(7,6,5,.8)),radial-gradient(ellipse at 50% 45%,transparent 10%,rgba(7,6,5,.5) 100%)}}
 .aa-halo{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(circle calc(var(--rad)*1.35) at var(--sx) var(--sy),rgba(255,196,120,.16),transparent 70%)}
 .aa-hero-title{font-family:var(--fd);font-weight:900;text-transform:uppercase;font-size:clamp(4.2rem,17vw,12rem);line-height:.84;letter-spacing:-.01em;text-shadow:0 20px 70px rgba(0,0,0,.6)}
 .aa-hero-lockup{position:relative;display:flex;flex-direction:column;align-items:center;margin-top:clamp(15rem,49vh,30rem);padding:0 0 1.25rem;max-width:100%;}
@@ -537,6 +539,8 @@ html{scroll-behavior:smooth}
 .aa-name-flare{position:absolute;left:50%;bottom:.3rem;transform:translateX(-50%);width:min(90%,36rem);height:1px;background:linear-gradient(90deg,transparent,rgba(218,157,55,.65),transparent);box-shadow:0 0 18px rgba(255,177,46,.35)}
 .aa-name-flare::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;transform:translate(-50%,-50%) rotate(45deg);background:#fff1c4;box-shadow:0 0 12px 4px rgba(255,190,88,.7)}
 @media(max-width:640px){.aa-hero-lockup{margin-top:clamp(13rem,43vh,23rem);padding-inline:.25rem}.aa-hero-title{font-size:clamp(3.15rem,14vw,5.8rem)}.aa-icon-star{letter-spacing:.25rem}.aa-icon-star span{width:1.5rem}}
+/* Laptop and desktop only: move the ICON STAR + Allu Arjun lockup slightly lower. */
+@media (min-width: 1024px){.aa-hero-lockup{margin-top:calc(clamp(15rem,49vh,30rem) + 0rem);position:relative;left:clamp(-650px,-50vw,-450px)}}
 
 .aa-letter{display:inline-block;background:linear-gradient(180deg,#fff 8%,#e9ddc5 58%,#b6a07a);-webkit-background-clip:text;background-clip:text;color:transparent;animation:aaLetterIn 1.2s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(1.5s + var(--i)*.08s)}
 @keyframes aaLetterIn{from{opacity:0;filter:blur(16px);transform:translateY(36px) scale(1.1)}to{opacity:1;filter:none;transform:none}}
@@ -650,10 +654,23 @@ html{scroll-behavior:smooth}
 .aa-topics button:hover{color:var(--bone);border-color:rgba(255,177,46,.5)}.aa-topics button[aria-pressed="true"]{background:var(--saffron);border-color:var(--saffron);color:#1b0f00;font-weight:600}
 .aa-err{color:#ff9d7e;font-size:.85rem}
 .aa-direct{display:grid;gap:1rem;align-content:start}
-.aa-dc{display:block;border:1px solid var(--line);border-radius:1.2rem;padding:1.4rem;background:rgba(240,232,216,.03);transition:border-color .35s,transform .45s cubic-bezier(.16,1,.3,1),background .3s}
+.aa-dc{display:block;border:1px solid var(--line);border-radius:1.2rem;padding:1.4rem;background:rgba(240,232,216,.03);transition:border-color .35s,transform .45s cubic-bezier(.16,1,.3,1),background .3s}.aa-contact-profile{display:flex;align-items:center;gap:1rem;min-height:112px}.aa-contact-pfp{width:68px;height:68px;flex:none;border-radius:50%;object-fit:cover;border:2px solid rgba(255,177,46,.7);background:#17120c;box-shadow:0 0 0 4px rgba(255,177,46,.08)}.aa-contact-fallback{display:grid;place-items:center;color:var(--saffron);font-size:1.65rem;font-weight:800}.aa-contact-profile-copy{min-width:0}.aa-contact-profile-copy small{display:block;margin-top:.4rem;color:var(--steel);font-size:.75rem}.aa-contact-profile-copy .aa-dc-main{margin-top:.3rem}
 .aa-dc>p{font-size:.82rem;color:var(--steel)}.aa-dc-main{display:block;margin-top:.55rem;font-size:1.05rem;font-weight:600;word-break:break-word}.aa-dc-main i{font-style:normal;color:var(--saffron)}
 .aa-dc-link:hover{border-color:rgba(255,177,46,.55);transform:translateY(-3px);background:rgba(255,177,46,.05)}
+
 a.aa-dc-main:hover{color:var(--saffron)}
+.aa-social-profiles{display:grid;gap:.65rem;padding:1.2rem;border:1px solid var(--line);border-radius:1.2rem;background:linear-gradient(145deg,rgba(255,177,46,.065),rgba(240,232,216,.018))}
+.aa-social-kicker{font-size:.72rem;letter-spacing:.19em;color:var(--saffron);margin:0 0 .35rem}
+.aa-profile-link{display:flex;align-items:center;gap:.85rem;min-width:0;padding:.8rem;border:1px solid rgba(240,232,216,.075);border-radius:.9rem;background:rgba(0,0,0,.2);transition:transform .25s,border-color .25s,background .25s}
+.aa-profile-link:hover{transform:translateX(4px);border-color:rgba(255,177,46,.45);background:rgba(255,177,46,.055)}
+.aa-avatar-wrap{position:relative;display:grid;place-items:center;flex:none;width:48px;height:48px;border-radius:50%;overflow:hidden;border:1px solid rgba(255,177,46,.45);background:#17120c}
+.aa-avatar-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.aa-avatar-fallback{font-size:1.25rem;color:var(--saffron);font-weight:700}
+.aa-profile-copy{display:grid;gap:.2rem;min-width:0;flex:1}
+.aa-profile-copy strong{font-size:.92rem;color:var(--bone)}
+.aa-profile-copy small{font-size:.76rem;color:var(--steel);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aa-profile-action{font-size:.76rem;color:var(--saffron);white-space:nowrap}
+
 .aa-copy{margin-top:1rem;border:1px solid var(--line);border-radius:999px;padding:.45rem 1rem;font-size:.8rem;color:#c8bfaf;transition:background .3s,color .3s,border-color .3s}.aa-copy:hover{background:var(--saffron);color:#1b0f00;border-color:var(--saffron)}
 
 .aa-end{overflow:hidden;border-block:1px solid var(--line);background:#030303;padding:1rem 0;color:rgba(240,232,216,.3)}
@@ -673,10 +690,7 @@ a.aa-dc-main:hover{color:var(--saffron)}
   }
   .aa-stage{
     background-color:var(--ink);
-    background-image:linear-gradient(rgba(7,6,5,.28),rgba(7,6,5,.62)),url("/images/17.png");
-    background-position:center,center;
-    background-size:cover,cover;
-    background-repeat:no-repeat;
+    background-image:none;
   }
 }
 
@@ -684,10 +698,7 @@ a.aa-dc-main:hover{color:var(--saffron)}
 @media(min-width:641px){
   .aa-stage{
     background-color:var(--ink);
-    background-image:linear-gradient(rgba(7,6,5,.28),rgba(7,6,5,.62)),url("/images/16.png");
-    background-position:center,center;
-    background-size:cover,cover;
-    background-repeat:no-repeat;
+    background-image:none;
   }
 }
 @media (prefers-reduced-motion:reduce){
