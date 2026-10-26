@@ -5,7 +5,7 @@ import Image from "next/image";
 
 const cssVars = (o: Record<string, string | number>) => o as unknown as CSSProperties;
 
-const NAV: [string, string][] = [["home", "Home"], ["about", "About"], ["filmography", "Filmography"], ["birthday", "Birthday"], ["social", "Connect"], ["contact", "contact"]];
+const NAV: [string, string][] = [["home", "Home"], ["about", "About"], ["birthday", "Birthday"], ["awards", "Awards"], ["filmography", "Filmography"], ["social", "Connect"], ["contact", "contact"]];
 
 const MOVIES: [string, string, string][] = [
   ["2003", "Gangotri", "movie1a.jpg"], ["2004", "Arya", "movie2.jpg"], ["2005", "Bunny", "movie3.jpg"], ["2006", "Happy", "movie41.jpg"],
@@ -186,7 +186,7 @@ export default function AlluArjunPage() {
   const navLinks = (cls: string) => NAV.map(([id, l]) => (
     <a
       key={id}
-      href={"#" + id}
+      href={id === "awards" ? "/allu-arjun/awards" : "#" + id}
       className={"aa-nl " + cls}
       aria-current={active === id ? "true" : undefined}
     >
