@@ -109,6 +109,7 @@ const Word = ({ w, o = 0 }: { w: string; o?: number }) => (
   </span>
 );
 
+
 export default function AlluArjunPage() {
   const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [bday, setBday] = useState(false);
@@ -203,7 +204,14 @@ export default function AlluArjunPage() {
   );
 
   const navLinks = (cls: string) => NAV.map(([id, l]) => (
-    <a key={id} href={"#" + id} className={"aa-nl " + cls} aria-current={active === id ? "true" : undefined}>{l}</a>
+    <a
+      key={id}
+      href={id === "awards" ? "/allu-arjun/awards" : "#" + id}
+      className={"aa-nl " + cls}
+      aria-current={active === id ? "true" : undefined}
+    >
+      {l}
+    </a>
   ));
 
   const sendMail = () => {
@@ -229,7 +237,6 @@ export default function AlluArjunPage() {
       <header className={"aa-nav fixed inset-x-0 top-0 z-50 px-4 md:px-8" + (scrolled ? " s" : "")}>
         <div className="mx-auto max-w-7xl">
           <div className="flex h-16 items-center justify-between gap-4">
-            <a href="#home" aria-label="Allu Arjun — home" className="flex items-center"><img src="/images/12.png" alt="Allu Arjun" className="h-9 w-auto object-contain sm:h-10" /></a>
             <nav className="hidden items-center gap-8 lg:flex" aria-label="Sections">{navLinks("")}</nav>
             <a href="#contact" className="aa-btn aa-btn-solid !px-5 !py-2.5 !text-sm">Contact</a>
           </div>
@@ -240,28 +247,15 @@ export default function AlluArjunPage() {
       {/* ============ HERO — a dark stage, one moving spotlight ============ */}
       <section id="home" ref={heroRef} className="aa-stage">
         <div className="aa-halo" aria-hidden="true" />
-        <div className="aa-beam" aria-hidden="true" />
 
         <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-6xl flex-col items-center justify-center px-6 pb-16 pt-32 text-center">
-          <div className="aa-logo-wrap relative w-[min(66vw,380px)]">
-            <span className="aa-logo-glow" aria-hidden="true" />
-            <span className="aa-logo-stage relative block">
-              <img src="/images/12.png" alt="Allu Arjun official logo" className="block h-auto w-full object-contain" />
-              <span className="aa-logo-shine" aria-hidden="true" />
-            </span>
-          </div>
-
-          <h1 className="aa-hero-title mt-8" aria-label="Allu Arjun">
-            <Word w="Allu" />
-            <Word w="Arjun" o={4} />
-          </h1>
-          <p className="aa-rise mt-6 max-w-md text-sm leading-7 text-[color:var(--steel)] md:text-base" style={cssVars({ "--d": "1.9s" })}>
-            The Icon Star. Two decades of films, awards and moments, kept in one independent archive.
-          </p>
-          <div className="aa-rise mt-8 flex flex-col gap-3 sm:flex-row" style={cssVars({ "--d": "2.1s" })}>
-            <a href="#filmography" className="aa-btn aa-btn-solid">Enter the filmography</a>
-            <a href="/allu-arjun/awards" className="aa-btn aa-btn-ghost">Awards</a>
-            <a href="#birthday" className="aa-btn aa-btn-line">Birthday countdown</a>
+          <div className="aa-hero-lockup aa-rise" style={cssVars({ "--d": "1.5s" })}>
+            <p className="aa-icon-star"><span aria-hidden="true" />ICON STAR<span aria-hidden="true" /></p>
+            <h1 className="aa-hero-title" aria-label="Allu Arjun">
+              <Word w="Allu" />
+              <Word w="Arjun" o={4} />
+            </h1>
+            <span className="aa-name-flare" aria-hidden="true" />
           </div>
           <p className="aa-hint" aria-hidden="true"><span className="aa-hint-pc">Move your cursor to light the stage</span><span className="aa-hint-touch">The light roams on its own</span></p>
         </div>
@@ -495,8 +489,7 @@ export default function AlluArjunPage() {
 
       <footer className="aa-foot">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <img src="/images/12.png" alt="Allu Arjun" className="h-10 w-auto object-contain" />
+          <div className="flex items-center">
             <p className="max-w-[16rem] text-sm text-[color:var(--steel)]">An independent fan-made digital archive.</p>
           </div>
           <div className="flex flex-wrap gap-6 text-sm"><a href="#home" className="aa-nl">Top</a><a href="#about" className="aa-nl">About</a><a href="#filmography" className="aa-nl">Filmography</a><a href="#contact" className="aa-nl">Contact</a></div>
@@ -534,17 +527,17 @@ html{scroll-behavior:smooth}
 /* ---------- hero: the stage ---------- */
 .aa-stage{position:relative;min-height:100svh;overflow:hidden;--sx:50%;--sy:46%;--rad:290px;background:radial-gradient(ellipse at 50% 125%,rgba(194,72,31,.28),transparent 60%),var(--ink)}
 .aa-halo{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(circle calc(var(--rad)*1.35) at var(--sx) var(--sy),rgba(255,196,120,.16),transparent 70%)}
-.aa-beam{position:absolute;left:50%;top:0;width:min(52vw,460px);height:78%;pointer-events:none;transform:translateX(-50%) scaleY(0);transform-origin:top;opacity:0;background:linear-gradient(180deg,rgba(255,238,196,.34),rgba(255,200,120,.09) 68%,transparent);clip-path:polygon(41% 0,59% 0,100% 100%,0 100%);animation:aaBeam 1.5s cubic-bezier(.2,.7,.2,1) .3s forwards,aaFlick 7s ease-in-out 2s infinite}
-@keyframes aaBeam{to{transform:translateX(-50%) scaleY(1);opacity:1}}
-@keyframes aaFlick{0%,100%{opacity:1}46%{opacity:.78}50%{opacity:1}54%{opacity:.82}}
-.aa-logo-wrap{animation:aaLogoIn 1.6s cubic-bezier(.16,1,.3,1) 1s backwards}
-@keyframes aaLogoIn{from{opacity:0;clip-path:inset(0 0 100% 0);filter:blur(14px) brightness(3);transform:translateY(-24px)}to{clip-path:inset(0)}}
-.aa-logo-glow{position:absolute;inset:-18%;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(255,177,46,.24),transparent 72%);filter:blur(26px);animation:aaGlow 4.6s ease-in-out infinite}
-@keyframes aaGlow{0%,100%{opacity:.45;transform:scale(.95)}50%{opacity:1;transform:scale(1.07)}}
-.aa-logo-stage{filter:drop-shadow(0 12px 22px rgba(0,0,0,.85))}
-.aa-logo-shine{position:absolute;inset:0;pointer-events:none;-webkit-mask:url(/images/allu-logo.png) center/contain no-repeat;mask:url(/images/allu-logo.png) center/contain no-repeat;background:linear-gradient(105deg,transparent 38%,rgba(255,244,205,.95) 50%,transparent 62%);background-size:260% 100%;background-position:160% 0;mix-blend-mode:screen;animation:aaShine 5.8s ease-in-out 3s infinite}
-@keyframes aaShine{0%{background-position:160% 0}45%,100%{background-position:-60% 0}}
 .aa-hero-title{font-family:var(--fd);font-weight:900;text-transform:uppercase;font-size:clamp(4.2rem,17vw,12rem);line-height:.84;letter-spacing:-.01em;text-shadow:0 20px 70px rgba(0,0,0,.6)}
+.aa-hero-lockup{position:relative;display:flex;flex-direction:column;align-items:center;margin-top:clamp(15rem,49vh,30rem);padding:0 0 1.25rem;max-width:100%;}
+.aa-icon-star{display:flex;align-items:center;justify-content:center;gap:clamp(.65rem,2vw,1.5rem);margin-bottom:.55rem;color:#f2d79b;font-size:clamp(.72rem,1.35vw,1.05rem);font-weight:500;letter-spacing:clamp(.28rem,1.1vw,.75rem);white-space:nowrap;text-shadow:0 0 22px rgba(255,190,82,.25)}
+.aa-icon-star span{display:block;width:clamp(2rem,6vw,5rem);height:1px;background:linear-gradient(90deg,transparent,#dca33d)}
+.aa-icon-star span:last-child{transform:scaleX(-1)}
+.aa-hero-title{font-family:var(--fd);font-weight:900;text-transform:uppercase;font-size:clamp(3.4rem,10.5vw,8.8rem);line-height:.82;letter-spacing:.025em;text-shadow:0 12px 50px rgba(0,0,0,.8);}
+.aa-letter{background:linear-gradient(180deg,#fff6d9 5%,#f2d38a 48%,#a96b22 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 20px rgba(255,174,51,.14))}
+.aa-name-flare{position:absolute;left:50%;bottom:.3rem;transform:translateX(-50%);width:min(90%,36rem);height:1px;background:linear-gradient(90deg,transparent,rgba(218,157,55,.65),transparent);box-shadow:0 0 18px rgba(255,177,46,.35)}
+.aa-name-flare::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;transform:translate(-50%,-50%) rotate(45deg);background:#fff1c4;box-shadow:0 0 12px 4px rgba(255,190,88,.7)}
+@media(max-width:640px){.aa-hero-lockup{margin-top:clamp(13rem,43vh,23rem);padding-inline:.25rem}.aa-hero-title{font-size:clamp(3.15rem,14vw,5.8rem)}.aa-icon-star{letter-spacing:.25rem}.aa-icon-star span{width:1.5rem}}
+
 .aa-letter{display:inline-block;background:linear-gradient(180deg,#fff 8%,#e9ddc5 58%,#b6a07a);-webkit-background-clip:text;background-clip:text;color:transparent;animation:aaLetterIn 1.2s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(1.5s + var(--i)*.08s)}
 @keyframes aaLetterIn{from{opacity:0;filter:blur(16px);transform:translateY(36px) scale(1.1)}to{opacity:1;filter:none;transform:none}}
 .aa-rise{animation:aaRise 1s cubic-bezier(.2,.7,.2,1) both;animation-delay:var(--d,1.9s)}
@@ -667,11 +660,44 @@ a.aa-dc-main:hover{color:var(--saffron)}
 .aa-end>div{display:flex;width:max-content;align-items:center;gap:2rem;font-family:var(--fd);font-weight:700;font-size:.85rem;letter-spacing:.2em;animation:aaMq 40s linear infinite}.aa-end i{width:4px;height:4px;border-radius:50%;background:var(--saffron);display:block}
 .aa-foot{border-top:1px solid var(--line);background:#000;padding:2.5rem 1.5rem}@media(min-width:768px){.aa-foot{padding:2.5rem}}
 
-@media(max-width:640px){.aa-mq-t{font-size:1.8rem}.aa-row{gap:1rem}.aa-row span{width:3.2rem}.aa-hint{bottom:1rem}}
+@media(max-width:640px){
+  .aa-mq-t{font-size:1.8rem}
+  .aa-row{gap:1rem}
+  .aa-row span{width:3.2rem}
+  .aa-hint{bottom:1rem}
+
+  /* Mobile: use 17.png as the background across the entire website. */
+  .aa-site{
+    background-color:var(--ink);
+    background-image:linear-gradient(rgba(7,6,5,.42),rgba(7,6,5,.58)),url("/images/17.png");
+    background-position:center top,center top;
+    background-size:cover,100% auto;
+    background-repeat:no-repeat,repeat-y;
+    background-attachment:scroll;
+  }
+  .aa-stage,.aa-sec,.aa-awards,.aa-closing,.aa-mq,.aa-end,.aa-foot{
+    background-image:none!important;
+    background-color:transparent!important;
+  }
+  .aa-stage{background:transparent!important;}
+  .aa-sec{background-color:rgba(7,6,5,.18)!important;}
+  .aa-awards,.aa-closing{background-color:rgba(7,6,5,.22)!important;}
+  .aa-mq,.aa-end,.aa-foot{background-color:rgba(3,3,3,.30)!important;}
+}
+
+/* Laptop/desktop: 16.png is used only on the home hero. */
+@media(min-width:641px){
+  .aa-stage{
+    background-color:var(--ink);
+    background-image:linear-gradient(rgba(7,6,5,.28),rgba(7,6,5,.62)),url("/images/16.png");
+    background-position:center,center;
+    background-size:cover,cover;
+    background-repeat:no-repeat;
+  }
+}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}.aa-grain{display:none}
-  .aa-beam,.aa-logo-wrap,.aa-logo-glow,.aa-logo-shine,.aa-letter,.aa-rise,.aa-hint,.aa-mq-t,.aa-end>div,.aa-confetti i,.aa-tick,.aa-poster,.aa-year,.aa-ftitle,.aa-aw{animation:none!important}
-  .aa-beam{opacity:1;transform:translateX(-50%)}
-  [data-r],.aa-ln>span,.aa-kk,.aa-lead,.aa-frame{opacity:1!important;transform:none!important;transition:none!important}
+  .aa-letter,.aa-rise,.aa-hint,.aa-mq-t,.aa-end>div,.aa-confetti i,.aa-tick,.aa-poster,.aa-year,.aa-ftitle,.aa-aw{animation:none!important}
+    [data-r],.aa-ln>span,.aa-kk,.aa-lead,.aa-frame{opacity:1!important;transform:none!important;transition:none!important}
 }
 `;
