@@ -5,7 +5,7 @@ import Image from "next/image";
 
 const cssVars = (o: Record<string, string | number>) => o as unknown as CSSProperties;
 
-const NAV: [string, string][] = [["home", "Home"], ["about", "About"], ["filmography", "Filmography"], ["birthday", "Birthday"], ["social", "Connect"]];
+const NAV: [string, string][] = [["home", "Home"], ["about", "About"], ["filmography", "Filmography"], ["birthday", "Birthday"], ["social", "Connect"], ["contact", "contact"]];
 
 const MOVIES: [string, string, string][] = [
   ["2003", "Gangotri", "movie1a.jpg"], ["2004", "Arya", "movie2.jpg"], ["2005", "Bunny", "movie3.jpg"], ["2006", "Happy", "movie41.jpg"],
@@ -218,7 +218,7 @@ export default function AlluArjunPage() {
         <div className="mx-auto max-w-7xl">
           <div className="flex h-16 items-center justify-between gap-4">
             <nav className="hidden items-center gap-8 lg:flex" aria-label="Sections">{navLinks("")}</nav>
-            <a href="#contact" className="aa-btn aa-btn-solid !px-5 !py-2.5 !text-sm">Contact</a>
+            <a href="/contact" className="aa-btn aa-btn-solid !px-5 !py-2.5 !text-sm">Contact</a>
           </div>
           <nav className="aa-nosb flex gap-6 overflow-x-auto pb-3 lg:hidden" aria-label="Sections">{navLinks("shrink-0")}</nav>
         </div>
