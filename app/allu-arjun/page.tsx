@@ -507,7 +507,7 @@ html{scroll-behavior:smooth}
 /* ---------- hero: the stage ---------- */
 .aa-stage{position:relative;isolation:isolate;min-height:100svh;overflow:hidden;--sx:50%;--sy:46%;--rad:290px;background:var(--ink)}
 .aa-stage-backgrounds{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.aa-stage-background{position:absolute;inset:0;background-image:var(--desktop-bg);background-size:cover;background-position:center 35%;background-repeat:no-repeat;opacity:1;transition:none;will-change:auto}
+.aa-stage-background{position:absolute;inset:0;background-image:var(--desktop-bg);background-size:cover;background-position:calc(100% + 100px) 35%;background-repeat:no-repeat;opacity:1;transition:none;will-change:auto}
 .aa-stage-shade{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(7,6,5,.38),rgba(7,6,5,.25) 45%,rgba(7,6,5,.78)),radial-gradient(ellipse at 50% 45%,transparent 20%,rgba(7,6,5,.55) 100%)}
 .aa-stage>.aa-halo{z-index:2}
 @media(max-width:640px){.aa-stage-background{background-image:var(--mobile-bg);background-position:center center;background-size:cover}.aa-stage-shade{background:linear-gradient(180deg,rgba(7,6,5,.42),rgba(7,6,5,.24) 42%,rgba(7,6,5,.8)),radial-gradient(ellipse at 50% 45%,transparent 10%,rgba(7,6,5,.5) 100%)}}
