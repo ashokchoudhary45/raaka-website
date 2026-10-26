@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  memo, useCallback, useEffect, useLayoutEffect, useRef, useState,
+  memo, useCallback, useEffect, useRef, useState,
   type ChangeEvent, type MutableRefObject, type PointerEvent as RPE,
 } from "react";
 
@@ -68,7 +68,6 @@ const fmt = (v: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 };
 const isHero = (t: string) => /raaka|make way for the king/i.test(t);
-const sizeOf = (t: string) => (t.length > 34 ? "s" : t.length > 18 ? "m" : "l");
 const MODES = ["ignite", "warp", "scan", "ignite"] as const;
 const TITLE_WORDS = ["MAKE", "WAY", "FOR", "THE", "KING"];
 
@@ -282,38 +281,14 @@ const Overlay = memo(function Overlay({ fx, vars }: { fx: MutableRefObject<FX>; 
   return <canvas ref={ref} className="spk" aria-hidden="true" />;
 });
 
-/* ================= LYRIC LINE (auto-fits: never leaves the screen) ================= */
+/* ================= LYRIC LINE (fixed cinematic size; wraps instead of shrinking) ================= */
 function Line({ seg, i, state }: { seg: Timed; i: number; state: "in" | "out" }) {
-  const ref = useRef<HTMLParagraphElement>(null);
   const hero = isHero(seg.text);
   const mode = hero ? "slam" : MODES[i % MODES.length];
   const text = hero ? seg.text.toUpperCase() : seg.text;
 
-  useLayoutEffect(() => {
-    const el = ref.current;
-    const host = el?.parentElement;
-    if (!el || !host) return;
-    const fit = () => {
-      el.style.fontSize = "";
-      const maxW = host.clientWidth * 0.9; // 10% spare for the slow camera push-in
-      const maxH = host.clientHeight * 0.92;
-      let fs = parseFloat(getComputedStyle(el).fontSize) || 40;
-      const words = Array.from(el.querySelectorAll<HTMLElement>(".w"));
-      for (let n = 0; n < 20; n++) {
-        const widest = words.reduce((m, w) => Math.max(m, w.offsetWidth), 0);
-        if (widest <= maxW && el.offsetWidth <= maxW && el.offsetHeight <= maxH) break;
-        fs *= 0.92; el.style.fontSize = `${fs.toFixed(1)}px`;
-      }
-    };
-    fit();
-    let cancelled = false;
-    void document.fonts?.ready.then(() => { if (!cancelled) fit(); });
-    window.addEventListener("resize", fit);
-    return () => { cancelled = true; window.removeEventListener("resize", fit); };
-  }, [text]);
-
   return (
-    <p ref={ref} className={`ln ${state} ${mode} ${sizeOf(seg.text)}${hero ? " hero" : ""}`} data-text={text} aria-hidden="true">
+    <p className={`ln ${state} ${mode}${hero ? " hero" : ""}`} data-text={text} aria-hidden="true">
       {text.split(" ").map((w, k) => (
         <span key={k}>{k > 0 && " "}<span className="w" style={{ ["--d" as string]: `${k * 45}ms` }}>{w}</span></span>
       ))}
@@ -681,13 +656,15 @@ const CSS = `
 
 /* lyrics stage: sits between the top letterbox and the player bar */
 .stage{position:absolute;left:0;right:0;top:calc(max(46px,5.5vh) + env(safe-area-inset-top));bottom:120px;display:grid;place-items:center;padding:0 3vw;perspective:900px;pointer-events:none;transform:translate3d(calc(var(--px,0)*-10px),calc(var(--py,0)*-7px),0)}
-.ln{grid-area:1/1;position:relative;margin:0;max-width:94vw;text-align:center;text-wrap:balance;font-family:Unbounded,'Segoe UI',system-ui,sans-serif;font-weight:800;line-height:1.12;letter-spacing:-.01em;will-change:transform,opacity;filter:drop-shadow(0 0 2px rgba(255,205,130,.9)) drop-shadow(0 0 18px rgba(255,110,20,.75)) drop-shadow(0 0 60px rgba(255,60,0,.45)) drop-shadow(0 18px 22px rgba(0,0,0,.9))}
-.ln.l{font-size:clamp(40px,9.4vw,150px)}.ln.m{font-size:clamp(28px,6vw,92px)}.ln.s{font-size:clamp(22px,4.1vw,62px)}
-.ln.hero{letter-spacing:.02em}.ln.hero.l{font-size:clamp(48px,12vw,190px)}.ln.hero.m{font-size:clamp(32px,7.6vw,120px)}
+.ln{grid-area:1/1;position:relative;margin:0;width:min(94vw,1500px);max-width:94vw;text-align:center;text-wrap:balance;white-space:normal;overflow-wrap:normal;word-break:normal;font-family:Unbounded,'Segoe UI',system-ui,sans-serif;font-weight:800;line-height:1.08;letter-spacing:-.025em;will-change:transform,opacity;transform-style:preserve-3d;text-shadow:0 1px 0 #ffdfad,0 2px 0 #d98935,0 3px 0 #9c421b,0 4px 0 #64240f,0 7px 0 rgba(20,5,0,.8),0 12px 20px rgba(0,0,0,.95);filter:drop-shadow(0 0 2px rgba(255,205,130,.9)) drop-shadow(0 0 18px rgba(255,110,20,.75)) drop-shadow(0 0 60px rgba(255,60,0,.45)) drop-shadow(0 18px 22px rgba(0,0,0,.9))}
+/* Keep a stable cinematic type scale. Long lyric lines wrap to 2+ lines; they are never auto-shrunk. */
+.ln{font-size:clamp(34px,7.3vw,112px)}
+.ln.hero{font-size:clamp(42px,9vw,142px);letter-spacing:-.025em;line-height:1.04}
+.ln .w{position:relative;transform:translateZ(18px);text-shadow:0 1px 0 #fff0c9,0 2px 0 #e7a34d,0 4px 0 #8d3516,0 8px 12px rgba(0,0,0,.85)}
 .mol,.w{display:inline-block;background:linear-gradient(180deg,#fffaf0 0%,#ffe2a0 28%,#ff9a2e 60%,#e8420a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
-.w{padding:.07em .03em}
-.ln.in{animation:li .25s ease-out both,dl 8s linear .25s both}
-.ln.out{animation:lo .55s cubic-bezier(.5,0,1,.6) both}
+.w{padding:.07em .03em;vertical-align:baseline}
+.ln.in{animation:lyric-arrive .9s cubic-bezier(.16,1,.3,1) both,dl 8s linear .9s both}
+.ln.out{animation:lyric-depart .62s cubic-bezier(.65,0,.35,1) both;filter:blur(2px) drop-shadow(0 0 20px rgba(255,110,20,.5))}
 .ln.in.ignite .w{animation:wi .75s cubic-bezier(.2,.9,.2,1) var(--d) both}
 .ln.in.warp .w{animation:ww .8s cubic-bezier(.16,1,.3,1) var(--d) both}
 .ln.in.scan .w{animation:wc .7s cubic-bezier(.2,.9,.2,1) var(--d) both}
@@ -760,6 +737,8 @@ const CSS = `
 @keyframes bk{50%{opacity:.25}}
 @keyframes gr{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}60%{transform:translate(-2%,-1%)}80%{transform:translate(3%,3%)}100%{transform:translate(0,0)}}
 @keyframes li{from{opacity:0}to{opacity:1}}
+@keyframes lyric-arrive{0%{opacity:0;transform:translate3d(0,42px,-180px) rotateX(-24deg) scale(.78);filter:blur(12px)}55%{opacity:1;filter:blur(0)}78%{transform:translate3d(0,-3px,18px) rotateX(2deg) scale(1.015)}100%{opacity:1;transform:translate3d(0,0,0) rotateX(0) scale(1);filter:blur(0)}}
+@keyframes lyric-depart{0%{opacity:1;transform:translate3d(0,0,0) rotateX(0) scale(1);filter:blur(0)}100%{opacity:0;transform:translate3d(0,-28px,-90px) rotateX(12deg) scale(.94);filter:blur(8px)}}
 @keyframes dl{from{transform:scale(1)}to{transform:scale(1.06)}}
 @keyframes lo{to{opacity:0;transform:scale(1.12) translateY(-3%)}}
 @keyframes wi{from{opacity:0;transform:translateY(70%) scale(.85);clip-path:inset(100% 0 0 0)}to{opacity:1;transform:none;clip-path:inset(0)}}
@@ -794,9 +773,8 @@ const CSS = `
   .hl{height:24px}
   .mtr{max-width:90px}
   .stage{bottom:150px;padding:0 2.5vw}
-  .ln{max-width:95vw}
-  .ln.l{font-size:16.5vw}.ln.m{font-size:11.5vw}.ln.s{font-size:8.8vw}
-  .ln.hero.l{font-size:19vw}.ln.hero.m{font-size:12.8vw}
+  .ln{width:95vw;max-width:95vw;font-size:clamp(30px,8.1vw,58px);line-height:1.12}
+  .ln.hero{font-size:clamp(34px,9.4vw,68px);line-height:1.06}
   .bar{gap:10px;padding-top:28px}
   .tm{position:static;font-size:12px;margin-left:2px}
   .rk .ib{width:44px;height:44px}
