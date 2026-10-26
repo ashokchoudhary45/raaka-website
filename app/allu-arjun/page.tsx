@@ -666,23 +666,18 @@ a.aa-dc-main:hover{color:var(--saffron)}
   .aa-row span{width:3.2rem}
   .aa-hint{bottom:1rem}
 
-  /* Mobile: use 17.png as the background across the entire website. */
+  /* Mobile: 17.png is used only behind the home hero. */
   .aa-site{
     background-color:var(--ink);
-    background-image:linear-gradient(rgba(7,6,5,.42),rgba(7,6,5,.58)),url("/images/17.png");
-    background-position:center top,center top;
-    background-size:cover,100% auto;
-    background-repeat:no-repeat,repeat-y;
-    background-attachment:scroll;
+    background-image:none;
   }
-  .aa-stage,.aa-sec,.aa-awards,.aa-closing,.aa-mq,.aa-end,.aa-foot{
-    background-image:none!important;
-    background-color:transparent!important;
+  .aa-stage{
+    background-color:var(--ink);
+    background-image:linear-gradient(rgba(7,6,5,.28),rgba(7,6,5,.62)),url("/images/17.png");
+    background-position:center,center;
+    background-size:cover,cover;
+    background-repeat:no-repeat;
   }
-  .aa-stage{background:transparent!important;}
-  .aa-sec{background-color:rgba(7,6,5,.18)!important;}
-  .aa-awards,.aa-closing{background-color:rgba(7,6,5,.22)!important;}
-  .aa-mq,.aa-end,.aa-foot{background-color:rgba(3,3,3,.30)!important;}
 }
 
 /* Laptop/desktop: 16.png is used only on the home hero. */
