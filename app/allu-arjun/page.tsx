@@ -158,30 +158,13 @@ export default function AlluArjunPage() {
     return () => { window.removeEventListener("scroll", on); io.disconnect(); so.disconnect(); };
   }, []);
 
-  // ---- hero: a spotlight you move (follows the pointer, roams on its own when idle / on touch) ----
+  // Hero spotlight movement removed: keep the home background lighting static.
   useEffect(() => {
     const el = heroRef.current;
     if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { el.style.setProperty("--rad", "9999px"); return; }
-    let tx = 0.5, ty = 0.5, cx = 0.5, cy = 0.5, last = -9999, vis = true, raf = 0;
-    const onMove = (e: PointerEvent) => {
-      const r = el.getBoundingClientRect();
-      tx = (e.clientX - r.left) / r.width; ty = (e.clientY - r.top) / r.height; last = performance.now();
-    };
-    el.addEventListener("pointermove", onMove);
-    const io = new IntersectionObserver(([e]) => { vis = e.isIntersecting; });
-    io.observe(el);
-    const loop = (t: number) => {
-      if (vis) {
-        if (t - last > 2500) { tx = 0.5 + 0.3 * Math.sin(t / 1700); ty = 0.46 + 0.22 * Math.sin(t / 1100 + 1); }
-        cx += (tx - cx) * 0.07; cy += (ty - cy) * 0.07;
-        el.style.setProperty("--sx", (cx * 100).toFixed(2) + "%");
-        el.style.setProperty("--sy", (cy * 100).toFixed(2) + "%");
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => { el.removeEventListener("pointermove", onMove); io.disconnect(); cancelAnimationFrame(raf); };
+    el.style.setProperty("--sx", "50%");
+    el.style.setProperty("--sy", "46%");
+    el.style.setProperty("--rad", "0px");
   }, []);
 
   // ---- filmography strip keeps the selected film centred (horizontal only) ----
@@ -528,7 +511,7 @@ html{scroll-behavior:smooth}
 .aa-stage-shade{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(7,6,5,.38),rgba(7,6,5,.25) 45%,rgba(7,6,5,.78)),radial-gradient(ellipse at 50% 45%,transparent 20%,rgba(7,6,5,.55) 100%)}
 .aa-stage>.aa-halo{z-index:2}
 @media(max-width:640px){.aa-stage-background{background-image:var(--mobile-bg);background-position:center center;background-size:cover}.aa-stage-shade{background:linear-gradient(180deg,rgba(7,6,5,.42),rgba(7,6,5,.24) 42%,rgba(7,6,5,.8)),radial-gradient(ellipse at 50% 45%,transparent 10%,rgba(7,6,5,.5) 100%)}}
-.aa-halo{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(circle calc(var(--rad)*1.35) at var(--sx) var(--sy),rgba(255,196,120,.16),transparent 70%)}
+.aa-halo{display:none}
 .aa-hero-title{font-family:var(--fd);font-weight:900;text-transform:uppercase;font-size:clamp(4.2rem,17vw,12rem);line-height:.84;letter-spacing:-.01em;text-shadow:0 20px 70px rgba(0,0,0,.6)}
 .aa-hero-lockup{position:relative;display:flex;flex-direction:column;align-items:center;margin-top:clamp(15rem,49vh,30rem);padding:0 0 1.25rem;max-width:100%;}
 .aa-icon-star{display:flex;align-items:center;justify-content:center;gap:clamp(.65rem,2vw,1.5rem);margin-bottom:.55rem;color:#f2d79b;font-size:clamp(.72rem,1.35vw,1.05rem);font-weight:500;letter-spacing:clamp(.28rem,1.1vw,.75rem);white-space:nowrap;text-shadow:0 0 22px rgba(255,190,82,.25)}
