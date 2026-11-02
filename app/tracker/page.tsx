@@ -16,7 +16,7 @@ type ScanData = {
   theatres?: Theatre[]; progress?: number; stopped?: boolean; scanning?: boolean; lastError?: string | null;
 };
 const DATA_URL = "/scan-latest.json";
-const RAMAYANA MOVIE = ""; // Add movie name here when ready.
+const MOVIE_NAME = "RAMAYANA MOVIE"; // Add movie name here when ready.
 const number = (n: unknown) => Number(n || 0);
 const fmt = (n: number) => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n || 0);
 const money = (n: number) => n >= 1e7 ? `₹${(n / 1e7).toFixed(2)} Cr` : n >= 1e5 ? `₹${(n / 1e5).toFixed(2)} L` : `₹${fmt(n)}`;
