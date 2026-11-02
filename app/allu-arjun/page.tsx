@@ -447,11 +447,11 @@ export default function AlluArjunPage() {
               </div>
               <a href="https://x.com/cricvizanalys" target="_blank" rel="noopener noreferrer" className="aa-dc aa-dc-link aa-contact-profile">
                 <span className="aa-contact-pfp aa-contact-fallback" aria-hidden="true">𝕏</span><img className="aa-contact-pfp" src="https://unavatar.io/x/cricvizanalys" alt="@cricvizanalys profile picture" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-                <span className="aa-contact-profile-copy"><p>YOUR X / TWITTER</p><span className="aa-dc-main">@cricvizanalys <i>↗</i></span><small>Open profile</small></span>
+                <span className="aa-contact-profile-copy"><p> X </p><span className="aa-dc-main">@cricvizanalys <i>↗</i></span><small>Open profile</small></span>
               </a>
               <a href="https://www.instagram.com/45_.editz/" target="_blank" rel="noopener noreferrer" className="aa-dc aa-dc-link aa-contact-profile">
                 <span className="aa-contact-pfp aa-contact-fallback" aria-hidden="true">◎</span><img className="aa-contact-pfp" src="https://unavatar.io/instagram/45_.editz" alt="@45_.editz Instagram profile picture" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-                <span className="aa-contact-profile-copy"><p>YOUR INSTAGRAM</p><span className="aa-dc-main">@45_.editz <i>↗</i></span><small>Open profile</small></span>
+                <span className="aa-contact-profile-copy"><p>INSTAGRAM</p><span className="aa-dc-main">@45_.editz <i>↗</i></span><small>Open profile</small></span>
               </a>
             </div>
           </div>
@@ -465,7 +465,7 @@ export default function AlluArjunPage() {
         </div>
       </section>
 
-      <div className="aa-end" aria-hidden="true"><div><span>AN INDEPENDENT DIGITAL ARCHIVE</span><i></i><span>ALLU ARJUN</span><i></i><span>THE JOURNEY CONTINUES</span><i></i><span>AN INDEPENDENT DIGITAL ARCHIVE</span><i></i><span>ALLU ARJUN</span><i></i><span>THE JOURNEY CONTINUES</span><i></i></div></div>
+      <div className="aa-end" aria-hidden="true"><div><span>AN INDEPENDENT DIGITAL ARCHIVE</span><i></i><span>FOLLOW US ON SOCIAL MEDIA</span><i></i><span>THE JOURNEY CONTINUES</span><i></i><span>AN INDEPENDENT DIGITAL ARCHIVE</span><i></i><span>ALLU ARJUN</span><i></i><span>THE JOURNEY CONTINUES</span><i></i></div></div>
 
       <footer className="aa-foot">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
