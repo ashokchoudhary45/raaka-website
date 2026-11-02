@@ -113,7 +113,7 @@ export default function AdvanceBookingPage() {
       map.set(name,v);
     });
     return [...map.entries()].map(([name,v])=>({
-      name,value:v.booked,
+      name,
       detail:`${fmt(v.shows)} shows · ${fmt(v.theatres.size)} theatres · ${money(v.value)} · ${pct(v.booked,v.capacity).toFixed(1)}%`,
       shows:v.shows, theatres:v.theatres.size, capacity:v.capacity, available:v.available, booked:v.booked, value:v.value
     })).sort((a,b)=>b.value-a.value);
