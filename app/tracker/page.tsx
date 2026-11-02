@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 type Theatre = {
@@ -41,6 +41,51 @@ const formatEntries = (t: Theatre) => t.formatBreakdown && Object.keys(t.formatB
   ? Object.entries(t.formatBreakdown)
   : splitFormats(t.format).map(name => [name, { shows: 0, capacity: 0, available: 0, booked: 0, value: 0 }] as const);
 
+const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Floating embers behind the whole page */
+function Embers() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current; if (!c || reduced()) return;
+    const x = c.getContext("2d"); if (!x) return;
+    let w = 0, h = 0, raf = 0;
+    const ps = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.8 + .4, s: Math.random() * .0006 + .00015, d: Math.random() * 6.28, a: Math.random() * .6 + .3 }));
+    const size = () => { w = c.width = innerWidth; h = c.height = innerHeight; };
+    size(); addEventListener("resize", size);
+    const loop = (t: number) => {
+      x.clearRect(0, 0, w, h);
+      for (const p of ps) {
+        p.y -= p.s; if (p.y < -.05) { p.y = 1.05; p.x = Math.random(); }
+        x.beginPath(); x.shadowBlur = 12; x.shadowColor = "#ff8a30";
+        x.fillStyle = `rgba(255,${(150 + p.a * 80) | 0},70,${p.a * (.25 + .75 * p.y)})`;
+        x.arc((p.x + Math.sin(t / 1800 + p.d) * .015) * w, p.y * h, p.r, 0, 6.283); x.fill();
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => { cancelAnimationFrame(raf); removeEventListener("resize", size); };
+  }, []);
+  return <canvas ref={ref} className="embers" aria-hidden="true" />;
+}
+
+/* Number that counts up smoothly */
+function Count({ to, format = fmt }: { to: number; format?: (n: number) => string }) {
+  const [v, setV] = useState(0);
+  const prev = useRef(0);
+  useEffect(() => {
+    if (reduced()) { setV(to); return; }
+    const from = prev.current, s = performance.now(); let raf = 0;
+    const f = (t: number) => {
+      const p = Math.min(1, (t - s) / 1200), val = from + (to - from) * (1 - Math.pow(1 - p, 4));
+      setV(val); prev.current = val; if (p < 1) raf = requestAnimationFrame(f);
+    };
+    raf = requestAnimationFrame(f);
+    return () => cancelAnimationFrame(raf);
+  }, [to]);
+  return <>{format(v)}</>;
+}
+
 function BarList({ rows, valueLabel = (n: number) => fmt(n), maxRows = 5, expandLabel = "Show more" }: {
   rows: { name: string; value: number; detail?: string }[];
   valueLabel?: (n: number) => string; maxRows?: number; expandLabel?: string;
@@ -48,15 +93,14 @@ function BarList({ rows, valueLabel = (n: number) => fmt(n), maxRows = 5, expand
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? rows : rows.slice(0, maxRows);
   const max = Math.max(1, ...rows.map(r => r.value));
-  return <><div className="barList">{visible.map((r) => <div className="barRow" key={r.name}>
-    <div className="barTop"><span title={r.name}>{r.name}</span><b>{valueLabel(r.value)}{r.detail ? <small> · {r.detail}</small> : null}</b></div>
-    <div className="barTrack"><i style={{ width: `${Math.max(r.value ? 1.5 : 0, r.value/max*100)}%` }} /></div>
+  return <><div className="barList">{visible.map((r, i) => <div className="barRow" key={r.name}>
+    <div className="barTop"><span title={r.name}>{r.name}</span><b>{valueLabel(r.value)}</b></div>
+    {r.detail ? <small className="barDetail">{r.detail}</small> : null}
+    <div className="barTrack"><i style={{ width: `${Math.max(r.value ? 1.5 : 0, r.value / max * 100)}%`, "--d": `${i * 90}ms` } as CSSProperties} /></div>
   </div>)}</div>{rows.length > maxRows && <button className="expandRows" onClick={() => setExpanded(v => !v)}>{expanded ? "Show less" : `${expandLabel} (${rows.length - maxRows} more)`}</button>}</>;
 }
 
 export default function AdvanceBookingPage() {
-  // Scoped page styles keep this route self-contained.
-
   const [data, setData] = useState<ScanData | null>(null);
   const [error, setError] = useState("");
   const [city, setCity] = useState("All cities");
@@ -69,16 +113,37 @@ export default function AdvanceBookingPage() {
     fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" })
       .then(r => { if (!r.ok) throw new Error(`Could not load ${DATA_URL} (${r.status})`); return r.json(); })
       .then((json: unknown) => { if (active) setData(json as ScanData); })
-      .catch(e => { if (active) setError(e.message || "Unable to load scan data"); });
+      .catch(e => { if (active) setError(e.message || "Unable to load data"); });
     return () => { active = false; };
   }, []);
+
+  // Cursor-following golden spotlight on every .glow surface
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest?.(".glow") as HTMLElement | null;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+      el.style.setProperty("--my", `${e.clientY - r.top}px`);
+    };
+    document.addEventListener("pointermove", move);
+    return () => document.removeEventListener("pointermove", move);
+  }, []);
+
+  // Scroll reveal
+  useEffect(() => {
+    const els = document.querySelectorAll(".rv:not(.in)");
+    if (reduced() || !("IntersectionObserver" in window)) { els.forEach(el => el.classList.add("in")); return; }
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .12 });
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, [data]);
 
   const all = data?.theatres || [];
   const cities = useMemo(() => unique(all.map(x => x.city)), [all]);
   const dates = useMemo(() => unique(all.map(x => x.date)), [all]);
   const languages = useMemo(() => unique(all.map(x => x.language)), [all]);
   const formats = useMemo(() => unique(all.flatMap(x => formatEntries(x).map(([name]) => name))), [all]);
-  const states = useMemo(() => unique(all.map(x => stateFromAddress(x.address))), [all]);
 
   const filtered = useMemo(() => all.filter(t =>
     (city === "All cities" || t.city === city) &&
@@ -149,38 +214,42 @@ export default function AdvanceBookingPage() {
     return [...map.entries()].map(([name,v])=>({name,value:v.booked,detail:`${fmt(v.shows)} shows · ${fmt(v.theatres.size)} theatres · ${money(v.value)} · ${pct(v.booked,v.capacity).toFixed(1)}%`})).sort((a,b)=>b.value-a.value);
   },[filtered]);
 
-  const failed = all.filter(t=>t.status==="failed").length;
-  const done = all.filter(t=>t.status==="done").length;
-  const lastUpdated = data?.lastCapture ? new Date(data.lastCapture).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}) : "Not available";
+  const lastUpdated = data?.lastCapture ? new Date(data.lastCapture).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}) : "";
+  const CIRC = 2 * Math.PI * 62;
 
-  return <><style>{styles}</style><main className="abPage">
+  return <><style>{styles}</style><Embers /><main className="abPage">
     <header className="topbar">
-      <div className="brand"><div className="brandMark">✦</div><div><div className="eyebrow">WORLD OF RAAKA · DATA INTELLIGENCE</div><div className="brandTitle">ADVANCE BOOKING <span>TRACKER</span></div><div className="brandSub">India theatrical booking overview</div></div></div>
-      <div className="livePill"><i /> SCAN DATA <b>{data ? "LOADED" : "CONNECTING"}</b></div>
+      <div className="brand">
+        <svg className="sun" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="8" /><g>{Array.from({ length: 12 }, (_, i) => <line key={i} x1="24" y1="4" x2="24" y2="10" transform={`rotate(${i * 30} 24 24)`} />)}</g></svg>
+        <div className="brandTitle">WORLD OF RAAKA <span>TRACKER</span></div>
+      </div>
     </header>
 
     <section className="movieHero">
-      <div className="eyebrow">NATIONAL ADVANCE BOOKING OVERVIEW</div>
-      <h1>{MOVIE_NAME || "MOVIE NAME"}</h1>
-      <p>City, cinema, language, format and date-wise booking intelligence</p>
-      <div className="heroMeta"><span>● {data?.scanning ? "Scan in progress" : data?.stopped ? "Scan stopped" : "Latest scan snapshot"}</span><span>{data?.lastCapture ? `Updated ${lastUpdated}` : "Waiting for scan data"}</span><span>{fmt(data?.totals?.cities || cities.length)} cities reported</span></div>
+      <div className="halo" aria-hidden="true"><i /><i /><i /></div>
+      <h1 aria-label={MOVIE_NAME}>{[...MOVIE_NAME].map((ch, i) => <span key={i} aria-hidden="true" style={{ "--i": i } as CSSProperties}>{ch}</span>)}</h1>
+      <p>National advance booking overview</p>
+      {data && <div className="heroMeta">{lastUpdated && <span>Updated {lastUpdated}</span>}<span>{fmt(data.totals?.cities || cities.length)} cities</span></div>}
     </section>
 
-    {error && <div className="errorBox">DATA LOAD ERROR · {error}<br/><small>Place scan-latest.json in the public folder of this Next.js app.</small></div>}
-    {!data && !error && <div className="loadingBox">Loading scan-latest.json…</div>}
+    {error && <div className="errorBox">Data load nahi ho paya · {error}<br/><small>Place scan-latest.json in the public folder of this Next.js app.</small></div>}
+    {!data && !error && <div className="loader"><i /><i /><i /></div>}
 
     {data && <>
       <section className="kpiGrid">
-        <article className="kpi occupancyCard"><div className="eyebrow">OCCUPANCY</div><div className="ring" style={{"--value":`${Math.min(100,stats.occupancy)}%`} as CSSProperties}><div><b>{stats.occupancy.toFixed(1)}%</b><small>Booked / capacity</small></div></div></article>
-        <Kpi label="LANGUAGES FOUND" value={fmt(new Set(filtered.map(t=>t.language)).size)} sub={`${languages.length} in current scan`} tone="teal"/>
-        <Kpi label="TOTAL SHOWS" value={fmt(stats.shows)} sub={`${fmt(stats.cinemas)} cinema records`} tone="blue"/>
-        <Kpi label="TOTAL CAPACITY" value={fmt(stats.capacity)} sub="Seats across filtered records" tone="violet"/>
-        <Kpi label="AVAILABLE" value={fmt(stats.available)} sub="Open seats observed" tone="teal"/>
-        <Kpi label="BOOKED" value={fmt(stats.booked)} sub="Capacity − available" tone="pink"/>
-        <Kpi label="EST. COLLECTION" value={money(stats.value)} sub="Scanner estimated unavailable value" tone="gold"/>
+        <article className="kpi glow occupancyCard rv"><div className="kpiLabel">Occupancy</div>
+          <div className="ring"><svg viewBox="0 0 150 150"><defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffe3a3"/><stop offset=".55" stopColor="#f0a53c"/><stop offset="1" stopColor="#ff5a2a"/></linearGradient></defs>
+            <circle cx="75" cy="75" r="62" className="rt"/><circle cx="75" cy="75" r="62" className="rf" style={{ strokeDasharray: CIRC, strokeDashoffset: CIRC * (1 - Math.min(100, stats.occupancy) / 100), "--c": CIRC } as CSSProperties}/></svg>
+            <div><b><Count to={stats.occupancy} format={n => `${n.toFixed(1)}%`}/></b><small>Booked / capacity</small></div></div></article>
+        <Kpi label="Languages found" value={<Count to={new Set(filtered.map(t=>t.language)).size}/>} sub={`${languages.length} available`} tone="a1"/>
+        <Kpi label="Total shows" value={<Count to={stats.shows}/>} sub={`${fmt(stats.cinemas)} cinemas`} tone="a2"/>
+        <Kpi label="Total capacity" value={<Count to={stats.capacity}/>} sub="Seats in current view" tone="a3"/>
+        <Kpi label="Available" value={<Count to={stats.available}/>} sub="Open seats" tone="a1"/>
+        <Kpi label="Booked" value={<Count to={stats.booked}/>} sub="Capacity − available" tone="a4"/>
+        <Kpi label="Est. collection" value={<Count to={stats.value} format={money}/>} sub="Estimated booked value" tone="a5"/>
       </section>
 
-      <section className="filters">
+      <section className="filters rv">
         <select value={city} onChange={e=>setCity(e.target.value)}><option>All cities</option>{cities.map(x=><option key={x}>{x}</option>)}</select>
         <select value={date} onChange={e=>setDate(e.target.value)}><option>All dates</option>{dates.map(x=><option key={x}>{x}</option>)}</select>
         <select value={language} onChange={e=>setLanguage(e.target.value)}><option>All languages</option>{languages.map(x=><option key={x}>{x}</option>)}</select>
@@ -189,37 +258,74 @@ export default function AdvanceBookingPage() {
       </section>
 
       <section className="reportGrid">
-        <Panel title="Language-wise" hint="Booked seats · estimated value"><BarList rows={languageRows} valueLabel={fmt}/></Panel>
+        <Panel title="Language-wise" hint="Booked seats"><BarList rows={languageRows} valueLabel={fmt}/></Panel>
         <Panel title="Format-wise" hint="Booked seats by format"><BarList rows={formatRows} valueLabel={fmt}/></Panel>
-        <Panel title="State-wise" hint="Top 5 states · remaining states under More"><BarList rows={stateRows} valueLabel={fmt} maxRows={5}/></Panel>
-        <Panel title="City-wise" hint="Top 5 cities · remaining cities under More"><BarList rows={cityRows} valueLabel={fmt} maxRows={5}/></Panel>
-        <Panel title="Cinema chain-wise" hint="PVR + INOX + Cinepolis · Movie Max · Rajhans · More"><BarList rows={chainRows} valueLabel={fmt} maxRows={3} expandLabel="More chains"/></Panel>
+        <Panel title="State-wise" hint="Top 5 states, rest under More"><BarList rows={stateRows} valueLabel={fmt} maxRows={5}/></Panel>
+        <Panel title="City-wise" hint="Top 5 cities, rest under More"><BarList rows={cityRows} valueLabel={fmt} maxRows={5}/></Panel>
+        <Panel title="Cinema chain-wise" hint="PVR + INOX + Cinepolis, Movie Max, Rajhans"><BarList rows={chainRows} valueLabel={fmt} maxRows={3} expandLabel="More chains"/></Panel>
         <Panel title="Date-wise" hint="Booked seats by show date"><BarList rows={dateRows} valueLabel={fmt}/></Panel>
       </section>
 
-      <section className="tablePanel summaryNote">
-        <div className="sectionHead"><div><div className="eyebrow">AGGREGATED REPORTS</div><h2>Booking analysis overview</h2><p>All figures are grouped and consolidated. Individual theatre-by-theatre records are intentionally hidden.</p></div><span className="countPill">{fmt(filtered.length)} source records aggregated</span></div>
-        <div className="summaryChips"><span>{fmt(stats.cityCount)} cities</span><span>{fmt(stats.cinemas)} unique cinemas</span><span>{fmt(stats.shows)} shows</span><span>{fmt(stats.capacity)} seats</span><span>{stats.occupancy.toFixed(1)}% occupancy</span></div>
+      <section className="summaryNote glow rv">
+        <div className="sectionHead"><div><h2>Booking analysis overview</h2><p>All figures are grouped and consolidated across {fmt(filtered.length)} records.</p></div></div>
+        <div className="summaryChips"><span>{fmt(stats.cityCount)} cities</span><span>{fmt(stats.cinemas)} cinemas</span><span>{fmt(stats.shows)} shows</span><span>{fmt(stats.capacity)} seats</span><span>{stats.occupancy.toFixed(1)}% occupancy</span></div>
       </section>
-      <footer className="foot"><span>WORLD OF RAAKA · ADVANCE BOOKING INTELLIGENCE</span><span>Completed {fmt(done)} · Failed {fmt(failed)} · Scan coverage {fmt(data.progress || 0)}%</span><span>Last capture: {lastUpdated}</span></footer>
+      <footer className="foot"><span>WORLD OF RAAKA TRACKER</span>{lastUpdated && <span>Last updated {lastUpdated}</span>}</footer>
     </>}
   </main></>;
 }
 
-function Kpi({label,value,sub,tone}:{label:string;value:string;sub:string;tone:string}) {
-  return <article className={`kpi ${tone}`}><div className="kpiLabel">{label}</div><strong>{value}</strong><small>{sub}</small></article>;
+function Kpi({label,value,sub,tone}:{label:string;value:ReactNode;sub:string;tone:string}) {
+  return <article className={`kpi glow rv ${tone}`}><div className="kpiLabel">{label}</div><strong>{value}</strong><small>{sub}</small></article>;
 }
 function Panel({title,hint,children}:{title:string;hint:string;children:ReactNode}) {
-  return <article className="panel"><div className="panelHead"><div><h3>{title}</h3><small>{hint}</small></div></div>{children}</article>;
+  return <article className="panel glow rv"><div className="panelHead"><h3>{title}</h3><small>{hint}</small></div>{children}</article>;
 }
 
 const styles = `
-*{box-sizing:border-box} .abPage{--bg:#0c0818;--panel:#191326;--line:#302541;--muted:#a39ab8;--text:#f5f1ff;min-height:100vh;padding:28px clamp(14px,3vw,48px) 40px;background:radial-gradient(ellipse at 10% 0%,#33205d 0,transparent 42%),radial-gradient(ellipse at 90% 45%,#29162e 0,transparent 35%),var(--bg);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial}
-.topbar{max-width:1700px;margin:0 auto 22px;display:flex;justify-content:space-between;align-items:center;gap:16px}.brand{display:flex;align-items:center;gap:14px}.brandMark{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(145deg,#3a2865,#19142b);border:1px solid #57417c;color:#d6a8ff;font-size:25px}.eyebrow{font-size:10px;font-weight:800;letter-spacing:1.7px;color:#b7a4d6}.brandTitle{font-size:19px;font-weight:900;letter-spacing:.5px}.brandTitle span{color:#bd91ff}.brandSub{color:var(--muted);font-size:11px}.livePill,.countPill{border:1px solid var(--line);background:#191326;padding:9px 13px;border-radius:99px;color:#c9bfdc;font-size:10px;letter-spacing:.6px}.livePill i{display:inline-block;width:7px;height:7px;background:#43d6a7;border-radius:50%;margin-right:7px;box-shadow:0 0 10px #43d6a7}.livePill b{color:#fff;margin-left:5px}
-.movieHero{max-width:1700px;margin:0 auto 17px;padding:24px 28px;border:1px solid #49366c;border-radius:19px;background:linear-gradient(110deg,#24183d,#171326 65%,#302039);position:relative;overflow:hidden}.movieHero:after{content:"";position:absolute;width:270px;height:270px;right:5%;top:-150px;border-radius:50%;border:1px solid #ffffff12;box-shadow:0 0 0 28px #ffffff06,0 0 0 58px #ffffff04}.movieHero h1{font-size:clamp(26px,4vw,40px);margin:5px 0 3px;font-weight:850;letter-spacing:-1px}.movieHero p{color:#b9afca;margin:0}.heroMeta{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.heroMeta span{padding:6px 10px;border-radius:8px;border:1px solid #493760;background:#201731;color:#d4c6e8;font-size:10px}
-.kpiGrid{max-width:1700px;margin:0 auto 15px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}.kpi{min-height:105px;padding:16px 18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#211832,#171222);position:relative;overflow:hidden}.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#9b72e8}.kpi.teal:before{background:#43d6c0}.kpi.blue:before{background:#6b8fff}.kpi.violet:before{background:#9e73ff}.kpi.pink:before{background:#ed648d}.kpi.gold:before{background:#eab85b}.kpiLabel{color:#b5a9c9;font-size:10px;letter-spacing:.6px}.kpi strong{display:block;font-size:clamp(21px,2vw,29px);line-height:1.2;margin:7px 0 3px;font-weight:850;letter-spacing:-.8px}.kpi small{font-size:10px;color:#9186a6}.occupancyCard{grid-row:span 2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:220px}.ring{width:142px;height:142px;margin-top:8px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#f36d92 var(--value),#4b3c68 0);position:relative}.ring:before{content:"";position:absolute;inset:10px;border-radius:50%;background:#1b1429}.ring>div{position:relative;text-align:center}.ring b{display:block;font-size:28px}.ring small{font-size:10px;color:#a99fbc}
-.filters{max-width:1700px;margin:0 auto 15px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px}.filters select,.filters button,.searchBox{min-width:0;border:1px solid #3a2e50;background:#1b152a;color:#eee8fa;border-radius:11px;padding:12px 13px;outline:none}.filters button,.moreBtn{background:#302047;border-color:#4b376b;cursor:pointer;font-weight:700}.reportGrid{max-width:1700px;margin:0 auto 15px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.panel,.tablePanel{min-width:0;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#20172f,#171221);padding:17px}.panelHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.panelHead h3{font-size:13px;margin:0 0 3px}.panelHead small{font-size:10px;color:#a398b7}.barList{display:flex;flex-direction:column;gap:13px}.expandRows{margin-top:13px;border:1px solid #493760;background:#211832;color:#d8c6f4;border-radius:8px;padding:7px 11px;font-size:10px;font-weight:750;cursor:pointer}.expandRows:hover{background:#302047}.barTop{display:flex;justify-content:space-between;gap:12px;font-size:10px;margin-bottom:6px}.barTop span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.barTop b{color:#b9adc9;text-align:right;white-space:nowrap;font-weight:500}.barTop small{color:#857b99;font-size:9px}.barTrack{height:7px;background:#352b45;border-radius:30px;overflow:hidden}.barTrack i{height:100%;display:block;border-radius:30px;background:linear-gradient(90deg,#9b70f0,#ef5f96)}
-.tablePanel{max-width:1700px;margin:0 auto;padding:20px}.sectionHead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.sectionHead h2{font-size:18px;margin:3px 0}.sectionHead p{font-size:11px;color:var(--muted);margin:0}.summaryNote{max-width:1700px;margin:0 auto;padding:20px}.summaryChips{display:flex;flex-wrap:wrap;gap:9px}.summaryChips span{border:1px solid #493760;background:#201731;color:#d4c6e8;border-radius:9px;padding:9px 12px;font-size:11px}.foot{max-width:1700px;margin:15px auto 0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#887d99;font-size:9px;letter-spacing:.5px}.errorBox,.loadingBox{max-width:1700px;margin:20px auto;padding:20px;border:1px solid #684052;background:#281725;border-radius:12px;color:#ffb6c8}.loadingBox{border-color:var(--line);background:#191326;color:#cfc3e1}
-@media(max-width:1050px){.kpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.reportGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:650px){.abPage{padding:16px 11px 28px}.topbar{align-items:flex-start}.brandTitle{font-size:15px}.livePill{font-size:8px;padding:7px}.movieHero{padding:20px 17px}.kpiGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.occupancyCard{grid-column:span 2;grid-row:auto;min-height:170px}.ring{width:120px;height:120px}.reportGrid{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr;gap:7px}.filters button{grid-column:1/-1}.panel{padding:14px}.tablePanel{padding:14px}.foot{font-size:8px}}
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Manrope:wght@400;500;700&display=swap');
+*{box-sizing:border-box}
+.abPage{--gold:#e9b866;--gold2:#ffe2a6;--ember:#ff7a2f;--blood:#c1272d;--text:#f7ecd8;--muted:#a8997f;--line:rgba(233,184,102,.17);position:relative;z-index:1;min-height:100vh;padding:26px clamp(14px,3vw,48px) 44px;color:var(--text);font:14px/1.5 Manrope,ui-sans-serif,system-ui,sans-serif}
+body{background:#07050a}
+.embers{position:fixed;inset:0;z-index:0;pointer-events:none}
+.abPage:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(255,122,47,.20),transparent 70%),radial-gradient(ellipse 50% 40% at 100% 60%,rgba(193,39,45,.14),transparent 70%),radial-gradient(ellipse 50% 40% at 0% 80%,rgba(233,184,102,.08),transparent 70%),#07050a}
+.abPage:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.topbar{max-width:1700px;margin:0 auto 18px;display:flex;align-items:center;animation:drop 1s .1s both cubic-bezier(.2,.8,.2,1)}
+.brand{display:flex;align-items:center;gap:13px}.sun{width:44px;height:44px;fill:none;stroke:var(--gold);stroke-width:2;stroke-linecap:round;filter:drop-shadow(0 0 8px rgba(255,150,50,.7))}.sun circle{fill:var(--ember);stroke:var(--gold2)}.sun g{transform-origin:24px 24px;animation:spin 24s linear infinite}
+.brandTitle{font:700 clamp(15px,2.2vw,21px)/1 Cinzel,serif;letter-spacing:.2em;background:linear-gradient(100deg,#f7ecd8 20%,var(--gold2) 45%,var(--ember) 55%,#f7ecd8 80%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite}.brandTitle span{letter-spacing:.2em}
+.movieHero{max-width:1700px;margin:0 auto 26px;padding:clamp(46px,8vw,110px) 20px clamp(36px,6vw,80px);text-align:center;position:relative;overflow:hidden;border-radius:26px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,122,47,.07),rgba(12,8,10,.55))}
+.halo{position:absolute;left:50%;top:50%;width:min(720px,110vw);aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none}.halo i{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(233,184,102,.22)}.halo i:nth-child(1){animation:spin 60s linear infinite;border-style:dashed}.halo i:nth-child(2){inset:11%;animation:spin 45s linear infinite reverse;border-color:rgba(255,122,47,.28)}.halo i:nth-child(3){inset:24%;background:radial-gradient(circle,rgba(255,122,47,.28),transparent 68%);border:0;animation:breathe 5s ease-in-out infinite}
+.movieHero h1{position:relative;margin:0;font:900 clamp(50px,12vw,170px)/1 Cinzel,serif;letter-spacing:.06em;text-indent:.06em;display:flex;justify-content:center;filter:drop-shadow(0 6px 40px rgba(255,122,47,.35))}
+.movieHero h1 span{display:inline-block;background:linear-gradient(180deg,#fff1cc 10%,var(--gold) 55%,#b8642a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:0;transform:translateY(60%) scale(.9);filter:blur(10px);animation:letter 1.1s calc(.35s + var(--i)*.09s) forwards cubic-bezier(.2,.8,.2,1)}
+.movieHero p{position:relative;margin:14px 0 0;color:var(--muted);letter-spacing:.32em;font-size:12px;animation:drop 1s 1.4s both}
+.heroMeta{position:relative;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:22px;animation:drop 1s 1.6s both}.heroMeta span{padding:7px 14px;border-radius:99px;border:1px solid var(--line);background:rgba(233,184,102,.06);color:#e9d9b8;font-size:11px;backdrop-filter:blur(8px)}
+.glow{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:linear-gradient(150deg,rgba(32,22,18,.78),rgba(14,10,12,.82));backdrop-filter:blur(10px);transition:transform .5s cubic-bezier(.2,.8,.2,1),border-color .4s,box-shadow .4s}
+.glow:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%),rgba(255,170,70,.16),transparent 60%)}
+.glow:hover{border-color:rgba(233,184,102,.42);box-shadow:0 18px 50px -20px rgba(255,122,47,.45)}.glow:hover:before{opacity:1}
+.rv{opacity:0;transform:translateY(26px)}.rv.in{opacity:1;transform:none;transition:opacity .9s cubic-bezier(.2,.8,.2,1),transform .9s cubic-bezier(.2,.8,.2,1),border-color .4s,box-shadow .4s}
+.kpiGrid{max-width:1700px;margin:0 auto 14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{--a:var(--gold);min-height:112px;padding:18px 20px}.kpi.a1{--a:#f2c879}.kpi.a2{--a:#ff9b4a}.kpi.a3{--a:#e9b866}.kpi.a4{--a:#ff6a45}.kpi.a5{--a:#ffe2a6}
+.kpi:after{content:"";position:absolute;left:20px;top:0;width:34px;height:2px;background:var(--a);box-shadow:0 0 14px var(--a);transition:width .5s}.kpi:hover:after{width:calc(100% - 40px)}
+.kpiLabel{color:var(--muted);font-size:12px;letter-spacing:.06em}.kpi strong{display:block;font:700 clamp(24px,2.5vw,34px)/1.15 Cinzel,serif;margin:8px 0 3px;color:var(--a);text-shadow:0 0 24px color-mix(in srgb,var(--a) 40%,transparent);font-variant-numeric:tabular-nums}.kpi small{font-size:11px;color:#8e8068}
+.occupancyCard{grid-row:span 2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px}
+.ring{position:relative;width:170px;height:170px;margin-top:10px;display:grid;place-items:center}.ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}.rt,.rf{fill:none;stroke-width:9}.rt{stroke:rgba(233,184,102,.12)}.rf{stroke:url(#gold);stroke-linecap:round;filter:drop-shadow(0 0 8px rgba(255,122,47,.7));transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1);animation:ring 2s .3s both cubic-bezier(.2,.8,.2,1)}
+.ring>div{position:relative;text-align:center}.ring b{display:block;font:700 30px/1.1 Cinzel,serif;color:var(--gold2)}.ring small{font-size:10px;color:var(--muted)}
+.filters{max-width:1700px;margin:0 auto 14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px}
+.filters select,.filters button{min-width:0;border:1px solid var(--line);background:rgba(20,14,12,.8);color:var(--text);border-radius:12px;padding:13px 14px;outline:none;font:inherit;transition:border-color .3s,box-shadow .3s,background .3s}.filters select:hover,.filters select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(233,184,102,.12)}.filters option{background:#14100c}
+.filters button{cursor:pointer;font-weight:700;color:#1a0f06;border:0;background:linear-gradient(120deg,var(--gold2),var(--gold) 50%,var(--ember));background-size:200% 100%}.filters button:hover{background-position:100% 0;box-shadow:0 8px 28px -8px rgba(255,122,47,.8)}
+.reportGrid{max-width:1700px;margin:0 auto 14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.panel{min-width:0;padding:20px}.panelHead{margin-bottom:18px}.panelHead h3{font:700 15px/1.2 Cinzel,serif;letter-spacing:.08em;margin:0 0 4px;color:var(--gold2)}.panelHead small{font-size:11px;color:var(--muted)}
+.barList{display:flex;flex-direction:column;gap:15px}.barTop{display:flex;justify-content:space-between;gap:12px;font-size:12px}.barTop span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.barTop b{color:var(--gold2);white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums}.barDetail{display:block;color:#857862;font-size:10px;margin:2px 0 7px}
+.barTrack{height:6px;background:rgba(233,184,102,.1);border-radius:30px;overflow:hidden}.barTrack i{display:block;height:100%;border-radius:30px;transform-origin:left;background:linear-gradient(90deg,var(--blood),var(--ember) 50%,var(--gold2));box-shadow:0 0 12px rgba(255,122,47,.6);animation:grow 1.3s var(--d,0ms) both cubic-bezier(.2,.8,.2,1)}
+.expandRows{margin-top:15px;border:1px solid var(--line);background:rgba(233,184,102,.07);color:var(--gold2);border-radius:99px;padding:7px 14px;font:700 11px Manrope,sans-serif;cursor:pointer;transition:background .3s,transform .3s}.expandRows:hover{background:rgba(233,184,102,.16);transform:translateY(-2px)}
+.summaryNote{max-width:1700px;margin:0 auto;padding:24px}.sectionHead h2{font:700 20px/1.2 Cinzel,serif;letter-spacing:.06em;margin:0 0 5px}.sectionHead p{font-size:12px;color:var(--muted);margin:0 0 16px}
+.summaryChips{display:flex;flex-wrap:wrap;gap:10px}.summaryChips span{border:1px solid var(--line);background:rgba(233,184,102,.06);color:#ecdcba;border-radius:99px;padding:8px 15px;font-size:12px;transition:transform .3s,background .3s}.summaryChips span:hover{transform:translateY(-3px);background:rgba(233,184,102,.14)}
+.foot{max-width:1700px;margin:22px auto 0;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#7d705a;font:500 10px Cinzel,serif;letter-spacing:.2em}
+.errorBox{max-width:1700px;margin:20px auto;padding:20px;border:1px solid rgba(193,39,45,.5);background:rgba(60,12,16,.6);border-radius:14px;color:#ffb6b0}
+.loader{display:flex;justify-content:center;gap:10px;padding:50px}.loader i{width:10px;height:10px;border-radius:50%;background:var(--ember);box-shadow:0 0 16px var(--ember);animation:pulse 1s infinite ease-in-out}.loader i:nth-child(2){animation-delay:.15s}.loader i:nth-child(3){animation-delay:.3s}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes shine{to{background-position:-250% 0}}@keyframes breathe{50%{transform:scale(1.15);opacity:.7}}
+@keyframes letter{to{opacity:1;transform:none;filter:blur(0)}}@keyframes drop{from{opacity:0;transform:translateY(-14px)}}@keyframes grow{from{transform:scaleX(0)}}@keyframes ring{from{stroke-dashoffset:var(--c)}}@keyframes pulse{50%{transform:translateY(-10px);opacity:.4}}
+@media(max-width:1050px){.kpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.reportGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.filters button{grid-column:1/-1}}
+@media(max-width:650px){.abPage{padding:16px 11px 30px}.brandTitle{letter-spacing:.12em}.kpiGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kpi{padding:14px}.occupancyCard{grid-column:span 2;grid-row:auto;min-height:210px}.reportGrid{grid-template-columns:1fr}.filters{gap:7px}.panel{padding:16px}.movieHero{border-radius:20px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}.movieHero h1 span{opacity:1;transform:none;filter:none}}
 `;
