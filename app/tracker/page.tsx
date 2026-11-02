@@ -56,7 +56,7 @@ export default function AdvanceBookingPage() {
     let active = true;
     fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" })
       .then(r => { if (!r.ok) throw new Error(`Could not load ${DATA_URL} (${r.status})`); return r.json(); })
-      .then(json => { if (active) setData(json); })
+      .then((json: unknown) => { if (active) setData(json as ScanData); })
       .catch(e => { if (active) setError(e.message || "Unable to load scan data"); });
     return () => { active = false; };
   }, []);
