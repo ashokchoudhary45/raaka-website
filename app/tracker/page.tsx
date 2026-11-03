@@ -33,10 +33,15 @@ type Agg = Part & { name: string; cinemas: Set<string> };
 const DATA_URL = "/scan-latest.json";
 const MOVIE_NAME = "Ramayana";
 const PAGE_NAME = "Box Office Radar";
+/** The scan file sometimes carries a generic placeholder ("District Movie") – never show that as the film title. */
+const cleanTitle = (raw?: string) => {
+  const t = (raw || "").replace(/\s+/g, " ").trim();
+  return !t || /^(district|movie|untitled|unknown)$/i.test(t) || /^district\b.*\bmovie$/i.test(t) ? MOVIE_NAME : t;
+};
 
 const number = (n: unknown) => Number(n || 0);
 const fmt = (n: number) => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n || 0);
-const compact = (n: number) => new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(n || 0);
+const compact = (n: number) => { n = n || 0; const a = Math.abs(n), t = (x: number) => String(+x.toFixed(1)); return a >= 1e7 ? `${t(n / 1e7)}Cr` : a >= 1e5 ? `${t(n / 1e5)}L` : a >= 1e3 ? `${t(n / 1e3)}K` : String(Math.round(n)); };
 const money = (n: number) => n >= 1e7 ? `₹${(n / 1e7).toFixed(2)} Cr` : n >= 1e5 ? `₹${(n / 1e5).toFixed(2)} L` : `₹${fmt(n)}`;
 const moneyS = (n: number) => n >= 1e7 ? `${(n / 1e7).toFixed(1)}Cr` : n >= 1e5 ? `${(n / 1e5).toFixed(1)}L` : n >= 1e3 ? `${(n / 1e3).toFixed(0)}k` : `${Math.round(n)}`;
 const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
@@ -159,33 +164,6 @@ const aggFormat = (rows: Row[]) => {
   });
   return [...m.values()];
 };
-
-/* ───────────────────────── Small UI pieces ───────────────────────── */
-/** Drifting projector-dust. Pauses when the tab is hidden. */
-function Dust() {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const c = ref.current; if (!c || reduced()) return;
-    const x = c.getContext("2d"); if (!x) return;
-    let w = 0, h = 0, raf = 0;
-    const ps = Array.from({ length: 38 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.4 + .3, s: Math.random() * .00028 + .00008, d: Math.random() * 6.28, a: Math.random() * .5 + .2 }));
-    const size = () => { w = c.width = innerWidth; h = c.height = innerHeight; };
-    size(); addEventListener("resize", size);
-    const loop = (t: number) => {
-      raf = requestAnimationFrame(loop);
-      if (document.hidden) return;
-      x.clearRect(0, 0, w, h);
-      for (const p of ps) {
-        p.y -= p.s; if (p.y < -.05) { p.y = 1.05; p.x = Math.random(); }
-        x.beginPath(); x.fillStyle = `rgba(255,228,170,${p.a * (.15 + .6 * (1 - p.y))})`;
-        x.arc((p.x + Math.sin(t / 2600 + p.d) * .02) * w, p.y * h, p.r, 0, 6.283); x.fill();
-      }
-    };
-    raf = requestAnimationFrame(loop);
-    return () => { cancelAnimationFrame(raf); removeEventListener("resize", size); };
-  }, []);
-  return <canvas ref={ref} className="dust" aria-hidden="true" />;
-}
 
 function Count({ to, format = fmt }: { to: number; format?: (n: number) => string }) {
   const [v, setV] = useState(0);
@@ -325,30 +303,42 @@ function CinemaTable({ rows }: { rows: Row[] }) {
   </Panel>;
 }
 
+/** Title splits by WORD (never mid-word) and scales its size to the name length. */
+function Title({ text }: { text: string }) {
+  const L = text.length;
+  const fs = L <= 9 ? "clamp(68px,10.5vw,168px)" : L <= 14 ? "clamp(54px,7.4vw,120px)" : L <= 22 ? "clamp(42px,5.4vw,88px)" : "clamp(34px,4vw,64px)";
+  let n = 0;
+  return <h1 aria-label={text} style={{ "--fs": fs } as CSSProperties}>
+    {text.split(" ").filter(Boolean).map((w, wi) => <span className="w" key={wi} aria-hidden="true">
+      {[...w].map((ch, ci) => { const i = n++; return <span className="l" key={ci} style={{ "--i": i } as CSSProperties}>{ch}</span>; })}
+    </span>)}
+  </h1>;
+}
+
 type Opt = { value: string; count: number };
-function Facet({ title, opts, sel, onToggle, onClear, list, fmtVal }: {
-  title: string; opts: Opt[]; sel: Set<string>; onToggle: (v: string) => void; onClear: () => void; list?: boolean; fmtVal?: (v: string) => string;
+/** Filter dropdown – opens as a popover on desktop and a bottom sheet on phones. */
+function FacetMenu({ title, opts, sel, onToggle, onClear, fmtVal, open, onOpen }: {
+  title: string; opts: Opt[]; sel: Set<string>; onToggle: (v: string) => void; onClear: () => void;
+  fmtVal?: (v: string) => string; open: boolean; onOpen: (o: boolean) => void;
 }) {
-  const [open, setOpen] = useState(true);
   const [q, setQ] = useState("");
-  const shown = list && q ? opts.filter(o => o.value.toLowerCase().includes(q.toLowerCase())) : opts;
   const label = fmtVal || ((v: string) => v);
-  return <div className="facet">
-    <div className="facetHead">
-      <button className="facetTitle" onClick={() => setOpen(v => !v)} aria-expanded={open}><i className={open ? "o" : ""} />{title}{sel.size > 0 && <em>{sel.size}</em>}</button>
-      {sel.size > 0 && <button className="mini" onClick={onClear}>Clear</button>}
-    </div>
-    {open && (!opts.length ? <p className="none sm">Nothing available</p> : list ? <>
-      {opts.length > 8 && <input className="facetSearch" placeholder={`Search ${title.toLowerCase()}…`} value={q} onChange={e => setQ(e.target.value)} />}
-      <div className="facetList">{shown.map(o => <button key={o.value} className={sel.has(o.value) ? "on" : ""} onClick={() => onToggle(o.value)} aria-pressed={sel.has(o.value)}>
-        <i /><span>{label(o.value)}</span><b>{compact(o.count)}</b></button>)}
-        {!shown.length && <p className="none sm">No match</p>}</div>
-    </> : <div className="chips">{opts.map(o => <button key={o.value} className={sel.has(o.value) ? "on" : ""} onClick={() => onToggle(o.value)} aria-pressed={sel.has(o.value)}>
-      {label(o.value)}<b>{compact(o.count)}</b></button>)}</div>)}
+  const shown = q ? opts.filter(o => label(o.value).toLowerCase().includes(q.toLowerCase())) : opts;
+  return <div className="fm">
+    <button className={`fmBtn${sel.size ? " has" : ""}`} onClick={() => onOpen(!open)} aria-expanded={open}>{title}{sel.size > 0 && <em>{sel.size}</em>}<i /></button>
+    {open && <div className="fmPop" role="dialog" aria-label={title}>
+      <div className="fmHead"><b>{title}</b>{sel.size > 0 && <button className="mini" onClick={onClear}>Clear</button>}<button className="mini sheetClose" onClick={() => onOpen(false)}>Done</button></div>
+      {opts.length > 8 && <input className="fmSearch" autoFocus placeholder={`Search ${title.toLowerCase()}…`} value={q} onChange={e => setQ(e.target.value)} />}
+      <div className="fmList">
+        {!opts.length && <p className="none sm">Nothing available</p>}
+        {shown.map(o => <button key={o.value} className={sel.has(o.value) ? "on" : ""} onClick={() => onToggle(o.value)} aria-pressed={sel.has(o.value)}>
+          <i /><span>{label(o.value)}</span><b>{compact(o.count)}</b></button>)}
+        {opts.length > 0 && !shown.length && <p className="none sm">No match</p>}
+      </div>
+    </div>}
   </div>;
 }
 
-/* ───────────────────────── Page ───────────────────────── */
 export default function AdvanceBookingPage() {
   const [data, setData] = useState<ScanData | null>(null);
   const [error, setError] = useState("");
@@ -356,7 +346,7 @@ export default function AdvanceBookingPage() {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const df = useDeferredValue(filters);
   const [metric, setMetric] = useState<Metric>("revenue");
-  const [drawer, setDrawer] = useState(false);
+  const [menu, setMenu] = useState("");
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -368,19 +358,13 @@ export default function AdvanceBookingPage() {
     setBusy(false);
   }, []);
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { document.title = `${data?.movie || MOVIE_NAME} · ${PAGE_NAME} | World of Raaka`; }, [data]);
+  useEffect(() => { document.title = `${cleanTitle(data?.movie)} · ${PAGE_NAME} | World of Raaka`; }, [data]);
 
-  // cursor-following spotlight on glass surfaces
   useEffect(() => {
-    const move = (e: PointerEvent) => {
-      const el = (e.target as HTMLElement | null)?.closest?.(".glow") as HTMLElement | null; if (!el) return;
-      const r = el.getBoundingClientRect();
-      el.style.setProperty("--mx", `${e.clientX - r.left}px`); el.style.setProperty("--my", `${e.clientY - r.top}px`);
-    };
-    document.addEventListener("pointermove", move);
-    return () => document.removeEventListener("pointermove", move);
-  }, []);
-  useEffect(() => { document.body.style.overflow = drawer ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [drawer]);
+    if (!menu) return;
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") setMenu(""); };
+    addEventListener("keydown", k); return () => removeEventListener("keydown", k);
+  }, [menu]);
 
   const rows = useMemo(() => { const all = data?.theatres || []; return buildRows(all, detectMode(all)); }, [data]);
   const cityState = useMemo(() => { const m = new Map<string, string>(); rows.forEach(r => m.set(r.city, r.state)); return m; }, [rows]);
@@ -426,7 +410,7 @@ export default function AdvanceBookingPage() {
   const stale = df !== filters;
 
   const lastUpdated = data?.lastCapture ? new Date(data.lastCapture).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "";
-  const title = data?.movie || MOVIE_NAME;
+  const title = cleanTitle(data?.movie);
   const range = data?.dateRange?.from ? `${dateLabel(data.dateRange.from)}${data.dateRange.to && data.dateRange.to !== data.dateRange.from ? ` – ${dateLabel(data.dateRange.to)}` : ""}` : "";
   const facetCfg: { k: FacetKey; title: string; list?: boolean; fmtVal?: (v: string) => string }[] = [
     { k: "state", title: "State", list: true }, { k: "city", title: "City", list: true },
@@ -434,70 +418,63 @@ export default function AdvanceBookingPage() {
     { k: "format", title: "Format" }, { k: "chain", title: "Cinema chain" },
   ];
 
-  return <><style>{styles}</style><Dust />
+
+  return <><style>{styles}</style>
     <main className="page">
       <header className="topbar">
         <div className="brand">
-          <svg className="reel" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" /><g>{[0, 60, 120, 180, 240, 300].map(a => <circle key={a} cx="24" cy="12" r="4" transform={`rotate(${a} 24 24)`} />)}</g><circle cx="24" cy="24" r="3" className="hub" /></svg>
-          <div><div className="brandName">WORLD OF RAAKA</div><div className="brandSub">{PAGE_NAME}</div></div>
+          <span className="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2.2a2.8 2.8 0 0 0 0 5.6V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2.2a2.8 2.8 0 0 0 0-5.6z" /><path d="M14 6v12" className="perf" /></svg></span>
+          <div><div className="brandName">World of Raaka</div><div className="brandSub">{PAGE_NAME}</div></div>
         </div>
         <div className="topRight">
           {data?.scanning && <span className="pill warn"><i className="dot" />Scanning {Math.round(number(data.progress))}%</span>}
           {lastUpdated && <span className="pill"><i className="dot live" />Updated {lastUpdated}</span>}
           <button className="iconBtn" onClick={load} disabled={busy} aria-label="Refresh data">{busy ? "…" : "↻"}</button>
-          {data && <button className="filterBtn" onClick={() => setDrawer(true)}>Filters{activeCount > 0 && <em>{activeCount}</em>}</button>}
         </div>
       </header>
 
       {error && <div className="errorBox">Data load nahi ho paya · {error}<br /><small>Place scan-latest.json in the public folder of this Next.js app.</small></div>}
       {!data && !error && <div className="loader"><div className="spool"><i /><i /><i /></div><span>Loading the reels…</span></div>}
 
-      {data && <div className="shell">
-        {drawer && <div className="backdrop" onClick={() => setDrawer(false)} />}
-        <aside className={`aside${drawer ? " open" : ""}`}>
-          <div className="asideHead"><h2>Filters</h2>
-            <div>{activeCount > 0 && <button className="mini" onClick={() => setFilters(emptyFilters())}>Reset all</button>}<button className="mini close" onClick={() => setDrawer(false)}>✕</button></div></div>
-          <div className="search"><input placeholder="Search cinema, city or chain…" value={filters.q} onChange={e => { const q = e.target.value; setFilters(p => ({ ...p, q })); }} />
-            {filters.q && <button onClick={() => setFilters(p => ({ ...p, q: "" }))} aria-label="Clear search">✕</button>}</div>
-          {facetCfg.map(c => <Facet key={c.k} title={c.title} list={c.list} fmtVal={c.fmtVal} opts={opts[c.k]} sel={filters[c.k]} onToggle={v => toggle(c.k, v)} onClear={() => clearK(c.k)} />)}
-          <p className="asideNote">Numbers beside each option = seats booked. Options narrow automatically as you pick.</p>
-          <button className="apply" onClick={() => setDrawer(false)}>Show {fmt(stats.shows)} shows</button>
-        </aside>
+      {data && <>
+        <div className="rail">
+          <div className="railIn">
+            <div className="search"><input placeholder="Search cinema, city or chain…" value={filters.q} onChange={e => { const q = e.target.value; setFilters(p => ({ ...p, q })); }} />
+              {filters.q && <button onClick={() => setFilters(p => ({ ...p, q: "" }))} aria-label="Clear search">✕</button>}</div>
+            {facetCfg.map(c => <FacetMenu key={c.k} title={c.title} fmtVal={c.fmtVal} opts={opts[c.k]} sel={filters[c.k]} open={menu === c.k}
+              onOpen={o => setMenu(o ? c.k : "")} onToggle={v => toggle(c.k, v)} onClear={() => clearK(c.k)} />)}
+            {activeCount > 0 && <button className="resetAll" onClick={() => setFilters(emptyFilters())}>Reset all</button>}
+          </div>
+          {menu && <div className="fmBack" onClick={() => setMenu("")} />}
+        </div>
 
         <div className={`main${stale ? " stale" : ""}`}>
-          <section className="screen">
-            <div className="beam" aria-hidden="true" />
-            <div className="strip top" aria-hidden="true" /><div className="strip bot" aria-hidden="true" />
-            <div className="heroGrid">
-              <div className="heroText">
-                <span className="eyebrow">Now screening · Advance booking</span>
-                <h1 aria-label={title}>{[...title].map((ch, i) => <span key={i} aria-hidden="true" style={{ "--i": i } as CSSProperties}>{ch === " " ? "\u00A0" : ch}</span>)}</h1>
-                <p className="tag">Live box-office radar across {fmt(data.totals?.cities || stats.cities)} cities</p>
-                <div className="meta">{range && <span>🎞 {range}</span>}<span>{fmt(stats.cinemas)} cinemas</span><span>{fmt(stats.cities)} cities</span><span>{fmt(stats.langs)} languages</span></div>
+          <section className="ticket">
+            <div className="tMain">
+              <span className="eyebrow"><i className="dot live" />Advance booking · live</span>
+              <Title text={title} />
+              <p className="tag">Box-office radar across {fmt(data.totals?.cities || stats.cities)} cities</p>
+              <div className="meta">{range && <span>{range}</span>}<span>{fmt(stats.cinemas)} cinemas</span><span>{fmt(stats.cities)} cities</span><span>{fmt(stats.langs)} languages</span></div>
+            </div>
+            <div className="tStub">
+              <span className="conLabel">Total revenue · booked + open seats</span>
+              <div className="rev"><Count to={stats.totalValue} format={money} /></div>
+              <div className="split" role="img" aria-label={`${stats.bookedShare.toFixed(1)}% of total revenue is booked`}><b style={{ width: `${Math.min(100, stats.bookedShare)}%` }} /></div>
+              <div className="legend">
+                <div><span>Booked revenue</span><strong><Count to={stats.bookedValue} format={money} /></strong><small>{stats.bookedShare.toFixed(1)}% of total</small></div>
+                <div><span>Non-booked revenue</span><strong><Count to={stats.openValue} format={money} /></strong><small>{(100 - stats.bookedShare).toFixed(1)}% still open</small></div>
               </div>
-              <div className="console glow">
-                <span className="conLabel">Total revenue · booked + open seats</span>
-                <div className="conValue"><Count to={stats.totalValue} format={money} /></div>
-                <div className="split" role="img" aria-label={`${stats.bookedShare.toFixed(1)}% of total revenue is booked`}>
-                  <b style={{ width: `${Math.min(100, stats.bookedShare)}%` }} /><i />
-                </div>
-                <div className="legend">
-                  <div><span className="sw booked" />Booked revenue<strong><Count to={stats.bookedValue} format={money} /></strong><small>{stats.bookedShare.toFixed(1)}% of total</small></div>
-                  <div><span className="sw open" />Non-booked revenue<strong><Count to={stats.openValue} format={money} /></strong><small>{(100 - stats.bookedShare).toFixed(1)}% still open</small></div>
-                </div>
-                <div className="hall"><Seats occ={stats.occupancy} />
-                  <div><b><Count to={stats.occupancy} format={n => `${n.toFixed(1)}%`} /></b><small>hall filled</small><small>{compact(stats.booked)} of {compact(stats.capacity)} seats</small></div></div>
-              </div>
+              <div className="hall"><Seats occ={stats.occupancy} />
+                <div><b><Count to={stats.occupancy} format={n => `${n.toFixed(1)}%`} /></b><small>hall filled</small><small>{compact(stats.booked)} of {compact(stats.capacity)} seats</small></div></div>
             </div>
           </section>
 
           {activeCount > 0 && <div className="tags">
             {filters.q && <button onClick={() => setFilters(p => ({ ...p, q: "" }))}>“{filters.q}” ✕</button>}
             {facetCfg.flatMap(c => [...filters[c.k]].map(v => <button key={c.k + v} onClick={() => toggle(c.k, v)}><small>{c.title}</small>{(c.fmtVal || ((x: string) => x))(v)} ✕</button>))}
-            <button className="clearAll" onClick={() => setFilters(emptyFilters())}>Clear all</button>
           </div>}
 
-          {!view.length ? <div className="empty glow"><h3>No shows match these filters</h3><p>Try removing a filter — the options on the left only list what exists for the current selection.</p>
+          {!view.length ? <div className="empty"><h3>No shows match these filters</h3><p>Try removing a filter — each menu only lists what exists for the current selection.</p>
             <button className="more" onClick={() => setFilters(emptyFilters())}>Reset filters</button></div> : <>
             <section className="kpis">
               <Kpi label="Shows" value={<Count to={stats.shows} />} sub={`${fmt(stats.cinemas)} cinemas`} />
@@ -508,7 +485,7 @@ export default function AdvanceBookingPage() {
               <Kpi label="Cities" value={<Count to={stats.cities} />} sub={`${fmt(stats.langs)} languages`} />
             </section>
 
-            <div className="secHead"><div><h2>Where the money is</h2><p>Gold = booked · faded = still open. Bars scale to total potential.</p></div>
+            <div className="secHead"><div><h2>Where the money is</h2><p>Blue = booked · grey = still open. Bars scale to total potential.</p></div>
               <div className="seg" role="tablist"><button className={metric === "revenue" ? "on" : ""} onClick={() => setMetric("revenue")}>Revenue ₹</button><button className={metric === "seats" ? "on" : ""} onClick={() => setMetric("seats")}>Seats</button></div></div>
 
             <section className="grid">
@@ -523,105 +500,106 @@ export default function AdvanceBookingPage() {
               <Lazy className="span" minHeight={420}><CinemaTable rows={view} /></Lazy>
             </section></>}
 
-          <footer className="foot"><span>WORLD OF RAAKA · {PAGE_NAME.toUpperCase()}</span>{lastUpdated && <span>Last updated {lastUpdated}</span>}</footer>
+          <footer className="foot"><span>World of Raaka · {PAGE_NAME}</span>{lastUpdated && <span>Last updated {lastUpdated}</span>}</footer>
         </div>
-      </div>}
+      </>}
     </main></>;
 }
 
 /* ───────────────────────── Styles ───────────────────────── */
 const styles = `
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&display=swap');
 *{box-sizing:border-box}
-body{background:#05060a;margin:0}
-.page{--gold:#f4c870;--gold2:#ffe6b0;--amber:#ff9a3d;--crim:#d4202f;--ink:#05060a;--text:#f6f0e4;--muted:#9b97a4;--line:rgba(255,255,255,.09);--open:#5d6b87;
-position:relative;z-index:1;min-height:100vh;padding:20px clamp(12px,2.4vw,40px) 40px;color:var(--text);font:14px/1.5 Manrope,ui-sans-serif,system-ui,sans-serif}
-.page:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse 60% 45% at 50% -8%,rgba(255,170,80,.16),transparent 70%),radial-gradient(ellipse 45% 40% at 105% 55%,rgba(212,32,47,.13),transparent 70%),radial-gradient(ellipse 40% 35% at -5% 85%,rgba(93,107,135,.12),transparent 70%),#05060a}
-.page:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
-.dust{position:fixed;inset:0;z-index:0;pointer-events:none}
-button{font:inherit;color:inherit}
-.topbar{max-width:1680px;margin:0 auto 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:12px}.reel{width:42px;height:42px;fill:none;stroke:var(--gold);stroke-width:1.8;filter:drop-shadow(0 0 8px rgba(255,160,60,.55))}.reel g{transform-origin:24px 24px;animation:spin 14s linear infinite}.reel .hub{fill:var(--amber);stroke:none}
-.brandName{font:400 22px/1 'Bebas Neue',sans-serif;letter-spacing:.28em;color:var(--gold2)}.brandSub{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+body{background:#eceff4;margin:0}
+.page{--bg:#eceff4;--card:#fff;--ink:#0c1020;--mu:#667085;--ln:#dbe0ea;--cb:#2038ff;--cb2:#1527c8;--sun:#ffd23f;--open:#d3d9e8;
+min-height:100vh;padding:0 clamp(12px,2.4vw,40px) 48px;color:var(--ink);background:var(--bg);font:14px/1.5 Manrope,ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+.topbar,.railIn,.main{max-width:1560px;margin-left:auto;margin-right:auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 0}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--cb)}.mark svg{width:22px;height:22px;fill:#fff}.mark .perf{fill:none;stroke:var(--cb);stroke-width:1.6;stroke-dasharray:2 2.2}
+.brandName{font:800 18px/1 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em}.brandSub{font-size:12px;color:var(--mu);margin-top:3px}
 .topRight{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-size:11px;color:#d8d2c4;backdrop-filter:blur(8px)}.pill.warn{border-color:rgba(255,154,61,.45);color:var(--gold2)}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--amber)}.dot.live{background:#4ade80;box-shadow:0 0 10px #4ade80;animation:pulse 2s infinite}
-.iconBtn,.filterBtn{border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:99px;height:34px;min-width:34px;padding:0 14px;cursor:pointer;transition:background .25s,border-color .25s}.iconBtn:hover,.filterBtn:hover{background:rgba(244,200,112,.14);border-color:rgba(244,200,112,.5)}.iconBtn{padding:0;font-size:16px}
-.filterBtn{display:none;font-weight:700}.filterBtn em{font-style:normal;margin-left:7px;background:var(--gold);color:#1a1004;border-radius:99px;padding:1px 7px;font-size:11px}
-.shell{max-width:1680px;margin:0 auto;display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
-.aside{position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto;padding:16px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,rgba(24,24,32,.82),rgba(10,10,15,.88));backdrop-filter:blur(14px);scrollbar-width:thin;scrollbar-color:rgba(244,200,112,.3) transparent}
-.asideHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.asideHead h2{margin:0;font:400 22px/1 'Bebas Neue',sans-serif;letter-spacing:.14em;color:var(--gold2)}.asideHead>div{display:flex;gap:6px}
-.mini{border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:99px;padding:3px 11px;font-size:11px;font-weight:700;cursor:pointer;color:var(--gold2)}.mini:hover{background:rgba(244,200,112,.15)}.mini.close{display:none}
-.search{position:relative;margin-bottom:6px}.search input,.facetSearch{width:100%;border:1px solid var(--line);background:rgba(0,0,0,.35);border-radius:12px;padding:10px 34px 10px 13px;color:var(--text);font:inherit;outline:none;transition:border-color .25s,box-shadow .25s}.facetSearch{padding:8px 12px;margin:8px 0 6px;font-size:12px}
-.search input:focus,.facetSearch:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(244,200,112,.12)}.search button{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);cursor:pointer}
-.facet{padding:12px 0;border-top:1px solid var(--line)}.facet:first-of-type{border-top:0}
-.facetHead{display:flex;justify-content:space-between;align-items:center}.facetTitle{display:flex;align-items:center;gap:8px;border:0;background:none;cursor:pointer;font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#d9d3c6;padding:0}
-.facetTitle i{width:6px;height:6px;border-right:2px solid var(--gold);border-bottom:2px solid var(--gold);transform:rotate(-45deg);transition:transform .25s}.facetTitle i.o{transform:rotate(45deg)}.facetTitle em{font-style:normal;background:var(--gold);color:#1a1004;border-radius:99px;padding:0 7px;font-size:10px}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chips button{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:99px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer;transition:all .22s}.chips button b{font-weight:600;font-size:10px;color:var(--muted)}
-.chips button:hover{border-color:rgba(244,200,112,.5);transform:translateY(-1px)}.chips button.on{background:linear-gradient(120deg,var(--gold2),var(--gold) 55%,var(--amber));color:#1a1004;border-color:transparent;box-shadow:0 6px 20px -8px rgba(255,154,61,.8)}.chips button.on b{color:#4a3512}
-.facetList{max-height:190px;overflow:auto;margin-top:8px;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:rgba(244,200,112,.3) transparent}
-.facetList button{display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:6px 8px;border-radius:9px;cursor:pointer;font-size:12.5px;transition:background .2s}.facetList button:hover{background:rgba(255,255,255,.06)}
-.facetList button i{flex:none;width:14px;height:14px;border-radius:4px;border:1.5px solid rgba(255,255,255,.28);transition:all .2s}.facetList button.on i{background:var(--gold);border-color:var(--gold);box-shadow:0 0 10px rgba(244,200,112,.6)}.facetList button.on{background:rgba(244,200,112,.09)}
-.facetList button span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.facetList button b{font-size:10px;color:var(--muted);font-weight:600}
-.asideNote{font-size:10.5px;color:#7a7683;margin:6px 2px 0}.apply{display:none;width:100%;margin-top:12px;border:0;border-radius:12px;padding:12px;font-weight:800;color:#1a1004;cursor:pointer;background:linear-gradient(120deg,var(--gold2),var(--gold) 55%,var(--amber))}
-.backdrop{display:none}
-.main{min-width:0;transition:opacity .25s}.main.stale{opacity:.72}
-.screen{position:relative;overflow:hidden;border-radius:24px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,154,61,.07),rgba(8,8,12,.7));padding:clamp(34px,4.6vw,64px) clamp(16px,3vw,44px)}
-.beam{position:absolute;inset:0;pointer-events:none;overflow:hidden}.beam:before{content:"";position:absolute;left:50%;top:-12%;width:150%;height:125%;transform:translateX(-50%);background:conic-gradient(from 180deg at 50% 0%,transparent 158deg,rgba(255,226,170,.10) 172deg,rgba(255,226,170,.20) 180deg,rgba(255,226,170,.10) 188deg,transparent 202deg);-webkit-mask:linear-gradient(#000,transparent 88%);mask:linear-gradient(#000,transparent 88%);animation:flicker 6s infinite}
-.strip{position:absolute;left:0;right:0;height:14px;opacity:.5;background:repeating-linear-gradient(90deg,rgba(255,255,255,.14) 0 10px,transparent 10px 24px);-webkit-mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}.strip.top{top:8px}.strip.bot{bottom:8px}
-.heroGrid{position:relative;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(18px,3vw,44px);align-items:center}
-.eyebrow{display:inline-block;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:700;margin-bottom:6px;animation:rise .9s both}
-.heroText h1{margin:0;display:flex;flex-wrap:wrap;font:400 clamp(64px,10.5vw,156px)/.9 'Bebas Neue',sans-serif;letter-spacing:.05em;filter:drop-shadow(0 8px 40px rgba(255,140,50,.35))}
-.heroText h1 span{display:inline-block;background:linear-gradient(180deg,#fff3d2 8%,var(--gold) 52%,#c4672a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:0;transform:translateY(55%) scale(.92);filter:blur(10px);animation:letter 1s calc(.25s + var(--i)*.07s) forwards cubic-bezier(.2,.8,.2,1)}
-.tag{margin:14px 0 0;color:var(--muted);font-size:13px;letter-spacing:.06em;animation:rise 1s 1s both}
-.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;animation:rise 1s 1.2s both}.meta span{padding:6px 13px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-size:11.5px;color:#e6dfcf}
-.glow{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:linear-gradient(150deg,rgba(26,26,34,.78),rgba(11,11,16,.84));backdrop-filter:blur(10px);transition:transform .45s cubic-bezier(.2,.8,.2,1),border-color .35s,box-shadow .35s}
-.glow:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .35s;background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),rgba(255,176,80,.14),transparent 60%)}.glow:hover{border-color:rgba(244,200,112,.38);box-shadow:0 18px 50px -22px rgba(255,140,50,.5)}.glow:hover:before{opacity:1}
-.console{padding:clamp(16px,2vw,26px);border-radius:22px;border-color:rgba(244,200,112,.25);animation:rise 1s .5s both}
-.conLabel{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.conValue{font:400 clamp(46px,6.2vw,92px)/1 'Bebas Neue',sans-serif;letter-spacing:.03em;margin:6px 0 14px;background:linear-gradient(180deg,#fff3d2,var(--gold) 60%,var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums;text-shadow:0 0 40px rgba(255,160,60,.25)}
-.split{display:flex;height:12px;border-radius:99px;overflow:hidden;background:repeating-linear-gradient(135deg,rgba(93,107,135,.45) 0 6px,rgba(93,107,135,.2) 6px 12px)}.split b{display:block;border-radius:99px;background:linear-gradient(90deg,var(--crim),var(--amber) 55%,var(--gold2));box-shadow:0 0 18px rgba(255,140,50,.7);transform-origin:left;animation:grow 1.4s .4s both cubic-bezier(.2,.8,.2,1);transition:width 1s cubic-bezier(.2,.8,.2,1)}.split i{flex:1}
-.legend{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.legend>div{display:flex;flex-direction:column;font-size:11.5px;color:var(--muted)}.legend strong{font:400 clamp(24px,2.4vw,34px)/1.1 'Bebas Neue',sans-serif;letter-spacing:.04em;color:var(--text);margin:2px 0}.legend small{font-size:10.5px;color:#7f7b8a}
-.sw{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px}.sw.booked{background:linear-gradient(135deg,var(--crim),var(--gold))}.sw.open{background:var(--open)}
-.hall{display:flex;align-items:center;gap:18px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.hall>div:last-child{display:flex;flex-direction:column}.hall b{font:400 38px/1 'Bebas Neue',sans-serif;letter-spacing:.04em;color:var(--gold2)}.hall small{font-size:11px;color:var(--muted)}
-.seats{flex:1;min-width:0;display:grid;grid-template-columns:repeat(20,1fr);gap:4px;max-width:340px;padding:8px 10px 6px;border-radius:50% 50% 12px 12px/22px 22px 12px 12px}.seats i{aspect-ratio:1;border-radius:3px 3px 5px 5px;background:rgba(255,255,255,.1);transition:background .5s,box-shadow .5s}.seats i.on{background:linear-gradient(180deg,var(--gold2),var(--amber));box-shadow:0 0 8px rgba(255,154,61,.7);animation:pop .5s calc(var(--i)*7ms) both}
-.tags{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 0}.tags button{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(244,200,112,.35);background:rgba(244,200,112,.09);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;color:var(--gold2);transition:background .2s}.tags button:hover{background:rgba(212,32,47,.25)}.tags small{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.1em}.tags .clearAll{border-color:var(--line);background:none;color:var(--muted)}
-.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:14px 0 8px}
-.kpi{padding:15px 17px;min-height:96px}.kpi span{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}.kpi strong{display:block;font:400 clamp(26px,2.6vw,38px)/1.1 'Bebas Neue',sans-serif;letter-spacing:.04em;color:var(--gold2);margin:4px 0 1px;font-variant-numeric:tabular-nums}.kpi small{font-size:10.5px;color:#7f7b8a}
-.kpi:after{content:"";position:absolute;left:17px;top:0;width:28px;height:2px;background:var(--amber);box-shadow:0 0 12px var(--amber);transition:width .5s}.kpi:hover:after{width:calc(100% - 34px)}
-.secHead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:26px 2px 12px}.secHead h2{margin:0;font:400 30px/1 'Bebas Neue',sans-serif;letter-spacing:.12em;color:var(--text)}.secHead p{margin:4px 0 0;font-size:12px;color:var(--muted)}
-.seg{display:inline-flex;padding:3px;border:1px solid var(--line);border-radius:99px;background:rgba(0,0,0,.35)}.seg button{border:0;background:none;border-radius:99px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .25s}.seg button.on{background:linear-gradient(120deg,var(--gold2),var(--gold) 55%,var(--amber));color:#1a1004}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.grid>.span{grid-column:1/-1}
-.panel{min-width:0;padding:18px 20px;height:100%}.rise{animation:rise .8s both cubic-bezier(.2,.8,.2,1)}
-.panelHead{margin-bottom:16px}.panelHead h3{margin:0;font:400 20px/1.1 'Bebas Neue',sans-serif;letter-spacing:.14em;color:var(--gold2)}.panelHead small{font-size:11px;color:var(--muted)}
-.board{display:flex;flex-direction:column;gap:14px}.bTop{display:flex;justify-content:space-between;gap:10px;font-size:12.5px}.bTop span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bTop em,.cName em{font-style:normal;color:#6f6b7a;font-size:10px;margin-right:8px;font-weight:700}
-.bTop b{white-space:nowrap;color:var(--gold2);font-variant-numeric:tabular-nums}.bTop b small{color:#6f6b7a;font-weight:500;font-size:10.5px}.bDetail{display:block;color:#7f7b8a;font-size:10.5px;margin:1px 0 6px}
-.bTrack{height:7px;border-radius:99px;background:repeating-linear-gradient(135deg,rgba(93,107,135,.5) 0 5px,rgba(93,107,135,.22) 5px 10px);overflow:hidden;min-width:8px}.bTrack b{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--crim),var(--amber) 55%,var(--gold2));box-shadow:0 0 12px rgba(255,140,50,.6);transform-origin:left;animation:grow 1.2s var(--d,0ms) both cubic-bezier(.2,.8,.2,1);transition:width .8s cubic-bezier(.2,.8,.2,1)}
-.more{margin-top:14px;border:1px solid var(--line);background:rgba(244,200,112,.08);color:var(--gold2);border-radius:99px;padding:7px 15px;font-size:11.5px;font-weight:700;cursor:pointer;transition:all .25s}.more:hover{background:rgba(244,200,112,.18);transform:translateY(-2px)}
-.none{color:var(--muted);font-size:12.5px;margin:8px 0}.none.sm{font-size:11px}
-.how{margin:0;padding-left:18px;color:#c9c3b6;font-size:12.5px;display:flex;flex-direction:column;gap:9px}.how b{color:var(--gold2)}
-.tl{overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scrollbar-color:rgba(244,200,112,.3) transparent}.tlIn{display:flex;gap:8px;min-width:100%;width:max-content}.col{flex:1;min-width:52px;display:flex;flex-direction:column;align-items:center;gap:6px}
-.cBar{width:100%;height:180px;display:flex;align-items:flex-end}.cOut{width:100%;border-radius:8px 8px 3px 3px;background:repeating-linear-gradient(135deg,rgba(93,107,135,.5) 0 5px,rgba(93,107,135,.22) 5px 10px);display:flex;align-items:flex-end;overflow:hidden;transition:height .8s cubic-bezier(.2,.8,.2,1)}
-.cOut i{display:block;width:100%;background:linear-gradient(0deg,var(--crim),var(--amber) 55%,var(--gold2));box-shadow:0 0 14px rgba(255,140,50,.6);transform-origin:bottom;animation:growY 1.1s var(--d,0ms) both cubic-bezier(.2,.8,.2,1);transition:height .8s}
-.cv{font-size:10px;color:var(--gold2);font-weight:700;white-space:nowrap}.cl{font-size:10.5px;color:var(--muted);white-space:nowrap}
-.tScroll{overflow-x:auto}.tbl{min-width:760px}
-.cRow{display:grid;grid-template-columns:minmax(220px,2.4fr) .7fr 1.1fr 1.3fr 1fr 1fr;gap:12px;align-items:center;padding:11px 8px;border-top:1px solid var(--line);font-size:12.5px;transition:background .2s}.cRow:not(.head):hover{background:rgba(244,200,112,.05)}
-.cRow.head{border-top:0;padding-top:0;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:800}.cRow.head button,.cRow.head span{border:0;background:none;padding:0;text-align:left;cursor:pointer;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit}.cRow.head span{cursor:default}.cRow.head button.on{color:var(--gold2)}
-.cName{min-width:0}.cName b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.cName small{display:block;color:#7f7b8a;font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:22px}
-.num{font-variant-numeric:tabular-nums;font-weight:600}.num small{color:#6f6b7a;font-weight:500}.num.gold{color:var(--gold2)}.occ{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:700}.occ .bTrack{height:5px}
-.sentinel{text-align:center;color:var(--muted);font-size:11.5px;padding:16px}
-.skel{border-radius:18px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.03) 30%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.03) 70%);background-size:250% 100%;animation:shimmer 1.6s infinite}
-.empty{margin-top:14px;padding:50px 20px;text-align:center}.empty h3{margin:0 0 6px;font:400 28px/1 'Bebas Neue',sans-serif;letter-spacing:.1em;color:var(--gold2)}.empty p{margin:0;color:var(--muted)}
-.foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6f6b7a;font:400 13px 'Bebas Neue',sans-serif;letter-spacing:.24em}
-.errorBox{max-width:1680px;margin:20px auto;padding:20px;border:1px solid rgba(212,32,47,.5);background:rgba(60,12,16,.6);border-radius:14px;color:#ffb6b0}
-.loader{display:flex;flex-direction:column;align-items:center;gap:14px;padding:90px 0;color:var(--muted);letter-spacing:.2em;font-size:12px;text-transform:uppercase}.spool{display:flex;gap:10px}.spool i{width:11px;height:11px;border-radius:50%;background:var(--amber);box-shadow:0 0 16px var(--amber);animation:bounce 1s infinite ease-in-out}.spool i:nth-child(2){animation-delay:.15s}.spool i:nth-child(3){animation-delay:.3s}
-@keyframes spin{to{transform:rotate(360deg)}}@keyframes flicker{0%,100%{opacity:1}46%{opacity:.82}48%{opacity:1}72%{opacity:.9}}
-@keyframes letter{to{opacity:1;transform:none;filter:blur(0)}}@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
-@keyframes grow{from{transform:scaleX(0)}}@keyframes growY{from{transform:scaleY(0)}}@keyframes pop{from{opacity:0;transform:scale(.3)}}@keyframes pulse{50%{opacity:.35}}@keyframes bounce{50%{transform:translateY(-10px);opacity:.4}}@keyframes shimmer{to{background-position:-250% 0}}
-@media(max-width:1180px){.shell{grid-template-columns:minmax(0,1fr)}.filterBtn{display:inline-flex;align-items:center}.mini.close{display:inline-block}.apply{display:block}
-.aside{position:fixed;z-index:50;left:0;top:0;bottom:0;width:min(340px,92vw);max-height:none;border-radius:0 20px 20px 0;transform:translateX(-105%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}.aside.open{transform:none}
-.backdrop{display:block;position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
-.heroGrid{grid-template-columns:minmax(0,1fr)}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:700px){.page{padding:14px 10px 30px}.screen{border-radius:18px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.grid{grid-template-columns:minmax(0,1fr)}.legend{grid-template-columns:1fr}.hall{flex-direction:column;align-items:flex-start}.seats{max-width:100%;width:100%}.pill{display:none}.brandName{font-size:18px}.panel{padding:16px}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.heroText h1 span{opacity:1;transform:none;filter:none}}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:99px;border:1px solid var(--ln);background:var(--card);font-size:12.5px;font-weight:600}
+.dot{width:7px;height:7px;border-radius:50%;background:#f59e0b}.dot.live{background:#16a34a;box-shadow:0 0 0 0 #16a34a66;animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 7px #16a34a00}100%{box-shadow:0 0 0 0 #16a34a00}}
+.iconBtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--ln);background:var(--card);font-size:16px;transition:background .2s,transform .2s}.iconBtn:hover{background:#f6f8fc;transform:rotate(90deg)}
+.rail{position:sticky;top:0;z-index:30;margin:0 calc(clamp(12px,2.4vw,40px)*-1);padding:10px clamp(12px,2.4vw,40px);background:#eceff4;border-bottom:1px solid var(--ln)}
+.railIn{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.search{position:relative;flex:1 1 240px;max-width:380px}.search input,.fmSearch{width:100%;height:38px;border:1px solid var(--ln);background:var(--card);border-radius:10px;padding:0 34px 0 12px;font:inherit;color:var(--ink);outline:none}
+.search input:focus,.fmSearch:focus{border-color:var(--cb);box-shadow:0 0 0 3px #2038ff1f}.search button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--mu);width:26px;height:26px}
+.fm{position:relative}.fmBtn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:1px solid var(--ln);background:var(--card);border-radius:10px;font-weight:600;font-size:13px;transition:border-color .15s,background .15s}.fmBtn:hover{border-color:#b9c2d6}
+.fmBtn.has{border-color:var(--cb);color:var(--cb)}.fmBtn em{font-style:normal;background:var(--cb);color:#fff;border-radius:99px;padding:0 7px;font-size:11px;line-height:18px}
+.fmBtn i{width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.6}
+.fmPop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;width:300px;max-width:92vw;background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:10px;box-shadow:0 20px 50px #0c102030;animation:pop .16s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(-4px)}}
+.fmHead{display:flex;align-items:center;gap:8px;margin-bottom:8px}.fmHead b{flex:1;font:700 15px 'Bricolage Grotesque',sans-serif}.sheetClose{display:none}
+.mini{border:1px solid var(--ln);background:var(--card);border-radius:99px;padding:3px 11px;font-size:11.5px;font-weight:700}.mini:hover{background:#f3f5fa}
+.fmSearch{margin-bottom:6px;height:34px}
+.fmList{max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:1px;scrollbar-width:thin}
+.fmList button{display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:7px 8px;border-radius:8px;font-size:13px}.fmList button:hover{background:#f3f5fa}
+.fmList button i{flex:none;width:16px;height:16px;border-radius:5px;border:1.5px solid #b4bdd0;position:relative;transition:all .15s}
+.fmList button.on i{background:var(--cb);border-color:var(--cb)}.fmList button.on i:after{content:"";position:absolute;left:4.5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.fmList button span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fmList button b{font-size:11px;color:var(--mu);font-weight:600}
+.fmBack{position:fixed;inset:0;z-index:35}
+.resetAll{height:38px;padding:0 12px;border:0;background:none;color:var(--cb);font-weight:700}
+.main{padding-top:18px;transition:opacity .25s}.main.stale{opacity:.7}
+.ticket{position:relative;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);background:var(--cb);color:#fff;border-radius:28px;overflow:hidden}
+.tMain{padding:clamp(22px,3.2vw,48px);min-width:0}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:99px;background:#ffffff22;font-size:12.5px;font-weight:700}
+.ticket h1{margin:16px 0 8px;font:800 var(--fs)/.9 'Bricolage Grotesque',sans-serif;letter-spacing:-.035em}
+.w{display:inline-block;white-space:nowrap;margin-right:.2em;overflow:hidden;padding-bottom:.16em;margin-bottom:-.16em;vertical-align:top}
+.l{display:inline-block;animation:letter .85s calc(.1s + var(--i)*.055s) both cubic-bezier(.2,.8,.2,1)}
+@keyframes letter{from{transform:translateY(105%)}}
+.tag{margin:10px 0 0;opacity:.8;font-size:14px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.meta span{padding:6px 13px;border-radius:99px;border:1px solid #ffffff40;font-size:12.5px;font-weight:600}
+.tStub{position:relative;padding:clamp(20px,2.4vw,34px);background:var(--cb2);border-left:2px dashed #ffffff55}
+.tStub:before,.tStub:after{content:"";position:absolute;left:-14px;width:26px;height:26px;border-radius:50%;background:var(--bg)}.tStub:before{top:-13px}.tStub:after{bottom:-13px}
+.conLabel{font-size:12.5px;font-weight:600;opacity:.75}
+.rev{font:800 clamp(40px,4.6vw,68px)/1 'Bricolage Grotesque',sans-serif;letter-spacing:-.035em;margin:6px 0 16px;color:var(--sun)}
+.split{height:10px;border-radius:99px;background:#00000040;overflow:hidden}.split b{display:block;height:100%;background:var(--sun);border-radius:99px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}.legend>div{display:flex;flex-direction:column;font-size:12px}.legend span{opacity:.75}
+.legend strong{font:800 clamp(18px,1.9vw,25px)/1.2 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;margin:2px 0}.legend small{opacity:.65;font-size:11.5px}
+.hall{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:end;margin-top:22px;padding-top:18px;border-top:1px solid #ffffff30}
+.hall b{display:block;font:800 34px/1 'Bricolage Grotesque',sans-serif;letter-spacing:-.03em}.hall small{display:block;opacity:.7;font-size:12px;white-space:nowrap}
+.seats{display:grid;grid-template-columns:repeat(20,1fr);gap:3px}.seats i{aspect-ratio:1;border-radius:3px 3px 1px 1px;background:#ffffff26}
+.seats i.on{background:var(--sun);animation:seat .45s calc(var(--i)*6ms) both cubic-bezier(.3,1.5,.5,1)}@keyframes seat{from{transform:scale(.2);opacity:0}}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}.tags button{display:inline-flex;gap:7px;align-items:center;border:1px solid var(--ln);background:var(--card);border-radius:99px;padding:5px 12px;font-size:12.5px;font-weight:600}.tags small{color:var(--mu);font-weight:500}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;margin-top:14px;background:var(--ln);border:1px solid var(--ln);border-radius:18px;overflow:hidden}
+.kpi{background:var(--card);padding:16px 18px}.kpi span{font-size:12.5px;color:var(--mu);font-weight:600}.kpi strong{display:block;font:800 clamp(22px,2.2vw,30px)/1.15 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;margin-top:3px}.kpi small{color:var(--mu);font-size:11.5px}
+.secHead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:30px 2px 14px}.secHead h2{margin:0;font:800 clamp(22px,2.4vw,30px)/1.1 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}.secHead p{margin:4px 0 0;color:var(--mu);font-size:13px}
+.seg{display:inline-flex;padding:3px;border-radius:99px;background:#dfe4ee}.seg button{border:0;background:none;padding:7px 16px;border-radius:99px;font-weight:700;font-size:13px;color:var(--mu);transition:all .2s}.seg button.on{background:var(--ink);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}.span{grid-column:1/-1}
+.panel{background:var(--card);border:1px solid var(--ln);border-radius:18px;padding:18px}.panelHead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:12px}
+.panelHead h3{margin:0;font:700 17px 'Bricolage Grotesque',sans-serif}.panelHead small{color:var(--mu);font-size:11.5px;text-align:right}
+.none{color:var(--mu);margin:8px 0}.sm{font-size:12px}
+.bRow{margin:14px 0}.bTop{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:13.5px}.bTop span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bTop em{font-style:normal;color:var(--mu);font-weight:600;display:inline-block;width:22px}
+.bTop b small{color:var(--mu);font-weight:500}.bDetail{display:block;color:var(--mu);font-size:11.5px;margin:1px 0 6px 22px}
+.bTrack{height:8px;border-radius:99px;background:var(--open);overflow:hidden;max-width:100%}.bTrack b{display:block;height:100%;background:var(--cb);border-radius:99px;transform-origin:left;animation:growX .9s var(--d,0ms) both cubic-bezier(.2,.8,.2,1)}
+@keyframes growX{from{transform:scaleX(0)}}@keyframes growY{from{transform:scaleY(0)}}
+.more{width:100%;margin-top:6px;border:1px dashed #b9c2d6;background:none;border-radius:10px;padding:9px;font-weight:700;color:var(--cb)}.more:hover{background:#f3f5fa}
+.tl{overflow-x:auto;scrollbar-width:thin}.tlIn{display:flex;gap:8px;height:250px;align-items:stretch;min-width:max-content}
+.col{display:flex;flex-direction:column;width:48px}.cBar{flex:1;display:flex;align-items:flex-end}.cOut{width:100%;background:var(--open);border-radius:8px 8px 3px 3px;display:flex;align-items:flex-end;overflow:hidden}
+.cOut i{display:block;width:100%;background:var(--cb);transform-origin:bottom;animation:growY .9s var(--d,0ms) both cubic-bezier(.2,.8,.2,1)}
+.cv,.cl{display:block;text-align:center;font-size:10.5px;color:var(--mu);margin:4px 0;font-weight:600}
+.tScroll{overflow:auto}.tbl{min-width:820px}
+.cRow{display:grid;grid-template-columns:minmax(230px,2.2fr) .6fr 1.2fr 1.1fr 1fr 1fr;gap:12px;align-items:center;padding:11px 8px;border-bottom:1px solid #edf0f6}.cRow:not(.head):hover{background:#f6f8fc}
+.cRow.head{position:sticky;top:0;background:var(--card);color:var(--mu);font-size:12px;font-weight:700}.cRow.head button{border:0;background:none;text-align:left;padding:0;font-weight:700;color:var(--mu)}.cRow.head button.on{color:var(--cb)}
+.cName b{display:block;font-size:13.5px}.cName em{font-style:normal;color:var(--mu);font-weight:600;display:inline-block;width:26px}.cName small{color:var(--mu);font-size:11.5px;margin-left:26px}
+.num{text-align:left;font-weight:600}.num small{color:var(--mu);font-weight:500}.gold{color:var(--cb);font-weight:800}
+.occ span{font-weight:700;font-size:12.5px}.occ .bTrack{height:5px;margin-top:4px}
+.sentinel{text-align:center;color:var(--mu);padding:14px;font-size:12.5px}
+.how{margin:0;padding-left:18px;color:#3b4256;font-size:13px}.how li{margin:8px 0}
+.skel{border-radius:18px;background:linear-gradient(100deg,#e3e7f0 30%,#eff2f8 50%,#e3e7f0 70%);background-size:300% 100%;animation:shim 1.3s linear infinite}@keyframes shim{to{background-position:-300% 0}}
+.empty{background:var(--card);border:1px solid var(--ln);border-radius:18px;padding:30px;margin-top:14px;text-align:center}.empty h3{font:800 22px 'Bricolage Grotesque',sans-serif;margin:0 0 6px}.empty p{color:var(--mu)}
+.errorBox{max-width:1560px;margin:12px auto;background:#fff1f2;border:1px solid #fecdd3;color:#9f1239;border-radius:14px;padding:14px 16px}
+.loader{display:grid;place-items:center;gap:14px;padding:90px 0;color:var(--mu)}.spool{display:flex;gap:8px}.spool i{width:12px;height:12px;border-radius:50%;background:var(--cb);animation:bounce 1s infinite ease-in-out}.spool i:nth-child(2){animation-delay:.15s}.spool i:nth-child(3){animation-delay:.3s}@keyframes bounce{50%{transform:translateY(-10px);opacity:.4}}
+.foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:34px;padding-top:16px;border-top:1px solid var(--ln);color:var(--mu);font-size:12px}
+@media(max-width:1180px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:900px){.ticket{grid-template-columns:1fr}.tStub{border-left:0;border-top:2px dashed #ffffff55}.tStub:before{left:-13px;top:-14px}.tStub:after{left:auto;right:-13px;top:-14px;bottom:auto}}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.legend{grid-template-columns:1fr 1fr}
+  .fmBack{background:#0c102066}.fmPop{position:fixed;left:8px;right:8px;bottom:8px;top:auto;width:auto;max-width:none;z-index:50;max-height:72vh;padding:14px}.fmList{max-height:48vh}.sheetClose{display:inline-block;background:var(--cb);color:#fff;border-color:var(--cb)}
+  .search{max-width:none;flex-basis:100%}.rail{position:static}}
+@media(max-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 `;
