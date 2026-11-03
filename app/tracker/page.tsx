@@ -423,8 +423,16 @@ export default function AdvanceBookingPage() {
     <main className="page">
       <header className="topbar">
         <div className="brand">
-          <span className="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2.2a2.8 2.8 0 0 0 0 5.6V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2.2a2.8 2.8 0 0 0 0-5.6z" /><path d="M14 6v12" className="perf" /></svg></span>
-          <div><div className="brandName">World of Raaka</div><div className="brandSub">{PAGE_NAME}</div></div>
+          <img
+            className="brandLogo"
+            src="/RAAKA_BoxOffice_Logo_Animated.webp"
+            alt="World of Raaka Box Office"
+            width="230"
+            height="44"
+            fetchPriority="high"
+            decoding="async"
+          />
+          <div className="brandSub">{PAGE_NAME}</div>
         </div>
         <div className="topRight">
           {data?.scanning && <span className="pill warn"><i className="dot" />Scanning {Math.round(number(data.progress))}%</span>}
