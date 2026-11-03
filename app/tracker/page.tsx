@@ -32,7 +32,7 @@ type Agg = Part & { name: string; cinemas: Set<string> };
 /* ───────────────────────── Constants & helpers ───────────────────────── */
 const DATA_URL = "/scan-latest.json";
 const MOVIE_NAME = "Ramayana";
-const PAGE_NAME = "Box Office Radar";
+const PAGE_NAME = "";
 /** The scan file sometimes carries a generic placeholder ("District Movie") – never show that as the film title. */
 const cleanTitle = (raw?: string) => {
   const t = (raw || "").replace(/\s+/g, " ").trim();
